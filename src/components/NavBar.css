@@ -1,0 +1,12 @@
+.nav-bar {
+    list-style-type: none;
+    margin: 0;
+    padding: 0; 
+    
+}
+
+.nav-item{
+       float:left;
+       margin:10px;
+
+}
