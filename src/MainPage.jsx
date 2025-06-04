@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import './MainPage.css'
 import NavBar from './components/NavBar.jsx'
+import JoinMatch from './components/JoinMatch.jsx'
 
 
 function MainPage() {
@@ -8,7 +9,8 @@ function MainPage() {
 
   return (
     <>
-    <NavBar></NavBar>
+    <NavBar/>
+    <JoinMatch/>
   </>
   )
 }
