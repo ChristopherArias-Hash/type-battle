@@ -3,9 +3,11 @@ import "./JoinMatch.css"
 function JoinMatch(){
     return(
         <>
-        <h2>Enter code to Join Match</h2>
+        <div className = "matchForm">
+        <h2>Enter code to join a match</h2>
         <input></input>
         <button>Submit</button>
+        </div>
         </>
     )
 }

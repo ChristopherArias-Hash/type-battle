@@ -18,6 +18,27 @@
 
 }
 
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 30px;
+}
 
+.topSection,
+.bottomSection {
+  border: 3px solid;
+  display: flex;
+  justify-content: center;
+  gap: 10rem;
+  
+}
 
+.matchForm, .createForm,
+.leader-board, .about-us {
 
+  width:300px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* aligns h2 to the left within each box */
+}
