@@ -1,0 +1,31 @@
+
+.nav-bar {
+    
+    list-style-type: none;
+    margin: 0;
+    padding: 0; 
+    border: solid 3px; 
+    overflow: hidden;
+
+    
+}
+.nav-item {
+  display: inline-block; /* or flex, depending on your layout */
+}
+
+
+.pull-left{
+    margin:10px;
+    float:left; 
+    font-size: 20px;
+}
+
+.pull-right{
+    margin:10px;
+    float:right;
+}
+
+.pull-right img {
+    width:50px;
+    height:auto;
+}

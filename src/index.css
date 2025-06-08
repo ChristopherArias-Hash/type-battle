@@ -1,0 +1,44 @@
+  @import url('https://fonts.googleapis.com/css2?family=Cabin:ital,wght@0,400..700;1,400..700&display=swap');
+
+:root {
+
+
+  font-family: 'Cabin', sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 30px;
+}
+
+.topSection,
+.bottomSection {
+  border: 3px solid;
+  display: flex;
+  justify-content: center;
+  gap: 10rem;
+  
+}
+
+.matchForm, .createForm,
+.leader-board, .about-us {
+
+  width:300px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* aligns h2 to the left within each box */
+}
