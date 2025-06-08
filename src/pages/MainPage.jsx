@@ -5,13 +5,18 @@ import JoinMatch from '../components/JoinMatch.jsx'
 import CreateMatch from '../components/CreateMatch.jsx'
 import LeaderBoard from '../components/LeaderBoard.jsx'
 import AboutUs from '../components/AboutUs.jsx'
+import LoginModal from '../components/LoginModal.jsx'
 
 function MainPage() {
-  const [count, setCount] = useState(0)
+  const [showLoginModal, setShowLoginModal] = useState(false)
+
 
   return (
     <>
-    <NavBar/>
+     <NavBar onLoginClick={() => setShowLoginModal(true)} />
+      {showLoginModal && (
+        <LoginModal onClose={() => setShowLoginModal(false)} />
+      )}
     <div className = "container">
     <div className = "topSection">
     <JoinMatch/>
