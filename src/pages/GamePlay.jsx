@@ -1,5 +1,5 @@
 import "./GamePlay.css"
-import NavBar from "../components/NavBar"
+import NavBar from "../components/navbar/NavBar"
 
 function GamePlay(){
     return(

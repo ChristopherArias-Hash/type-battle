@@ -1,34 +1,48 @@
-import { useState } from 'react'
-import './MainPage.css'
-import NavBar from '../components/NavBar.jsx'
-import JoinMatch from '../components/JoinMatch.jsx'
-import CreateMatch from '../components/CreateMatch.jsx'
-import LeaderBoard from '../components/LeaderBoard.jsx'
-import AboutUs from '../components/AboutUs.jsx'
-import LoginModal from '../components/LoginModal.jsx'
+import { useState } from "react";
+import "./MainPage.css";
+import NavBar from "../components/navbar/NavBar.jsx";
+import JoinMatch from "../components/join-match/JoinMatch.jsx";
+import CreateMatch from "../components/create-match/CreateMatch.jsx";
+import LeaderBoard from "../components/leader-board/LeaderBoard.jsx";
+import AboutUs from "../components/about-us/AboutUs.jsx";
+import LoginModal from "../components/login/LoginModal.jsx";
+import RegisterModal from "../components/register/RegisterModal.jsx";
 
 function MainPage() {
-  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
 
   return (
     <>
-     <NavBar onLoginClick={() => setShowLoginModal(true)} />
+      <NavBar
+        onLoginClick={() => {
+          setShowLoginModal(true);
+          setShowRegisterModal(false);
+        }}
+        onRegisterClick={() => {
+          setShowRegisterModal(true);
+          setShowLoginModal(false);
+        }}
+      />
       {showLoginModal && (
         <LoginModal onClose={() => setShowLoginModal(false)} />
       )}
-    <div className = "container">
-    <div className = "topSection">
-    <JoinMatch/>
-    <CreateMatch/>
-    </div>
-    <div className = "bottomSection">
-    <LeaderBoard></LeaderBoard>
-    <AboutUs></AboutUs>
-    </div>
-    </div>
-  </>
-  )
+      {showRegisterModal && (
+        <RegisterModal onClose={() => setShowRegisterModal(false)} />
+      )}
+      <div className="container">
+        <div className="topSection">
+          <JoinMatch />
+          <CreateMatch />
+        </div>
+        <div className="bottomSection">
+          <LeaderBoard></LeaderBoard>
+          <AboutUs></AboutUs>
+        </div>
+      </div>
+    </>
+  );
 }
 
-export default MainPage
+export default MainPage;
