@@ -48,4 +48,22 @@ public class UserController {
         String uid = (String) request.getAttribute("uid");
         return ResponseEntity.ok("Token valid. UID: "+ uid);
     }
+
+    @GetMapping("/user")
+    public ResponseEntity<?> getUser(HttpServletRequest request) {
+        String uid = (String) request.getAttribute("uid");
+
+        if (uid == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+        Optional<User> userOpt = userRepository.findByFirebaseUid(uid);
+
+        if(userOpt.isPresent()) {
+            return ResponseEntity.ok(userOpt.get());
+
+        }else{
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+    }
 }
