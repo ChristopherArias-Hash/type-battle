@@ -3,6 +3,7 @@ target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+backend/type-battle/src/main/resources/servicesAccountKey.json
 src/main/resources/application.properties
 src/main/resources/servicesAccountKey.json
 ### STS ###
