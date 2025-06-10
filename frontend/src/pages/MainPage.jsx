@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./MainPage.css";
 import NavBar from "../components/navbar/NavBar.jsx";
 import JoinMatch from "../components/join-match/JoinMatch.jsx";
@@ -7,15 +7,41 @@ import LeaderBoard from "../components/leader-board/LeaderBoard.jsx";
 import AboutUs from "../components/about-us/AboutUs.jsx";
 import LoginModal from "../components/login/LoginModal.jsx";
 import RegisterModal from "../components/register/RegisterModal.jsx";
+import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
+
 
 function MainPage() {
   const [showLoginModal, setShowLoginModal] = useState(false);
-
   const [showRegisterModal, setShowRegisterModal] = useState(false);
+
+  const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
+  
+   useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsUserLoggedIn(!!user); // true if user exists
+    });
+
+    return () => unsubscribe(); // cleanup
+  }, []);
+
+  const logOutFirebase = async () =>{
+    const auth =  getAuth();
+    try{
+
+    await signOut(auth)
+    setIsUserLoggedIn(false);
+    console.log("User signed out successfuly.")
+      }catch (err){
+        console.error("Error signing out", err)
+      }
+  }
 
   return (
     <>
       <NavBar
+        logOut={logOutFirebase}
+        isUserLoggedIn={isUserLoggedIn}
         onLoginClick={() => {
           setShowLoginModal(true);
           setShowRegisterModal(false);
