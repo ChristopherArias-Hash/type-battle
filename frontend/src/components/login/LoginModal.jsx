@@ -10,10 +10,7 @@ function LoginModal({ onClose }) {
 
   const handleLogin = async () => {
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
+      const userCredential = await signInWithEmailAndPassword(auth,email,password
       );
       const token = await userCredential.user.getIdToken();
 
