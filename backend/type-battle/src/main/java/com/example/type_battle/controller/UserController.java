@@ -4,8 +4,11 @@ import com.example.type_battle.model.User;
 import com.example.type_battle.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/protected")
@@ -14,12 +17,29 @@ public class UserController {
     @Autowired
     private UserRepository userRepository;
 
-    @PostMapping("/users")
-    User newUser(@RequestBody User newUser, HttpServletRequest request) {
-        String uid = (String) request.getAttribute("uid");
-        newUser.setFirebaseUid(uid);
-        return userRepository.save(newUser);
 
+
+    @PostMapping("/users")
+    public ResponseEntity<?> registerUser(HttpServletRequest request, @RequestBody User newUserData) {
+        String uid = (String) request.getAttribute("uid");
+
+        if (uid == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+
+        Optional<User> existingUser = userRepository.findByFirebaseUid(uid);
+        if (existingUser.isPresent()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("User already exists");
+        }
+        User user = new User();
+
+        user.setFirebaseUid(uid);
+        user.setDisplayName(newUserData.getDisplayName());
+        user.setEmail(newUserData.getEmail());
+        user.setImageUrl(newUserData.getImageUrl());
+
+        userRepository.save(user);
+        return ResponseEntity.ok("User registered successfully");
     }
 
     @CrossOrigin(origins = "http://localhost:5173")
