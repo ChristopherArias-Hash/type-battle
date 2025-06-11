@@ -28,6 +28,10 @@ function LoginModal({ onClose }) {
 
       if (response.ok) {
         console.log("Login success!");
+        auth.currentUser.getIdToken().then(token => {
+  console.log("Firebase ID Token:", token);
+  alert("Firebase ID Token copied to console!");
+});
         onClose();
       } else {
         console.error("Failed to verify token");

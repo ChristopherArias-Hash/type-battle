@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import { auth } from "../firebase";
+import {onAuthStateChanged, signOut } from "firebase/auth";
+
 import "./MainPage.css";
 import NavBar from "../components/navbar/NavBar.jsx";
 import JoinMatch from "../components/join-match/JoinMatch.jsx";
@@ -7,25 +10,55 @@ import LeaderBoard from "../components/leader-board/LeaderBoard.jsx";
 import AboutUs from "../components/about-us/AboutUs.jsx";
 import LoginModal from "../components/login/LoginModal.jsx";
 import RegisterModal from "../components/register/RegisterModal.jsx";
-import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
+import axios from "axios";
 
 
 function MainPage() {
+
+  //Modals for login and Register
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
 
-  const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
+  //Variables for user info in DB
+  const [getWinsInfo, setWinsInfo] = useState(0)
+  const [getGamesPlayedInfo, setGamesPlayedInfo] = useState(0)
+  const [getHighestWpmInfo, setHighestWpmInfo] = useState(0)
+
+  //Groups all info
+  const userInfo = {
+    getWinsInfo,
+    getGamesPlayedInfo, 
+    getHighestWpmInfo, 
+  }
+
+//Gets info and controls user login state
+const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
   
-   useEffect(() => {
-    const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setIsUserLoggedIn(!!user); // true if user exists
-    });
+useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      setIsUserLoggedIn(true);
+      const idToken = await user.getIdToken();
+      const response = await axios.get("http://localhost:8080/protected/user", {
+        headers: {
+          Authorization: `Bearer ${idToken}`
+        }
+      });
+      console.log(response.data); // do something with user data
+      const userDetails = response.data
+      setWinsInfo(userDetails.gamesWon)
+      setGamesPlayedInfo(userDetails.gamesPlayed)
+      setHighestWpmInfo(userDetails.highestWpm)
 
-    return () => unsubscribe(); // cleanup
-  }, []);
+    } else {
+      setIsUserLoggedIn(false);
+    }
+  });
+  return () => unsubscribe();
+}, []);
 
-  const logOutFirebase = async () =>{
+//Logs out user ends session 
+const logOutFirebase = async () =>{
     const auth =  getAuth();
     try{
 
@@ -40,6 +73,7 @@ function MainPage() {
   return (
     <>
       <NavBar
+        userInfo ={userInfo}
         logOut={logOutFirebase}
         isUserLoggedIn={isUserLoggedIn}
         onLoginClick={() => {

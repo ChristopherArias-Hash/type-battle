@@ -2,7 +2,7 @@ import "./NavBar.css"
 
 
 
-function NavBar({onLoginClick, onRegisterClick, isUserLoggedIn, logOut}) {
+function NavBar({onLoginClick, onRegisterClick, isUserLoggedIn, logOut, userInfo}) {
     return(
         <>
         <ul className="nav-bar">
@@ -10,9 +10,9 @@ function NavBar({onLoginClick, onRegisterClick, isUserLoggedIn, logOut}) {
             <li className="nav-item pull-right"><img src="https://hourglassmc.com/wp-content/uploads/2016/10/mystery-man.png"/></li>
             {isUserLoggedIn ?    
             <>
-            <li className="nav-item pull-right">WPMA: </li>
-            <li className="nav-item pull-right">AVG:</li>
-            <li className="nav-item pull-right">WINS:</li>
+            <li className="nav-item pull-right">WPM Max: {userInfo.getWinsInfo}</li>
+            <li className="nav-item pull-right">Games Played: {userInfo.getGamesPlayedInfo}</li>
+            <li className="nav-item pull-right">WINS: {userInfo.getWinsInfo}</li>
             <li className="nav-item pull-right"><button onClick={logOut}>Logout</button></li>
             </> : 
                     <>

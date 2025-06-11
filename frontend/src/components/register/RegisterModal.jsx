@@ -1,5 +1,7 @@
 import { useState }  from 'react';
-import {getAuth, createUserWithEmailAndPassword} from "firebase/auth";
+
+import { auth } from "../../firebase";
+import {createUserWithEmailAndPassword} from "firebase/auth";
 import axios from 'axios';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
@@ -9,9 +11,9 @@ function RegisterModal({onClose}){
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("");
     const [username, setUsername] = useState("")
- 
+    
+
     const handleRegister = async () => {
-        const auth = getAuth();
         try{
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const idToken = await userCredential.user.getIdToken();
