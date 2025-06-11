@@ -11,7 +11,7 @@ public class FilterConfig {
     public FilterRegistrationBean<FirebaseAuthFilter> firebaseAuthFilterRegistration(FirebaseAuthFilter filter) {
         FilterRegistrationBean<FirebaseAuthFilter> registration = new FilterRegistrationBean<>();
         registration.setFilter(filter);
-        registration.addUrlPatterns("/protected/*"); // Only protect endpoints starting with /protected/
+        registration.addUrlPatterns("/protected/*", "/api/media/*"); // Only protect endpoints starting with /protected/
         registration.setOrder(1); // Run this early in the filter chain
         return registration;
     }
