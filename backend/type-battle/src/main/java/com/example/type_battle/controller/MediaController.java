@@ -35,7 +35,7 @@ public class MediaController {
         String key = mediaService.uploadFile(file, uid);
 
         // Construct public URL if you want (optional)
-        String imageUrl = "https://4c602847b3a5272ef057f15c7e304f22.r2.cloudflarestorage.com/type-battle-pfp/" + key;
+        String imageUrl = "https://media.christopher-arias.com/" + key;
 
 
         // Fetch user from DB
