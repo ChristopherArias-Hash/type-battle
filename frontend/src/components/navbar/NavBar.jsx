@@ -7,9 +7,10 @@ function NavBar({onLoginClick, onRegisterClick, isUserLoggedIn, logOut, userInfo
         <>
         <ul className="nav-bar">
             <li className="nav-item pull-left"><h1>TYPE BATTLE</h1></li>
-            <li className="nav-item pull-right"><img src="https://hourglassmc.com/wp-content/uploads/2016/10/mystery-man.png"/></li>
             {isUserLoggedIn ?    
             <>
+            <li className="nav-item pull-right"><img src={userInfo.getProfilePicture}/></li>
+            <li className="nav-item pull-right">name: {userInfo.getDisplayName}</li>
             <li className="nav-item pull-right">WPM Max: {userInfo.getWinsInfo}</li>
             <li className="nav-item pull-right">Games Played: {userInfo.getGamesPlayedInfo}</li>
             <li className="nav-item pull-right">WINS: {userInfo.getWinsInfo}</li>

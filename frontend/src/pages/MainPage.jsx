@@ -23,39 +23,53 @@ function MainPage() {
   const [getWinsInfo, setWinsInfo] = useState(0)
   const [getGamesPlayedInfo, setGamesPlayedInfo] = useState(0)
   const [getHighestWpmInfo, setHighestWpmInfo] = useState(0)
+  const [getDisplayName, setDisplayNameInfo] = useState("")
+  const [getProfilePicture, setProfilePicture] = useState(null)
 
   //Groups all info
   const userInfo = {
     getWinsInfo,
     getGamesPlayedInfo, 
     getHighestWpmInfo, 
+    getDisplayName,
+    getProfilePicture
   }
 
 //Gets info and controls user login state
 const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
-  
+
+const loadUserInfo = async () => {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const idToken = await user.getIdToken();
+  const response = await axios.get("http://localhost:8080/protected/user", {
+    headers: {
+      Authorization: `Bearer ${idToken}`,
+    },
+  });
+
+  const userDetails = response.data;
+  setWinsInfo(userDetails.gamesWon);
+  setGamesPlayedInfo(userDetails.gamesPlayed);
+  setHighestWpmInfo(userDetails.highestWpm);
+  setDisplayNameInfo(userDetails.displayName);
+  setProfilePicture(userDetails.imageUrl)
+};
+
+//Keeps user logged in and out 
 useEffect(() => {
   const unsubscribe = onAuthStateChanged(auth, async (user) => {
     if (user) {
       setIsUserLoggedIn(true);
-      const idToken = await user.getIdToken();
-      const response = await axios.get("http://localhost:8080/protected/user", {
-        headers: {
-          Authorization: `Bearer ${idToken}`
-        }
-      });
-      console.log(response.data); // do something with user data
-      const userDetails = response.data
-      setWinsInfo(userDetails.gamesWon)
-      setGamesPlayedInfo(userDetails.gamesPlayed)
-      setHighestWpmInfo(userDetails.highestWpm)
-
+      await loadUserInfo();
     } else {
       setIsUserLoggedIn(false);
     }
   });
   return () => unsubscribe();
 }, []);
+
 
 //Logs out user ends session 
 const logOutFirebase = async () =>{
@@ -88,7 +102,7 @@ const logOutFirebase = async () =>{
         <LoginModal onClose={() => setShowLoginModal(false)} />
       )}
       {showRegisterModal && (
-        <RegisterModal onClose={() => setShowRegisterModal(false)} />
+        <RegisterModal onClose={() => setShowRegisterModal(false)} onUserInfoUpdated={loadUserInfo}/>
       )}
       <div className="container">
         <div className="topSection">
