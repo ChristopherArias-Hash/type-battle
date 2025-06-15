@@ -59,7 +59,6 @@ useEffect(() => {
 
 //Logs out user ends session 
 const logOutFirebase = async () =>{
-    const auth =  getAuth();
     try{
 
     await signOut(auth)
