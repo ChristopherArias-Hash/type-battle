@@ -37,7 +37,7 @@ const registerAndLogin = async () => {
         <Modal.Body>
           <Form>
             <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
-              <Form.Label>Email</Form.Label>
+              <Form.Label><b>Email</b>  *required</Form.Label>
               <Form.Control
                 type="email"
                 placeholder="Enter email"
@@ -46,7 +46,7 @@ const registerAndLogin = async () => {
               ></Form.Control>
             </Form.Group>
             <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
-              <Form.Label>Password</Form.Label>
+              <Form.Label><b>Password</b> *required</Form.Label>
               <Form.Control
                 type="password"
                 placeholder="Enter password"
@@ -55,7 +55,7 @@ const registerAndLogin = async () => {
               ></Form.Control>
             </Form.Group>
             <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
-              <Form.Label>Username</Form.Label>
+              <Form.Label><b>Username</b>  *required</Form.Label>
               <Form.Control
                 type="Username"
                 placeholder="Enter username"
@@ -64,7 +64,7 @@ const registerAndLogin = async () => {
               ></Form.Control>
             </Form.Group>
             <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
-              <Form.Label>Profile Picture</Form.Label>
+              <Form.Label><b>Profile Picture</b></Form.Label>
               <Form.Control
                 type="file"
                 onChange={(e) => setFilePath(e.target.files[0])}
