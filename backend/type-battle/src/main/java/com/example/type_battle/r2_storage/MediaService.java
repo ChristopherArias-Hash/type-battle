@@ -20,6 +20,7 @@ public class MediaService {
     @Value("${cloudflare.r2.bucket}")
     private String bucket;
 
+    //EXCEPTIONS
     public static class UnsupportedMediaTypeException extends RuntimeException {
         public UnsupportedMediaTypeException(String msg) { super(msg); }
     }
@@ -27,9 +28,11 @@ public class MediaService {
     public static class FileUploadException extends RuntimeException {
         public FileUploadException(String msg, Throwable cause) { super(msg, cause); }
     }
+    private boolean isAllowedImageExtension(String ext) {
+        return ext.equals("png") || ext.equals("jpg") || ext.equals("jpeg") || ext.equals("gif");
+    }
 
     public String uploadFile(MultipartFile file, String uid) {
-        // 1. Resolve filename and content type
         String original = Optional.ofNullable(file.getOriginalFilename())
                 .orElseThrow(() -> new UnsupportedMediaTypeException("Filename is missing"))
                 .toLowerCase();
@@ -37,19 +40,26 @@ public class MediaService {
         String contentType = Optional.ofNullable(file.getContentType())
                 .orElseThrow(() -> new UnsupportedMediaTypeException("Content-Type is unknown"));
 
-        // 2. Decide folder by extension
+        //Enforce image only MIME types
+        if (!contentType.startsWith("image/")) {
+            throw new UnsupportedMediaTypeException("Only image files are allowed.");
+        }
+
+        //Enforce image file extensions
         String ext = getFileExtension(original);
-        String categoryFolder = switch (ext) {
-            case "jpg", "jpeg", "png", "gif" -> "images";
-            case "mp4", "mov"                -> "videos";
-            case "pdf", "doc", "docx", "txt" -> "documents";
-            default -> throw new UnsupportedMediaTypeException("Unsupported file type: " + contentType);
-        };
+        if (!isAllowedImageExtension(ext)) {
+            throw new UnsupportedMediaTypeException("Only .png, .jpg, .jpeg, .gif files are allowed.");
+        }
 
-        // 3. Build key: uid/category/uuid-originalfilename
-        String key = String.format("%s/%s/%s-%s", uid, categoryFolder, UUID.randomUUID(), original);
+        //file size limit (5MB)
+        long MAX_SIZE = 5 * 1024 * 1024;
+        if (file.getSize() > MAX_SIZE) {
+            throw new FileUploadException("File exceeds maximum allowed size of 5 MB", null);
+        }
 
-        // 4. Prepare and send S3 PutObject
+        // Save under 'images' folder only
+        String key = String.format("%s/images/%s-%s", uid, UUID.randomUUID(), original);
+
         PutObjectRequest req = PutObjectRequest.builder()
                 .bucket(bucket)
                 .key(key)
@@ -64,6 +74,7 @@ public class MediaService {
 
         return key;
     }
+
 
     private String getFileExtension(String filename) {
         int idx = filename.lastIndexOf('.');

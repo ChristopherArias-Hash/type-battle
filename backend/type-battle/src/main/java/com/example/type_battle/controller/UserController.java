@@ -1,15 +1,12 @@
 package com.example.type_battle.controller;
 
 import com.example.type_battle.model.User;
-import com.example.type_battle.r2_storage.MediaService;
 import com.example.type_battle.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Optional;
 
@@ -18,9 +15,10 @@ import java.util.Optional;
 public class UserController {
 
     @Autowired
+    //Connects DB to backend
     private UserRepository userRepository;
 
-
+    //Adding users, checks for uid, then adds it to DB
     @PostMapping("/users")
     public ResponseEntity<?> registerUser(HttpServletRequest request, @RequestBody User newUserData) {
         String uid = (String) request.getAttribute("uid");
@@ -44,13 +42,13 @@ public class UserController {
         return ResponseEntity.ok("User registered successfully");
     }
 
-    @CrossOrigin(origins = "http://localhost:5173")
+   //When user logs in this verifys token from frontend to makesure its a real auth user
     @PostMapping("/verify-token")
     public ResponseEntity<String> verifyToken(HttpServletRequest request) {
         String uid = (String) request.getAttribute("uid");
         return ResponseEntity.ok("Token valid. UID: " + uid);
     }
-
+    //Grabs user info, checks for uid first.
     @GetMapping("/user")
     public ResponseEntity<?> getUser(HttpServletRequest request) {
         String uid = (String) request.getAttribute("uid");
