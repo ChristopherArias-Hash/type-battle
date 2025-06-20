@@ -1,0 +1,103 @@
+import { createContext, useContext, useEffect, useState } from "react";
+import { auth } from "../firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import axios from "axios";
+
+const AuthContext = createContext();
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};
+
+export const AuthProvider = ({ children }) => {
+  const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
+  const [userInfo, setUserInfo] = useState({
+    getWinsInfo: 0,
+    getGamesPlayedInfo: 0,
+    getHighestWpmInfo: 0,
+    getDisplayName: "",
+    getProfilePicture: null
+  });
+  const [loading, setLoading] = useState(true);
+
+  const loadUserInfo = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+      const idToken = await user.getIdToken();
+      const response = await axios.get("http://localhost:8080/protected/user", {
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+      });
+
+      const userDetails = response.data;
+      setUserInfo({
+        getWinsInfo: userDetails.gamesWon,
+        getGamesPlayedInfo: userDetails.gamesPlayed,
+        getHighestWpmInfo: userDetails.highestWpm,
+        getDisplayName: userDetails.displayName,
+        getProfilePicture: userDetails.imageUrl
+      });
+    } catch (error) {
+      console.error("Error loading user info:", error);
+    }
+  };
+
+  const logOutFirebase = async () => {
+    try {
+      await signOut(auth);
+      setIsUserLoggedIn(false);
+      setUserInfo({
+        getWinsInfo: 0,
+        getGamesPlayedInfo: 0,
+        getHighestWpmInfo: 0,
+        getDisplayName: "",
+        getProfilePicture: null
+      });
+      console.log("User signed out successfully.");
+    } catch (err) {
+      console.error("Error signing out", err);
+    }
+  };
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setIsUserLoggedIn(true);
+        await loadUserInfo();
+      } else {
+        setIsUserLoggedIn(false);
+        setUserInfo({
+          getWinsInfo: 0,
+          getGamesPlayedInfo: 0,
+          getHighestWpmInfo: 0,
+          getDisplayName: "",
+          getProfilePicture: null
+        });
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const value = {
+    isUserLoggedIn,
+    userInfo,
+    loadUserInfo,
+    logOutFirebase,
+    loading
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
