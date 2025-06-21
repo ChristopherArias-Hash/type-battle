@@ -9,7 +9,7 @@ public class Paragraphs {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @Column(name = "text", nullable = false, unique = true)
+    @Column(name = "text", nullable = false, columnDefinition = "TEXT")
     private String text;
 
     public String getText() {
