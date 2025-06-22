@@ -5,11 +5,11 @@ import { useAuth } from "../utils/authContext"
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { connectWebSocket, disconnectWebSocket } from "../websocket";
-
+import { auth } from "../firebase";
 function GamePlay(){
-
+ 
     const {isUserLoggedIn, userInfo, logOutFirebase, loading} = useAuth();
-    const [players, setPlayers] = useState([])
+    const [paragraphText, setParagraphText] = useState(null);    const [players, setPlayers] = useState([])
     const sessionId = 1; //Make dyamic from url or state
     
     useEffect(() => {
@@ -18,16 +18,21 @@ function GamePlay(){
             if (user){
                 const token = await user.getIdToken();
                 connectWebSocket(sessionId, token, (playerList) => {
-                    setPlayers(playerList)
-                })
+                  setPlayers(playerList)
+                },(sentence) =>{
+                  setParagraphText(sentence)
+                } )
             }
         };
         connect();
-
+       
         return () => {
             disconnectWebSocket();
         };
     }, [sessionId])
+
+   
+
     if (loading) {
         return <div>Loading...</div>;
     }
@@ -35,7 +40,7 @@ function GamePlay(){
     if (!isUserLoggedIn){
         return <Navigate to="/" replace />;
     }
-
+   
    return (
     <>
       <NavBar
@@ -55,7 +60,9 @@ function GamePlay(){
         </ul>
       </div>
 
-      <TypingSentences />
+      <TypingSentences 
+      paragraphText={paragraphText}
+      />
     </>
   );
 }

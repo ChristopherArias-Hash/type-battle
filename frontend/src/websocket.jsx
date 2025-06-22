@@ -4,33 +4,62 @@ import SockJS from "sockjs-client";
 
 let stompClient = null;
 
-export function connectWebSocket(sessionId, firebaseToken, onPlayerListUpdate) {
+export function connectWebSocket(sessionId, firebaseToken, onPlayerListUpdate, onParagraphReceived) {
+  // Disconnect existing connection if any
+  if (stompClient && stompClient.active) {
+    console.log("[WebSocket] Disconnecting existing connection");
+    stompClient.deactivate();
+  }
+
   const socket = new SockJS("http://localhost:8080/ws");
 
   stompClient = new Client({
     webSocketFactory: () => socket,
     reconnectDelay: 5000,
-    onConnect: () => {
-      console.log("[WebSocket] Connected");
+    heartbeatIncoming: 4000,
+    heartbeatOutgoing: 4000,
 
-      // Subscribe to the session's lobby topic
+    // where we send the Firebase token for authentication
+    connectHeaders: {
+      Authorization: `Bearer ${firebaseToken}`,
+    },
+
+    onConnect: () => {
+      console.log("[WebSocket] Connected to session " + sessionId);
+
+      // Subscribe to lobby topic for player list
       stompClient.subscribe(`/topic/lobby/${sessionId}`, (message) => {
         const updatedPlayers = JSON.parse(message.body);
+     
         console.log("[WebSocket] Player list update:", updatedPlayers);
         onPlayerListUpdate(updatedPlayers);
       });
 
-      // Tell server we joined the lobby
+      // Subscribe to paragraph topic 
+      stompClient.subscribe(`/topic/game/${sessionId}`, (message) => {
+        const paragraph = JSON.parse(message.body);
+        console.log("[WebSocket] Paragraph receieved: ", paragraph.text);
+        onParagraphReceived(paragraph.text)
+      })
+      // Join the game after subscribing
+      console.log("[WebSocket] Sending join request for session " + sessionId);
       stompClient.publish({
         destination: `/app/join/${sessionId}`,
-        headers: {
-          uid: firebaseToken, // This is used in the backend controller header
-        },
-        body: "", // No message body needed
+        body: "",
       });
     },
+
     onStompError: (frame) => {
       console.error("[WebSocket] STOMP error:", frame.headers["message"]);
+      console.error("[WebSocket] Error details:", frame.body);
+    },
+
+    onWebSocketError: (event) => {
+      console.error("[WebSocket] WebSocket error:", event);
+    },
+
+    onDisconnect: () => {
+      console.log("[WebSocket] Disconnected");
     },
   });
 
@@ -42,4 +71,5 @@ export function disconnectWebSocket() {
     stompClient.deactivate();
     console.log("[WebSocket] Disconnected");
   }
+  stompClient = null;
 }
