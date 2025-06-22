@@ -16,6 +16,7 @@ public class GameSessions {
     @Column(name="status")
     private String status; // e.g., "waiting", "in_progress", "finished"
 
+
     public Long getId() {
         return id;
     }

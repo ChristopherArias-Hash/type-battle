@@ -20,6 +20,18 @@ public class GameParticipants {
     @Column(name = "score")
     private int score;
 
+    @Column(name ="in_game")
+    private boolean inGame;
+
+    public boolean isInGame() {
+        return inGame;
+    }
+
+    public void setInGame(boolean inGame) {
+        this.inGame = inGame;
+    }
+
+
     public Long getId() {
         return id;
     }
