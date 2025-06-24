@@ -2,7 +2,66 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "fire
 import { auth } from "../firebase";
 import axios from "axios";
 
+const isAllowedImageType  = (file) => {
+  if(!file) return false;
+
+  const validImageTypes = ["image/png", "image/jpg", "image/jpeg", "image/gif"]
+  const fileType = file.type;
+
+  return validImageTypes.includes(fileType);
+
+  
+}
+
+const invalidRegistrationInput = (email, password, username, file) => {
+
+  if (!email || !password || !username){
+    alert("Please fill in all required fields.")
+    return true;
+  }
+
+  if(email.split("").includes("@") === false){
+     alert("Email is not in proper format")
+     return true; 
+  }
+
+  if(password.length < 6){
+    alert("Password must be at least 6 characters.")
+    return true;
+  }
+
+  if (file && !isAllowedImageType(file)){
+    alert("Unsupported image format. ");
+    return true;
+  }
+
+  return false
+}
+
+const invalidLoginInput = (email, password) => {
+
+  if (!email || !password ){
+    alert("Please fill in all required fields.")
+    return true;
+  }
+
+  if(email.split("").includes("@") === false){
+     alert("Email is not in proper format")
+     return true; 
+  }
+
+  if(password.length < 6){
+    alert("Password must be at least 6 characters.")
+    return true;
+  }
+
+  return false
+}
 export async function handleLogin(email, password) {
+  if(invalidLoginInput(email, password)){
+    return; 
+  }
+  try {
   const userCredential = await signInWithEmailAndPassword(auth, email, password);
   const token = await userCredential.user.getIdToken();
 
@@ -18,31 +77,19 @@ export async function handleLogin(email, password) {
   }
 
   return token;
+} catch (error){
+  alert("User does not exist")
 }
 
-
-const isAllowedImageType  = (file) => {
-  if(!file) return false;
-
-  const validImageTypes = ["image/png", "image/jpg", "image/jpeg", "image/gif"]
-  const fileType = file.type;
-
-  return validImageTypes.includes(fileType);
-
-  
 }
-export async function handleRegister(email, password, username, file) {
 
-  if (!email || !password || !username){
-    alert("Please fill in all required fields.")
-    return;
+export async function handleRegister (email, password, username, file) {
+
+  if (invalidRegistrationInput(email, password, username, file)){
+    console.log("Bad Registration Input")
+    return false;
   }
 
-  if (file && !isAllowedImageType(file)){
-    alert("Unsupported image format. ");
-    return;
-  }
-  
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const idToken = await userCredential.user.getIdToken();
@@ -70,7 +117,9 @@ export async function handleRegister(email, password, username, file) {
           },
         });
       }
+
       alert("Registration successful!");
+      return true;
    
   } catch (error) {
     console.error("Registration error:", error.message);

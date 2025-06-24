@@ -14,7 +14,13 @@ function RegisterModal({ onClose, onUserInfoUpdated }) {
 
 const registerAndLogin = async () => {
   try {
-    await handleRegister(email.trim(), password.trim(), username.trim(), file);
+    const register = await handleRegister(email.trim(), password.trim(), username.trim(), file);
+    
+    if (!register){
+      console.log("hit")
+      return; 
+    }
+
     await handleLogin(email.trim(), password.trim());
     await onUserInfoUpdated(); //Refresh trigger
     onClose();
