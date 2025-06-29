@@ -1,9 +1,9 @@
 // websocket.js
+import {useEffect, useState} from "react"
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 
 let stompClient = null;
-
 export function connectWebSocket(sessionId, firebaseToken, onPlayerListUpdate, onParagraphReceived) {
   // Disconnect existing connection if any
   if (stompClient && stompClient.active) {

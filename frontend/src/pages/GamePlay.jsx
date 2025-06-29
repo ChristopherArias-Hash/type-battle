@@ -3,14 +3,16 @@ import NavBar from "../components/navbar/NavBar"
 import TypingSentences from "../components/typing-sentences/TypingSentences";
 import { useAuth } from "../utils/authContext"
 import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
+
 import { connectWebSocket, disconnectWebSocket } from "../websocket";
 import { auth } from "../firebase";
 function GamePlay(){
- 
+    const { id: sessionId } = useParams(); // Grab the :id param and rename it to sessionId
+
     const {isUserLoggedIn, userInfo, logOutFirebase, loading} = useAuth();
-    const [paragraphText, setParagraphText] = useState(null);    const [players, setPlayers] = useState([])
-    const sessionId = 1; //Make dyamic from url or state
+    const [paragraphText, setParagraphText] = useState(null);    
+    const [players, setPlayers] = useState([])
     
     useEffect(() => {
         const connect = async () => {
@@ -32,15 +34,13 @@ function GamePlay(){
     }, [sessionId])
 
    
-
-    if (loading) {
+    if (loading || paragraphText === null) {
         return <div>Loading...</div>;
     }
     
     if (!isUserLoggedIn){
         return <Navigate to="/" replace />;
     }
-   
    return (
     <>
       <NavBar
@@ -62,6 +62,7 @@ function GamePlay(){
 
       <TypingSentences 
       paragraphText={paragraphText}
+    
       />
     </>
   );

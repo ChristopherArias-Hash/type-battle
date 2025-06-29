@@ -8,7 +8,6 @@ import AboutUs from "../components/about-us/AboutUs.jsx";
 import LoginModal from "../components/login/LoginModal.jsx";
 import RegisterModal from "../components/register/RegisterModal.jsx";
 import { useAuth } from "../utils/authContext.jsx";
-
 function MainPage() {
   // Get auth state from context
   const { isUserLoggedIn, userInfo, logOutFirebase, loadUserInfo } = useAuth();
@@ -44,7 +43,7 @@ function MainPage() {
       <div className="container">
         <div className="topSection">
           <JoinMatch />
-          <CreateMatch />
+          <CreateMatch/>
         </div>
         <div className="bottomSection">
           <LeaderBoard></LeaderBoard>

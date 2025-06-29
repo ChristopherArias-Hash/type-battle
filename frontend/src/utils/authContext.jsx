@@ -66,6 +66,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {

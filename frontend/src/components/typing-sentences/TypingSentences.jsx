@@ -6,7 +6,6 @@ function TypingSentences({paragraphText}) {
   const [correctStrokes, setCorrectStrokes] = useState(0); //Compares your key strokes with the letter list, keeps count on bottom
   const [inputStatus, setInputStatus] = useState([]); //Sets letter status to incorrect or correct. 
   const [letters, setLetters] = useState(0); //Used to track letter array
- 
   
   //Bans non typing letters to be used on website 
  useEffect(() => {
@@ -53,8 +52,8 @@ const approvedLetters = [
 ];
 
 
-  const currentSentence = paragraphText ? paragraphText.split(" ") : ["[websocket] word array still loading"];; //Entire paragraph as a word array
-  const flatLetters = paragraphText ? paragraphText.split("") : ["[websocket] letter array still loading"]; // entire paragraph as letter array
+  const currentSentence = paragraphText ? paragraphText.split(" ") : ["Loading..."];; //Entire paragraph as a word array
+  const flatLetters = paragraphText ? paragraphText.split("") : ["Loading..."]; // entire paragraph as letter array
 
   //Checks if your strokes match the sentence letters, also sets Status for letters.
   const checkIfStrokesCorrect = (newStroke) => {

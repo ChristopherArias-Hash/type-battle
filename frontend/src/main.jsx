@@ -14,7 +14,7 @@ createRoot(document.getElementById('root')).render(
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<MainPage />} />
-          <Route path="/game" element={<ProtectedRoute><GamePlay /></ProtectedRoute>} />
+          <Route path="/game/:id" element={<ProtectedRoute><GamePlay /></ProtectedRoute>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

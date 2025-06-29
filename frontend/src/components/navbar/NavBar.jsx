@@ -1,12 +1,10 @@
 import "./NavBar.css"
 
-
-
 function NavBar({onLoginClick, onRegisterClick, isUserLoggedIn, logOut, userInfo}) {
     return(
         <>
         <ul className="nav-bar">
-            <li className="nav-item pull-left"><h1>TYPE BATTLE</h1></li>
+            <li className="nav-item pull-left"><h1><a href="/">TYPE BATTLE</a></h1></li>
             {isUserLoggedIn ?    
             <>
             <li className="nav-item pull-right"><img src={userInfo.getProfilePicture}/></li>

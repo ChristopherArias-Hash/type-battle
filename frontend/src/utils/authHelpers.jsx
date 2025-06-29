@@ -1,6 +1,7 @@
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase";
 import axios from "axios";
+import { Navigate } from "react-router-dom";
 
 const isAllowedImageType  = (file) => {
   if(!file) return false;
@@ -57,6 +58,8 @@ const invalidLoginInput = (email, password) => {
 
   return false
 }
+
+
 export async function handleLogin(email, password) {
   if(invalidLoginInput(email, password)){
     return; 
@@ -81,6 +84,34 @@ export async function handleLogin(email, password) {
   alert("User does not exist")
 }
 
+}
+
+export async function createGame() {
+  const user = auth.currentUser;
+
+  if (!user) {
+    throw new Error("User not authenticated.");
+  }
+
+  const token = await user.getIdToken();
+
+  try {
+    const res = await axios.post(
+      "http://localhost:8080/protected/lobbies",
+      {}, // empty body
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    console.log("Lobby created:", res.data);
+    return res.data.lobbyCode; // return the session ID from backend
+  } catch (error) {
+    console.error("Failed to create lobby:", error.response?.data || error.message);
+    throw error;
+  }
 }
 
 export async function handleRegister (email, password, username, file) {
@@ -126,4 +157,6 @@ export async function handleRegister (email, password, username, file) {
     alert("Failed to register.");
     throw error; 
   }
+
+  
 }
