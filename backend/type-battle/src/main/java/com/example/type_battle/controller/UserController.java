@@ -1,8 +1,14 @@
 package com.example.type_battle.controller;
 
+import com.example.type_battle.DTO.LobbyResponse;
+import com.example.type_battle.model.GameSessions;
+import com.example.type_battle.model.Paragraphs;
 import com.example.type_battle.model.User;
+import com.example.type_battle.repository.GameSessionsRepository;
+import com.example.type_battle.repository.ParagraphsRepository;
 import com.example.type_battle.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +24,12 @@ public class UserController {
     //Connects DB to backend
     private UserRepository userRepository;
 
+
+    @Autowired
+    private GameSessionsRepository sessionRepository;
+
+    @Autowired
+    private ParagraphsRepository paragraphsRepository;
     //Adding users, checks for uid, then adds it to DB
     @PostMapping("/users")
     public ResponseEntity<?> registerUser(HttpServletRequest request, @RequestBody User newUserData) {
@@ -66,6 +78,46 @@ public class UserController {
         }
 
     }
+
+    @PostMapping("/lobbies")
+    public ResponseEntity<?> createLobby(HttpServletRequest request) {
+        String uid = (String) request.getAttribute("uid");
+
+        if (uid == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+
+        Optional<User> userOpt = userRepository.findByFirebaseUid(uid);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
+        }
+
+        String lobbyCode;
+        do {
+            lobbyCode = RandomStringUtils.randomAlphanumeric(6).toUpperCase();
+        } while (sessionRepository.existsByLobbyCode(lobbyCode)); // Ensure it's unique
+
+        GameSessions newSession = new GameSessions();
+        newSession.setHostUser(userOpt.get());
+        newSession.setStatus("started");
+        newSession.setLobbyCode(lobbyCode);
+
+        // ASSIGN PARAGRAPH HERE:
+        long totalParagraphs = paragraphsRepository.count();
+        if (totalParagraphs > 0) {
+            long randomId = (long) (Math.random() * totalParagraphs) + 1;
+            Optional<Paragraphs> paragraphOpt = paragraphsRepository.findById(randomId);
+            paragraphOpt.ifPresent(newSession::setParagraph);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Paragraph not found");
+        }
+
+        GameSessions savedSession = sessionRepository.save(newSession);
+
+        return ResponseEntity.ok(new LobbyResponse(savedSession.getId(), savedSession.getStatus(), savedSession.getLobbyCode()));
+    }
+
+
 
 
 }

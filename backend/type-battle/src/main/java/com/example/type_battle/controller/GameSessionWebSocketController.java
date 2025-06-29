@@ -9,6 +9,7 @@ import com.example.type_battle.repository.GameSessionsRepository;
 import com.example.type_battle.repository.ParagraphsRepository;
 import com.example.type_battle.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
@@ -40,7 +41,7 @@ public class GameSessionWebSocketController {
 
 
     @MessageMapping("/join/{sessionId}")
-    public void joinGame(@DestinationVariable Long sessionId, SimpMessageHeaderAccessor headerAccessor) {
+    public void joinGame(@DestinationVariable String sessionId, SimpMessageHeaderAccessor headerAccessor) {
 
         // Try to get UID from session attributes first (set by interceptor)
         String uid = (String) headerAccessor.getSessionAttributes().get("uid");
@@ -61,9 +62,10 @@ public class GameSessionWebSocketController {
         System.out.println("[WebSocket] joinGame called with UID: " + uid + " for session: " + sessionId);
 
         // Debug: Check if session exists
-        Optional<GameSessions> sessionOpt = sessionRepository.findById(sessionId);
+        Optional<GameSessions> sessionOpt = sessionRepository.findByLobbyCode(sessionId);
         if (sessionOpt.isEmpty()) {
             System.out.println("[WebSocket] ERROR: Game session " + sessionId + " not found in database!");
+            return;
 
 
         }
@@ -71,6 +73,7 @@ public class GameSessionWebSocketController {
         Optional<User> userOpt = userRepository.findByFirebaseUid(uid);
         if (userOpt.isEmpty()) {
             System.out.println("[WebSocket] ERROR: User with UID " + uid + " not found in database!");
+            return;
         }
 
         GameSessions session = sessionOpt.get();
@@ -94,28 +97,13 @@ public class GameSessionWebSocketController {
         List<GameParticipants> allParticipants = participantsRepository.findAllByGameSessions(session);
         messagingTemplate.convertAndSend( "/topic/lobby/" + sessionId, allParticipants);
         System.out.println("[WebSocket] Sent updated participant list to lobby " + sessionId + " (" + allParticipants.size() + " participants)");
+
         System.out.println(session.getParagraph());
-        if(session.getParagraph() != null){
-            long totalParagraphs = paragraphsRepository.count();
-            if(totalParagraphs > 0){
-                long randomId = (long) (Math.random() * totalParagraphs) + 1;
-                Optional<Paragraphs> paragraphOpt = paragraphsRepository.findById(randomId);
-                if(paragraphOpt.isPresent()){
-                    Paragraphs paragraph = paragraphOpt.get();
-                    session.setParagraph(paragraph);
-                    sessionRepository.save(session);
-                    messagingTemplate.convertAndSend("/topic/game/" + sessionId, paragraph);
-                    System.out.println("[WebSocket] Sent paragraph to game session " + sessionId);
-
-                }else{
-                    System.out.println("[WebSocket] ERROR: Paragraph " + randomId + " not found in database!");
-                }
-            }else{
-                System.out.println("[WebSocket] ERROR: No paragraphs available in DB.");
-
-            }
-        }else{
-            System.out.println("paragraph found");
+        Paragraphs paragraph = session.getParagraph();
+        if (paragraph != null) {
+            messagingTemplate.convertAndSend("/topic/game/" + sessionId, paragraph);
+        } else {
+            System.out.println("[WebSocket] WARNING: Session has no paragraph assigned.");
         }
     }
 }
