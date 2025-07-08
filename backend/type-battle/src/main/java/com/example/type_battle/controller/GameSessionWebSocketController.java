@@ -39,7 +39,48 @@ public class GameSessionWebSocketController {
     private SimpMessagingTemplate messagingTemplate;
 
 
+    @MessageMapping("/stroke/{sessionId}")
+    public void handleCorrectStroke(@DestinationVariable String sessionId, SimpMessageHeaderAccessor headerAccessor) {
+        String uid = (String) headerAccessor.getSessionAttributes().get("uid");
 
+        if (uid == null) {
+            Principal principal = headerAccessor.getUser();
+            if (principal != null) {
+                uid = principal.getName();
+            }
+        }
+
+        if (uid == null) {
+            System.out.println("[WebSocket] handleCorrectStroke called with no UID available!");
+            return;
+        }
+
+        Optional<GameSessions> sessionOpt = sessionRepository.findByLobbyCode(sessionId);
+        Optional<User> userOpt = userRepository.findByFirebaseUid(uid);
+
+        if (sessionOpt.isEmpty() || userOpt.isEmpty()) {
+            System.out.println("[WebSocket] Session or user not found!");
+            return;
+        }
+
+        GameSessions session = sessionOpt.get();
+        User user = userOpt.get();
+
+        Optional<GameParticipants> participantOpt  = participantsRepository.findByGameSessionsAndUser(session, user);
+        if (participantOpt.isEmpty()) {
+            System.out.println("[WebSocket] Participant not found!");
+            return;
+        }
+
+        GameParticipants participant = participantOpt.get();
+        participant.setScore(participant.getScore() + 1);
+        participantsRepository.save(participant);
+        System.out.println("[WebSocket] Updated score for " + user.getDisplayName() + " to " + participant.getScore());
+
+        //Send score to all clients
+        messagingTemplate.convertAndSend("/topic/lobby/" + sessionId, participantsRepository.findAllByGameSessions(session));
+
+    }
     @MessageMapping("/join/{sessionId}")
     public void joinGame(@DestinationVariable String sessionId, SimpMessageHeaderAccessor headerAccessor) {
 
@@ -94,10 +135,12 @@ public class GameSessionWebSocketController {
             System.out.println("[WebSocket] User " + user.getDisplayName() + " already in game session " + sessionId);
         }
 
+        //Creates list of people in lobby and sends it to everyone
         List<GameParticipants> allParticipants = participantsRepository.findAllByGameSessions(session);
         messagingTemplate.convertAndSend( "/topic/lobby/" + sessionId, allParticipants);
         System.out.println("[WebSocket] Sent updated participant list to lobby " + sessionId + " (" + allParticipants.size() + " participants)");
 
+        //Grabs paragraph from session then sits it into the game lobby
         System.out.println(session.getParagraph());
         Paragraphs paragraph = session.getParagraph();
         if (paragraph != null) {
@@ -105,5 +148,7 @@ public class GameSessionWebSocketController {
         } else {
             System.out.println("[WebSocket] WARNING: Session has no paragraph assigned.");
         }
+
+
     }
 }

@@ -30,6 +30,13 @@ public class UserController {
 
     @Autowired
     private ParagraphsRepository paragraphsRepository;
+
+    //When user logs in this verifys token from frontend to makesure its a real auth user
+    @PostMapping("/verify-token")
+    public ResponseEntity<String> verifyToken(HttpServletRequest request) {
+        String uid = (String) request.getAttribute("uid");
+        return ResponseEntity.ok("Token valid. UID: " + uid);
+    }
     //Adding users, checks for uid, then adds it to DB
     @PostMapping("/users")
     public ResponseEntity<?> registerUser(HttpServletRequest request, @RequestBody User newUserData) {
@@ -54,31 +61,7 @@ public class UserController {
         return ResponseEntity.ok("User registered successfully");
     }
 
-   //When user logs in this verifys token from frontend to makesure its a real auth user
-    @PostMapping("/verify-token")
-    public ResponseEntity<String> verifyToken(HttpServletRequest request) {
-        String uid = (String) request.getAttribute("uid");
-        return ResponseEntity.ok("Token valid. UID: " + uid);
-    }
-    //Grabs user info, checks for uid first.
-    @GetMapping("/user")
-    public ResponseEntity<?> getUser(HttpServletRequest request) {
-        String uid = (String) request.getAttribute("uid");
-
-        if (uid == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
-        }
-        Optional<User> userOpt = userRepository.findByFirebaseUid(uid);
-
-        if (userOpt.isPresent()) {
-            return ResponseEntity.ok(userOpt.get());
-
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
-        }
-
-    }
-
+    //Creates lobby, sets host user, sets creates random lobby code, picks random paragraph from db.
     @PostMapping("/lobbies")
     public ResponseEntity<?> createLobby(HttpServletRequest request) {
         String uid = (String) request.getAttribute("uid");
@@ -115,6 +98,41 @@ public class UserController {
         GameSessions savedSession = sessionRepository.save(newSession);
 
         return ResponseEntity.ok(new LobbyResponse(savedSession.getId(), savedSession.getStatus(), savedSession.getLobbyCode()));
+    }
+
+    //Grabs user info, checks for uid first.
+    @GetMapping("/user")
+    public ResponseEntity<?> getUser(HttpServletRequest request) {
+        String uid = (String) request.getAttribute("uid");
+
+        if (uid == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+        Optional<User> userOpt = userRepository.findByFirebaseUid(uid);
+
+        if (userOpt.isPresent()) {
+            return ResponseEntity.ok(userOpt.get());
+
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+    }
+
+    @GetMapping("/game-session")
+    public ResponseEntity<?> getGameSession(HttpServletRequest request, @RequestParam String lobbyCode) {
+        String uid = (String) request.getAttribute("uid");
+
+        if (uid == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+        Optional<GameSessions> sessionOpt = sessionRepository.findByLobbyCode(lobbyCode);
+
+        if (sessionOpt.isPresent()) {
+            return ResponseEntity.ok(sessionOpt.get());
+        }else{
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Session not found");
+        }
     }
 
 
