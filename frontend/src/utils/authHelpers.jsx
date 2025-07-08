@@ -1,7 +1,8 @@
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase";
+import {useNavigate} from "react-router-dom"
 import axios from "axios";
-import { Navigate } from "react-router-dom";
+
 
 const isAllowedImageType  = (file) => {
   if(!file) return false;
@@ -86,34 +87,6 @@ export async function handleLogin(email, password) {
 
 }
 
-export async function createGame() {
-  const user = auth.currentUser;
-
-  if (!user) {
-    throw new Error("User not authenticated.");
-  }
-
-  const token = await user.getIdToken();
-
-  try {
-    const res = await axios.post(
-      "http://localhost:8080/protected/lobbies",
-      {}, // empty body
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    console.log("Lobby created:", res.data);
-    return res.data.lobbyCode; // return the session ID from backend
-  } catch (error) {
-    console.error("Failed to create lobby:", error.response?.data || error.message);
-    throw error;
-  }
-}
-
 export async function handleRegister (email, password, username, file) {
 
   if (invalidRegistrationInput(email, password, username, file)){
@@ -160,3 +133,65 @@ export async function handleRegister (email, password, username, file) {
 
   
 }
+
+export async function createGame() {
+  const user = auth.currentUser;
+
+  if (!user) {
+    throw new Error("User not authenticated.");
+  }
+
+  const token = await user.getIdToken();
+
+  try {
+    const res = await axios.post(
+      "http://localhost:8080/protected/lobbies",
+      {}, // empty body
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    console.log("Lobby created:", res.data);
+    return res.data.lobbyCode; // return the session ID from backend
+  } catch (error) {
+    console.error("Failed to create lobby:", error.response?.data || error.message);
+    throw error;
+  }
+}
+
+export const joinGameUsingCode = async (code, navigate) => {
+       
+
+     if(code.length != 6){
+            alert("Code length must have a length of 6.")
+            return;
+        }
+        const user = auth.currentUser
+        if (user){
+        try{
+        const token = await user.getIdToken()
+        const response = await axios.get(`http://localhost:8080/protected/game-session?lobbyCode=${code}`, {
+                headers:{
+                    Authorization: `Bearer ${token}`,
+                }
+            });
+
+        const lobbyData = response.data
+        
+        if (lobbyData.lobbyCode == code){
+            navigate(`/game/${code}`)
+
+        }
+        } catch(error){
+            console.log("Error getting info", error)
+            alert("CODE IS NOT CORRECT")
+        }
+    }else{
+        alert("USER NOT LOGGED IN")
+    }
+
+}
+

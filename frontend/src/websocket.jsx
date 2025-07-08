@@ -1,5 +1,4 @@
 // websocket.js
-import {useEffect, useState} from "react"
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 
@@ -73,3 +72,15 @@ export function disconnectWebSocket() {
   }
   stompClient = null;
 }
+
+export function sendCorrectStroke(sessionId){
+  if (stompClient && stompClient.connected){
+    stompClient.publish({
+      destination: `/app/stroke/${sessionId}`,
+      body: "",
+    });
+      console.log(`[WebSocket] Sent stroke to /app/stroke/${sessionId}`);
+  } else {
+    console.warn("[WebSocket] Cannot send stroke – not connected");
+  }
+  }
