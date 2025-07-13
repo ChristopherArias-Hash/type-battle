@@ -82,7 +82,7 @@ public class UserController {
 
         GameSessions newSession = new GameSessions();
         newSession.setHostUser(userOpt.get());
-        newSession.setStatus("started");
+        newSession.setStatus("waiting");
         newSession.setLobbyCode(lobbyCode);
 
         // ASSIGN PARAGRAPH HERE:

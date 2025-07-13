@@ -23,6 +23,19 @@ public class GameParticipants {
     @Column(name ="in_game")
     private boolean inGame;
 
+    @Column(name= "is_ready")
+    private boolean isReady;
+
+
+    public boolean isReady() {
+        return isReady;
+    }
+
+    public void setReady(boolean ready) {
+        isReady = ready;
+    }
+
+
     public boolean isInGame() {
         return inGame;
     }

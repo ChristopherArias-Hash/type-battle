@@ -23,8 +23,14 @@ public class GameSessions {
     @Column(name = "lobby_code", unique = true, nullable = false)
     private String lobbyCode;
 
-    // Getters and setters
+    // NEW TIMER FIELDS
+    @Column(name = "game_start_time")
+    private Long gameStartTime;
 
+    @Column(name = "game_duration")
+    private Integer gameDuration = 60; // 60 seconds default
+
+    // Existing getters and setters...
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -39,4 +45,11 @@ public class GameSessions {
 
     public String getLobbyCode() { return lobbyCode; }
     public void setLobbyCode(String lobbyCode) { this.lobbyCode = lobbyCode; }
+
+    // NEW TIMER GETTERS AND SETTERS
+    public Long getGameStartTime() { return gameStartTime; }
+    public void setGameStartTime(Long gameStartTime) { this.gameStartTime = gameStartTime; }
+
+    public Integer getGameDuration() { return gameDuration; }
+    public void setGameDuration(Integer gameDuration) { this.gameDuration = gameDuration; }
 }

@@ -38,6 +38,71 @@ public class GameSessionWebSocketController {
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
+    @Autowired
+    private GameTimer gameTimer;
+
+    @MessageMapping("/ready_up/{sessionId}")
+    public void handlePlayerReadyUp(@DestinationVariable String sessionId, SimpMessageHeaderAccessor headerAccessor) {
+        String uid = (String) headerAccessor.getSessionAttributes().get("uid");
+
+        if (uid == null) {
+            Principal principal = headerAccessor.getUser();
+            if (principal != null) {
+                uid = principal.getName();
+            }
+        }
+
+        if (uid == null) {
+            System.out.println("[WebSocket] handlePlayerReadyUp called with no UID available!");
+            return;
+        }
+
+        Optional<GameSessions> sessionOpt = sessionRepository.findByLobbyCode(sessionId);
+        Optional<User> userOpt = userRepository.findByFirebaseUid(uid);
+
+        if (sessionOpt.isEmpty() || userOpt.isEmpty()) {
+            System.out.println("[WebSocket] User or Session not available");
+            return;
+        }
+
+        GameSessions session = sessionOpt.get();
+        User user = userOpt.get();
+
+        if("finished".equals(session.getStatus())) {
+            System.out.println("[WebSocket] session has ended");
+            return;
+
+        }
+        Optional<GameParticipants> participantOpt = participantsRepository.findByGameSessionsAndUser(session, user);
+        if (participantOpt.isEmpty()) {
+            System.out.println("[WebSocket] Participant not available");
+            return;
+        }
+
+        GameParticipants participant = participantOpt.get();
+        participant.setReady(true);
+        participantsRepository.save(participant);
+
+        List<GameParticipants> allParticipants = participantsRepository.findAllByGameSessions(session);
+
+        boolean everyoneReady = allParticipants.stream()
+                .allMatch(GameParticipants::isReady);
+
+        if (everyoneReady) {
+            session.setStatus("in_progress");
+            session.setGameStartTime(System.currentTimeMillis());
+            sessionRepository.save(session);
+            System.out.println("All players are ready! Starting the game...");
+
+            // Start the game timer
+            gameTimer.startGameTimer(sessionId, session.getGameDuration());
+
+            allParticipants = participantsRepository.findAllByGameSessions(session);
+        }
+
+        // Send updated participant list to all clients
+        messagingTemplate.convertAndSend("/topic/lobby/" + sessionId, allParticipants);
+    }
 
     @MessageMapping("/stroke/{sessionId}")
     public void handleCorrectStroke(@DestinationVariable String sessionId, SimpMessageHeaderAccessor headerAccessor) {
@@ -66,7 +131,13 @@ public class GameSessionWebSocketController {
         GameSessions session = sessionOpt.get();
         User user = userOpt.get();
 
-        Optional<GameParticipants> participantOpt  = participantsRepository.findByGameSessionsAndUser(session, user);
+        // Check if game is still in progress
+        if (!"in_progress".equals(session.getStatus())) {
+            System.out.println("[WebSocket] Game is not in progress, ignoring stroke");
+            return;
+        }
+
+        Optional<GameParticipants> participantOpt = participantsRepository.findByGameSessionsAndUser(session, user);
         if (participantOpt.isEmpty()) {
             System.out.println("[WebSocket] Participant not found!");
             return;
@@ -77,13 +148,12 @@ public class GameSessionWebSocketController {
         participantsRepository.save(participant);
         System.out.println("[WebSocket] Updated score for " + user.getDisplayName() + " to " + participant.getScore());
 
-        //Send score to all clients
+        // Send score to all clients
         messagingTemplate.convertAndSend("/topic/lobby/" + sessionId, participantsRepository.findAllByGameSessions(session));
-
     }
+
     @MessageMapping("/join/{sessionId}")
     public void joinGame(@DestinationVariable String sessionId, SimpMessageHeaderAccessor headerAccessor) {
-
         // Try to get UID from session attributes first (set by interceptor)
         String uid = (String) headerAccessor.getSessionAttributes().get("uid");
 
@@ -107,9 +177,8 @@ public class GameSessionWebSocketController {
         if (sessionOpt.isEmpty()) {
             System.out.println("[WebSocket] ERROR: Game session " + sessionId + " not found in database!");
             return;
-
-
         }
+
         // Debug: Check if user exists
         Optional<User> userOpt = userRepository.findByFirebaseUid(uid);
         if (userOpt.isEmpty()) {
@@ -125,22 +194,22 @@ public class GameSessionWebSocketController {
         boolean alreadyJoined = participantsRepository.existsByGameSessionsAndUser(session, user);
         if (!alreadyJoined) {
             GameParticipants participant = new GameParticipants();
+            participant.setReady(false);
             participant.setGameSessions(session);
             participant.setUser(user);
             participant.setScore(0);
             participantsRepository.save(participant);
             System.out.println("[WebSocket] User " + user.getDisplayName() + " joined game session " + sessionId);
-
         } else {
             System.out.println("[WebSocket] User " + user.getDisplayName() + " already in game session " + sessionId);
         }
 
-        //Creates list of people in lobby and sends it to everyone
+        // Creates list of people in lobby and sends it to everyone
         List<GameParticipants> allParticipants = participantsRepository.findAllByGameSessions(session);
-        messagingTemplate.convertAndSend( "/topic/lobby/" + sessionId, allParticipants);
+        messagingTemplate.convertAndSend("/topic/lobby/" + sessionId, allParticipants);
         System.out.println("[WebSocket] Sent updated participant list to lobby " + sessionId + " (" + allParticipants.size() + " participants)");
 
-        //Grabs paragraph from session then sits it into the game lobby
+        // Grabs paragraph from session then sends it to the game lobby
         System.out.println(session.getParagraph());
         Paragraphs paragraph = session.getParagraph();
         if (paragraph != null) {
@@ -148,7 +217,5 @@ public class GameSessionWebSocketController {
         } else {
             System.out.println("[WebSocket] WARNING: Session has no paragraph assigned.");
         }
-
-
     }
 }
