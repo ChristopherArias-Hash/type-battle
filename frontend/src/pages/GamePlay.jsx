@@ -3,72 +3,94 @@ import NavBar from "../components/navbar/NavBar";
 import TypingSentences from "../components/typing-sentences/TypingSentences";
 import { useAuth } from "../utils/authContext";
 import { useEffect, useState } from "react";
-import { Navigate, useParams } from "react-router-dom";
+import { Navigate, useParams, useNavigate } from "react-router-dom";
 
-import { connectWebSocket, disconnectWebSocket } from "../websocket";
+import { connectWebSocket, disconnectWebSocket, sendReadyUp } from "../websocket";
 import { auth } from "../firebase";
+
 function GamePlay() {
-  const { id: sessionId } = useParams(); // Grab the :id param and rename it to sessionId
-  const [timer, setTimer] = useState(() => {      //Timer gets set from sessionStorage to avoid sync issues 
-    const saved = sessionStorage.getItem(`typing-timer-${sessionId}`);
-    if (saved) {
-      const data = JSON.parse(saved);
-      console.log("✅ Initial timer from sessionStorage:", data);
-      return data.timer || 60;
-    }
-    return 60;
-  });
+  const { id: sessionId } = useParams();
+  const navigate = useNavigate();
+  const [timer, setTimer] = useState(60);
   const { isUserLoggedIn, userInfo, logOutFirebase, loading } = useAuth();
+  const [playerReady, setPlayerReady] = useState(false);
   const [paragraphText, setParagraphText] = useState(null);
   const [players, setPlayers] = useState([]);
+  const [gameStart, setGameStart] = useState(false);
+  const [gameEnded, setGameEnded] = useState(false);
 
+  const ready_up = () => {
+    setPlayerReady(true);
+    sendReadyUp(sessionId);
+  };
+
+  //Checks first user in list, if they ready up, switches status to in_progress then starts game. 
   useEffect(() => {
-    if (!paragraphText || timer <= 0) return;
-    const interval = setInterval(() => {
-      setTimer((prev) => prev - 1);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [paragraphText, timer]);
-
-  useEffect(() => {
-    sessionStorage.setItem(
-      `typing-timer-${sessionId}`,
-      JSON.stringify({ timer })
-    );
-  }, [timer]);
-
-  useEffect(() => {
-    const saved = sessionStorage.getItem(`typing-timer-${sessionId}`);
-    if (saved) {
-      const data = JSON.parse(saved);
-      setTimer(data.timer || 60);
-      console.log("✅ Restored timer from sessionStorage:", data);
+    if (players.length > 0 && players[0].gameSessions.status === "in_progress") {
+      setGameStart(true);
     }
-  }, [sessionId]);
+  }, [players]);
 
-  useEffect(() => {
-    const connect = async () => {
-      const user = auth.currentUser;
-      if (user) {
-        const token = await user.getIdToken();
-        connectWebSocket(
-          sessionId,
-          token,
-          (playerList) => {
-            setPlayers(playerList);
-          },
-          (sentence) => {
-            setParagraphText(sentence);
-          }
-        );
+ //Connnects web socket components, and verfies if game is avaible
+ useEffect(() => {
+  const connect = async () => {
+    const user = auth.currentUser;
+    if (user) {
+      const token = await user.getIdToken();
+
+      // Check game status before connecting
+      const response = await fetch(
+        `http://localhost:8080/protected/game-session?lobbyCode=${sessionId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (!response.ok) {
+        console.error("Session not found or unauthorized.");
+        navigate("/"); // redirect home
+        return;
       }
-    };
-    connect();
-    return () => {
-      disconnectWebSocket();
-    };
-  }, [sessionId]);
+
+      const session = await response.json();
+
+      if (session.status === "finished") {
+        console.alert("Cannot join a finished session.");
+        navigate("/"); // redirect home
+        return;
+      }
+
+      connectWebSocket(
+        sessionId,
+        token,
+        (playerList) => {
+          setPlayers(playerList);
+        },
+        (data) => {
+          if (typeof data === "string") {
+            setParagraphText(data);
+          } else if (data.type === "timer_update") {
+            setTimer(data.remainingTime);
+          } else if (data.type === "game_end") {
+            setGameEnded(true);
+            setGameStart(false);
+            setTimeout(() => {
+              navigate('/');
+            }, 3000);
+          } else if (data.text) {
+            setParagraphText(data.text);
+          }
+        }
+      );
+    }
+  };
+
+  connect();
+  return () => {
+    disconnectWebSocket();
+  };
+}, [sessionId, navigate]);
+
 
   if (loading || paragraphText === null) {
     return <div>Loading...</div>;
@@ -77,6 +99,31 @@ function GamePlay() {
   if (!isUserLoggedIn) {
     return <Navigate to="/" replace />;
   }
+
+  if (gameEnded) {
+    return (
+      <>
+        <NavBar
+          userInfo={userInfo}
+          isUserLoggedIn={isUserLoggedIn}
+          logOut={logOutFirebase}
+        />
+        <div className="game-ended">
+          <h1>Game Over!</h1>
+          <h2>Final Scores:</h2>
+          <ul>
+            {players.map((p, index) => (
+              <li key={index}>
+                {p.user?.displayName || p.user?.firebaseUid} - Score: {p.score}
+              </li>
+            ))}
+          </ul>
+          <p>Returning to main menu in 3 seconds...</p>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <NavBar
@@ -87,22 +134,31 @@ function GamePlay() {
 
       <div className="lobby">
         <h2>
-          Lobby (Game Session #{sessionId}) Time left: {timer}
+          Lobby (Game Session #{sessionId}) Time left: {timer}s
         </h2>
+        {!gameStart && (
+          <button onClick={() => ready_up()} disabled={playerReady}>
+            {playerReady ? "Ready!" : "Ready Up"}
+          </button>
+        )}
         <ul>
           {players.map((p, index) => (
             <li key={index}>
-              {p.user?.displayName || p.user?.firebaseUid} - Score: {p.score}
+              {p.user?.displayName || p.user?.firebaseUid} - Score: {p.score} |
+              Is ready: {p.ready ? "yes" : "no"}
             </li>
           ))}
         </ul>
       </div>
-
-      <TypingSentences
-        sessionId={sessionId}
-        paragraphText={paragraphText}
-        timer={timer}
-      />
+      {gameStart ? (
+        <TypingSentences
+          sessionId={sessionId}
+          paragraphText={paragraphText}
+          timer={timer}
+        />
+      ) : (
+        <h2>Please ready up to start the game</h2>
+      )}
     </>
   );
 }

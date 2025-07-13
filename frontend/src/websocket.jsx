@@ -1,9 +1,8 @@
-// websocket.js
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 
 let stompClient = null;
-export function connectWebSocket(sessionId, firebaseToken, onPlayerListUpdate, onParagraphReceived) {
+export function connectWebSocket(sessionId, firebaseToken, onPlayerListUpdate, onGameDataReceived) {
   // Disconnect existing connection if any
   if (stompClient && stompClient.active) {
     console.log("[WebSocket] Disconnecting existing connection");
@@ -29,17 +28,17 @@ export function connectWebSocket(sessionId, firebaseToken, onPlayerListUpdate, o
       // Subscribe to lobby topic for player list
       stompClient.subscribe(`/topic/lobby/${sessionId}`, (message) => {
         const updatedPlayers = JSON.parse(message.body);
-     
         console.log("[WebSocket] Player list update:", updatedPlayers);
         onPlayerListUpdate(updatedPlayers);
       });
 
-      // Subscribe to paragraph topic 
+      // Subscribe to game topic for paragraphs, timer updates, and game end
       stompClient.subscribe(`/topic/game/${sessionId}`, (message) => {
-        const paragraph = JSON.parse(message.body);
-        console.log("[WebSocket] Paragraph receieved: ", paragraph.text);
-        onParagraphReceived(paragraph.text)
-      })
+        const data = JSON.parse(message.body);
+        console.log("[WebSocket] Game data received:", data);
+        onGameDataReceived(data);
+      });
+
       // Join the game after subscribing
       console.log("[WebSocket] Sending join request for session " + sessionId);
       stompClient.publish({
@@ -73,14 +72,26 @@ export function disconnectWebSocket() {
   stompClient = null;
 }
 
-export function sendCorrectStroke(sessionId){
-  if (stompClient && stompClient.connected){
+export function sendCorrectStroke(sessionId) {
+  if (stompClient && stompClient.connected) {
     stompClient.publish({
       destination: `/app/stroke/${sessionId}`,
       body: "",
     });
-      console.log(`[WebSocket] Sent stroke to /app/stroke/${sessionId}`);
+    console.log(`[WebSocket] Sent stroke to /app/stroke/${sessionId}`);
   } else {
     console.warn("[WebSocket] Cannot send stroke – not connected");
   }
+}
+
+export function sendReadyUp(sessionId) {
+  if (stompClient && stompClient.connected) {
+    stompClient.publish({
+      destination: `/app/ready_up/${sessionId}`,
+      body: "",
+    });
+    console.log(`[WebSocket] Sent ready_up to /app/ready_up/${sessionId}`);
+  } else {
+    console.log("[WebSocket] ready_up not sent");
   }
+}

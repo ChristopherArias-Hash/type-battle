@@ -1,15 +1,16 @@
 import "./TypingSentences.css";
 import { sendCorrectStroke } from "../../websocket";
 import { useState, useEffect } from "react";
-function TypingSentences({ paragraphText, sessionId }) {
-  const [strokes, setStrokes] = useState(""); //Your keystrokes
-  const [correctStrokes, setCorrectStrokes] = useState(0); //Compares your key strokes with the letter list, keeps count on bottom
-  const [inputStatus, setInputStatus] = useState([]); //Sets letter status to incorrect or correct.
-  const [letters, setLetters] = useState(0); //Used to track letter array
+
+function TypingSentences({ paragraphText, sessionId, timer }) {
+  const [strokes, setStrokes] = useState("");
+  const [correctStrokes, setCorrectStrokes] = useState(0);
+  const [inputStatus, setInputStatus] = useState([]);
+  const [letters, setLetters] = useState(0);
   const [restored, setRestored] = useState(false);
 
   useEffect(() => {
-    if (!paragraphText) return; //Waits for paragragh, if not breaks code
+    if (!paragraphText) return;
 
     const saved = sessionStorage.getItem(`typing-progress-${sessionId}`);
     if (saved) {
@@ -21,12 +22,11 @@ function TypingSentences({ paragraphText, sessionId }) {
       console.log("✅ Restored progress from sessionStorage:", data);
     }
 
-    setRestored(true); // ✅ Only after attempting restore
+    setRestored(true);
   }, [paragraphText, sessionId]);
 
-  // After checkIfStrokesCorrect definition
   useEffect(() => {
-    if (!restored) return; // Don't save until restore is done
+    if (!restored) return;
 
     const dataToStore = {
       strokes,
@@ -41,7 +41,6 @@ function TypingSentences({ paragraphText, sessionId }) {
     );
   }, [strokes, correctStrokes, letters, inputStatus, sessionId, restored]);
 
-  //Bans non typing letters to be used on website
   useEffect(() => {
     const handleKeyDown = (event) => {
       const key = event.key.toLowerCase();
@@ -67,7 +66,6 @@ function TypingSentences({ paragraphText, sessionId }) {
         return;
       }
 
-      // Track keystroke
       setStrokes((prev) => prev + key);
       checkIfStrokesCorrect(key);
     };
@@ -76,46 +74,19 @@ function TypingSentences({ paragraphText, sessionId }) {
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [letters, inputStatus, correctStrokes]); // Add all dependencies used inside the effect
+  }, [letters, inputStatus, correctStrokes]);
 
   const approvedLetters = [
-    "a",
-    "b",
-    "c",
-    "d",
-    "e",
-    "f",
-    "g",
-    "h",
-    "i",
-    "j",
-    "k",
-    "l",
-    "m",
-    "n",
-    "o",
-    "p",
-    "q",
-    "r",
-    "s",
-    "t",
-    "u",
-    "v",
-    "w",
-    "x",
-    "y",
-    "z",
-    ",",
-    " ",
-    ".", // include space and any punctuation you use
+    "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
+    "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
+    ",", " ", ".",
   ];
 
   const currentSentence = paragraphText
     ? paragraphText.split(" ")
-    : ["Loading..."]; //Entire paragraph as a word array
-  const flatLetters = paragraphText ? paragraphText.split("") : ["Loading..."]; // entire paragraph as letter array
+    : ["Loading..."];
+  const flatLetters = paragraphText ? paragraphText.split("") : ["Loading..."];
 
-  //Checks if your strokes match the sentence letters, also sets Status for letters.
   const checkIfStrokesCorrect = (newStroke) => {
     let newStatus = [...inputStatus];
     if (flatLetters[letters] === newStroke) {
@@ -131,16 +102,14 @@ function TypingSentences({ paragraphText, sessionId }) {
     setLetters(letters + 1);
   };
 
-  //Uses double forloop to create sentences, then inside create span tags with each letter.
   const listOfSentence = currentSentence.map((word, i) => {
     const wordLetters = word.split("");
 
     return (
       <div key={`word-${i}`} className="word">
         {wordLetters.map((letter, j) => {
-          // Get the flat index of this letter in the full sentence
           const flatIndex = getFlatIndex(i, j);
-          const status = inputStatus[flatIndex]; // "correct" or "incorrect"
+          const status = inputStatus[flatIndex];
           const isCurrent = flatIndex === letters;
 
           return (
@@ -148,7 +117,7 @@ function TypingSentences({ paragraphText, sessionId }) {
               key={`letter-${i}-${j}`}
               className={`letter ${status ?? ""} ${
                 isCurrent ? "current" : ""
-              } ${letter === " " ? "space" : ""}`} // apply class if status exists
+              } ${letter === " " ? "space" : ""}`}
             >
               {letter === "" ? "_" : letter}
             </span>
@@ -161,7 +130,7 @@ function TypingSentences({ paragraphText, sessionId }) {
   function getFlatIndex(wordIndex, letterIndex) {
     let count = 0;
     for (let w = 0; w < wordIndex; w++) {
-      count += currentSentence[w].length + 1; // +1 for the space
+      count += currentSentence[w].length + 1;
     }
     return count + letterIndex;
   }
@@ -169,9 +138,12 @@ function TypingSentences({ paragraphText, sessionId }) {
   return (
     <>
       <div className="typing-area">
+        <div className="timer-display">
+          <h2>Time Remaining: {timer}s</h2>
+        </div>
         <div className="ghost-text">{listOfSentence}</div>
       </div>
-      <h3>{correctStrokes}</h3>
+      <h3>Score: {correctStrokes}</h3>
     </>
   );
 }
