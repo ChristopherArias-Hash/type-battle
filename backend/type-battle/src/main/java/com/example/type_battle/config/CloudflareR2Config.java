@@ -33,7 +33,7 @@ public class CloudflareR2Config {
 
         return S3Client.builder()
                 .httpClientBuilder(ApacheHttpClient.builder())
-                .region(Region.of("auto"))
+                .region(Region.US_EAST_1)
                 .endpointOverride(URI.create(cloudflareProperties.getEndpoint()))
                 .credentialsProvider(StaticCredentialsProvider.create(
                         AwsBasicCredentials.create(

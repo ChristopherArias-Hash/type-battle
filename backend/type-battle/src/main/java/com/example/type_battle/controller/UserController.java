@@ -51,7 +51,6 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("User already exists");
         }
         User user = new User();
-
         user.setFirebaseUid(uid);
         user.setDisplayName(newUserData.getDisplayName());
         user.setEmail(newUserData.getEmail());
@@ -119,6 +118,7 @@ public class UserController {
 
     }
 
+    //Checks if game session is real, if so then frontend user gets sent in.
     @GetMapping("/game-session")
     public ResponseEntity<?> getGameSession(HttpServletRequest request, @RequestParam String lobbyCode) {
         String uid = (String) request.getAttribute("uid");

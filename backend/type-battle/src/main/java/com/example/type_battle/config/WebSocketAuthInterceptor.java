@@ -19,41 +19,42 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
-        if (accessor != null) {
-            if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-                String authHeader = accessor.getFirstNativeHeader("Authorization");
+        if (accessor == null) {
+            return message;
+        }
 
-                if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                    String token = authHeader.substring(7);
+        // Only process CONNECT commands
+        if (StompCommand.CONNECT.equals(accessor.getCommand())) {
+            String authHeader = accessor.getFirstNativeHeader("Authorization");
 
-                    try {
-                        FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(token);
-                        String uid = decodedToken.getUid();
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
 
-                        System.out.println("[WebSocketAuth] UID set: " + uid + " (command: " + accessor.getCommand() + ")");
+                try {
+                    FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(token);
+                    String uid = decodedToken.getUid();
 
-                        // Store UID in session attributes
-                        accessor.getSessionAttributes().put("uid", uid);
+                    System.out.println("[WebSocketAuth] ✅ Authenticated UID: " + uid);
 
-                        // Create a Principal and set it
-                        Principal principal = new FirebaseUserPrincipal(uid);
-                        accessor.setUser(principal);
+                    // Store UID in session attributes so we can use it later
+                    accessor.getSessionAttributes().put("uid", uid);
 
-                    } catch (Exception e) {
-                        System.err.println("[WebSocketAuth] Token verification failed: " + e.getMessage());
-                        return null; // Reject the connection
-                    }
-                } else {
-                    System.err.println("[WebSocketAuth] No valid Authorization header found");
+                    // Attach a Principal so Spring Security and others can access it
+                    accessor.setUser(new FirebaseUserPrincipal(uid));
+
+                } catch (Exception e) {
+                    System.err.println("[WebSocketAuth] ❌ Firebase token verification failed: " + e.getMessage());
                     return null; // Reject the connection
                 }
+            } else {
+                System.err.println("[WebSocketAuth] ❌ Missing or invalid Authorization header");
+                return null; // Reject the connection
             }
         }
 
         return message;
     }
 
-    // Simple Principal implementation for Firebase UID
     private static class FirebaseUserPrincipal implements Principal {
         private final String uid;
 

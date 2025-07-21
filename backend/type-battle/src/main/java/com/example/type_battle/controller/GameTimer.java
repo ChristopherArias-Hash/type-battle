@@ -1,15 +1,17 @@
 package com.example.type_battle.controller;
 
+import com.example.type_battle.model.GameParticipants;
 import com.example.type_battle.model.GameSessions;
+import com.example.type_battle.model.User;
+import com.example.type_battle.repository.GameParticipantsRepository;
 import com.example.type_battle.repository.GameSessionsRepository;
+import com.example.type_battle.repository.UserRepository;
 import jakarta.annotation.PreDestroy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.*;
 
 @Component
@@ -17,6 +19,12 @@ public class GameTimer {
 
     @Autowired
     private GameSessionsRepository sessionRepository;
+
+    @Autowired
+    private GameParticipantsRepository participantsRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
@@ -43,7 +51,7 @@ public class GameTimer {
             }
 
             long currentTime = System.currentTimeMillis();
-            long elapsedSeconds = (currentTime - session.getGameStartTime()) / 1000;
+            long elapsedSeconds = (currentTime - session.getGameStartTime()) / 100;
             int remainingTime = durationSeconds - (int) elapsedSeconds;
 
             if (remainingTime <= 0) {
@@ -81,9 +89,29 @@ public class GameTimer {
         Map<String, Object> gameEndMessage = new HashMap<>();
         gameEndMessage.put("type", "game_end");
         gameEndMessage.put("message", "Time's up! Game ended.");
+        System.out.println("[GameTimer] Game ended for session: " + sessionId);
+
+        //Once game is over it checks everyones scores, whoever has the highest score wins
+        List<GameParticipants> allParticipantsScores = participantsRepository.findAllByGameSessions(session);
+        Optional<GameParticipants> winner = allParticipantsScores.stream()
+                .max(Comparator.comparing(GameParticipants::getScore));
+
+        //Grabs winner then grabs the winner user object, to add wins
+        if (winner.isPresent()) {
+            GameParticipants winnerParticipant = winner.get();
+            User winnerUser = winnerParticipant.getUser();
+            if (winnerUser != null) {
+                int currentWins = winnerUser.getGamesWon();
+                winnerUser.setGamesWon(currentWins + 1);
+                userRepository.save(winnerUser);
+                gameEndMessage.put("win_message", "Winner is: " + winnerUser.getDisplayName() + "Won with a score of " + winnerParticipant.getScore()) ;
+                System.out.println("[WebSocket] Winner is " + winnerUser.getDisplayName() + " with updated wins: " + winnerUser.getGamesWon());
+
+            }
+        }
+
         messagingTemplate.convertAndSend("/topic/game/" + sessionId, gameEndMessage);
 
-        System.out.println("[GameTimer] Game ended for session: " + sessionId);
     }
 
     @PreDestroy
