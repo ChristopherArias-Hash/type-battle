@@ -18,11 +18,13 @@ function GamePlay() {
   const [players, setPlayers] = useState([]);
   const [gameStart, setGameStart] = useState(false);
   const [gameEnded, setGameEnded] = useState(false);
+  const [winnerText, setWinnerText] = useState("")
 
   const ready_up = () => {
     setPlayerReady(true);
     sendReadyUp(sessionId);
   };
+
 
   //Checks first user in list, if they ready up, switches status to in_progress then starts game. 
   useEffect(() => {
@@ -74,9 +76,10 @@ function GamePlay() {
           } else if (data.type === "game_end") {
             setGameEnded(true);
             setGameStart(false);
+            setWinnerText(data.win_message)
             setTimeout(() => {
               navigate('/');
-            }, 3000);
+            }, 10000);
           } else if (data.text) {
             setParagraphText(data.text);
           }
@@ -111,6 +114,8 @@ function GamePlay() {
         <div className="game-ended">
           <h1>Game Over!</h1>
           <h2>Final Scores:</h2>
+          
+          
           <ul>
             {players.map((p, index) => (
               <li key={index}>
@@ -118,7 +123,9 @@ function GamePlay() {
               </li>
             ))}
           </ul>
-          <p>Returning to main menu in 3 seconds...</p>
+          <p>{winnerText}</p>
+
+          <p>Returning to main menu in 10 seconds...</p>
         </div>
       </>
     );

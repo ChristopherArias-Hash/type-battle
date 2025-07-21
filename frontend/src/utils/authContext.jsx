@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { auth } from "../firebase";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { onAuthStateChanged, signOut, deleteUser } from "firebase/auth";
 import axios from "axios";
 
 const AuthContext = createContext();
@@ -65,7 +65,6 @@ export const AuthProvider = ({ children }) => {
       console.error("Error signing out", err);
     }
   };
-
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {

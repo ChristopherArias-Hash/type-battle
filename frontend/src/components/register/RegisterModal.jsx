@@ -4,20 +4,20 @@ import { handleRegister, handleLogin } from "../../utils/authHelpers"
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import Form from "react-bootstrap/Form";
-function RegisterModal({ onClose, onUserInfoUpdated }) {
+function RegisterModal({ onClose, onUserInfoUpdated, deleteFireBaseUser}) {
   //User Info that is added
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
   const [file, setFilePath] = useState(null);
 
-
+//Uses Register logic, after register is successful logins in user right away.
 const registerAndLogin = async () => {
   try {
     const register = await handleRegister(email.trim(), password.trim(), username.trim(), file);
     
     if (!register){
-      console.log("hit")
+      console.log("error on register")
       return; 
     }
 

@@ -72,15 +72,32 @@ export function disconnectWebSocket() {
   stompClient = null;
 }
 
-export function sendCorrectStroke(sessionId) {
-  if (stompClient && stompClient.connected) {
+// NEW: Send multiple strokes at once
+export function sendCorrectStrokesOptimized(sessionId, count) {
+  if (!stompClient || !stompClient.connected || count <= 0) {
+    console.warn(`[WebSocket] Cannot send strokes – not connected or invalid count: ${count}`);
+    return;
+  }
+
+  // For very large batches, split them up to avoid overwhelming the backend
+  const maxBatchSize = 50;
+  let remaining = count;
+  
+  while (remaining > 0) {
+    const batchSize = Math.min(remaining, maxBatchSize);
+    
     stompClient.publish({
-      destination: `/app/stroke/${sessionId}`,
-      body: "",
+      destination: `/app/strokes/${sessionId}`,
+      body: JSON.stringify({ count: batchSize }),
     });
-    console.log(`[WebSocket] Sent stroke to /app/stroke/${sessionId}`);
-  } else {
-    console.warn("[WebSocket] Cannot send stroke – not connected");
+    
+    remaining -= batchSize;
+    console.log(`[WebSocket] Sent batch of ${batchSize} strokes (${remaining} remaining)`);
+    
+    // Small delay between large batches to prevent overwhelming
+    if (remaining > 0) {
+      setTimeout(() => {}, 10);
+    }
   }
 }
 
@@ -95,3 +112,4 @@ export function sendReadyUp(sessionId) {
     console.log("[WebSocket] ready_up not sent");
   }
 }
+

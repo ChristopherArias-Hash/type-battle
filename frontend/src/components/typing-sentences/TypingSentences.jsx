@@ -1,14 +1,41 @@
 import "./TypingSentences.css";
-import { sendCorrectStroke } from "../../websocket";
-import { useState, useEffect } from "react";
+import { sendCorrectStrokesOptimized } from "../../websocket";
+import { useState, useEffect, useRef } from "react";
 
 function TypingSentences({ paragraphText, sessionId, timer }) {
+  const pendingStrokesRef = useRef(0);
   const [strokes, setStrokes] = useState("");
   const [correctStrokes, setCorrectStrokes] = useState(0);
   const [inputStatus, setInputStatus] = useState([]);
   const [letters, setLetters] = useState(0);
   const [restored, setRestored] = useState(false);
 
+  //Sends correct strokes to backend, it first gets batched and it does it ever 800ms so backend dont get overloaded
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const strokesToSend = pendingStrokesRef.current;
+      if (strokesToSend > 0) {
+        // Send all pending strokes at once using the new batch endpoint
+        sendCorrectStrokesOptimized(sessionId, strokesToSend);
+        pendingStrokesRef.current = 0;
+      }
+    }, 800); // Reduced to 100ms for better responsiveness
+
+    return () => clearInterval(interval);
+  }, [sessionId]);
+
+  //Post data and creates object in session storage
+  useEffect(() => {
+    if (!restored) return;
+
+    const dataToStore = {
+      strokes,
+      correctStrokes,
+      letters,
+      inputStatus,
+    };
+
+  //Gets all info thats in session storage
   useEffect(() => {
     if (!paragraphText) return;
 
@@ -25,15 +52,6 @@ function TypingSentences({ paragraphText, sessionId, timer }) {
     setRestored(true);
   }, [paragraphText, sessionId]);
 
-  useEffect(() => {
-    if (!restored) return;
-
-    const dataToStore = {
-      strokes,
-      correctStrokes,
-      letters,
-      inputStatus,
-    };
 
     sessionStorage.setItem(
       `typing-progress-${sessionId}`,
@@ -41,9 +59,10 @@ function TypingSentences({ paragraphText, sessionId, timer }) {
     );
   }, [strokes, correctStrokes, letters, inputStatus, sessionId, restored]);
 
+  //Bans certain keyboard strokes needs updated
   useEffect(() => {
     const handleKeyDown = (event) => {
-      const key = event.key.toLowerCase();
+      const key = event.key;
 
       const isDisruptiveCombo =
         ((event.ctrlKey || event.metaKey) &&
@@ -79,10 +98,12 @@ function TypingSentences({ paragraphText, sessionId, timer }) {
   const approvedLetters = [
     "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
     "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
-    ",", " ", ".",
+    "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
+    "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+    ",", " ", ".", "-"
   ];
-
-  const currentSentence = paragraphText
+ //Displays current sentece, if db doesn't send on time will show loading on it
+ const currentSentence = paragraphText
     ? paragraphText.split(" ")
     : ["Loading..."];
   const flatLetters = paragraphText ? paragraphText.split("") : ["Loading..."];
@@ -92,16 +113,16 @@ function TypingSentences({ paragraphText, sessionId, timer }) {
     if (flatLetters[letters] === newStroke) {
       newStatus[letters] = "correct";
       if (newStroke !== " ") {
-        setCorrectStrokes(correctStrokes + 1);
-        sendCorrectStroke(sessionId);
+        setCorrectStrokes((prev) => prev + 1);
+        pendingStrokesRef.current += 1;
       }
     } else {
       newStatus[letters] = "incorrect";
     }
     setInputStatus(newStatus);
-    setLetters(letters + 1);
+    setLetters((prev) => prev + 1);
   };
-
+  //Makes divs for words, and span for letters (makes css easy)
   const listOfSentence = currentSentence.map((word, i) => {
     const wordLetters = word.split("");
 
