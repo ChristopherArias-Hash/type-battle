@@ -4,7 +4,7 @@ import { handleRegister, handleLogin } from "../../utils/authHelpers"
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import Form from "react-bootstrap/Form";
-function RegisterModal({ onClose, onUserInfoUpdated, deleteFireBaseUser}) {
+function RegisterModal({ onClose, onUserInfoUpdated}) {
   //User Info that is added
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -15,7 +15,6 @@ function RegisterModal({ onClose, onUserInfoUpdated, deleteFireBaseUser}) {
 const registerAndLogin = async () => {
   try {
     const register = await handleRegister(email.trim(), password.trim(), username.trim(), file);
-    
     if (!register){
       console.log("error on register")
       return; 

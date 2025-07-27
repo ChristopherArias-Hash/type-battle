@@ -5,7 +5,11 @@ import { useAuth } from "../utils/authContext";
 import { useEffect, useState } from "react";
 import { Navigate, useParams, useNavigate } from "react-router-dom";
 
-import { connectWebSocket, disconnectWebSocket, sendReadyUp } from "../websocket";
+import {
+  connectWebSocket,
+  disconnectWebSocket,
+  sendReadyUp,
+} from "../websocket";
 import { auth } from "../firebase";
 
 function GamePlay() {
@@ -18,82 +22,83 @@ function GamePlay() {
   const [players, setPlayers] = useState([]);
   const [gameStart, setGameStart] = useState(false);
   const [gameEnded, setGameEnded] = useState(false);
-  const [winnerText, setWinnerText] = useState("")
+  const [winnerText, setWinnerText] = useState("");
 
   const ready_up = () => {
     setPlayerReady(true);
     sendReadyUp(sessionId);
   };
 
-
-  //Checks first user in list, if they ready up, switches status to in_progress then starts game. 
+  //Checks first user in list, if they ready up, switches status to in_progress then starts game.
   useEffect(() => {
-    if (players.length > 0 && players[0].gameSessions.status === "in_progress") {
+    if (
+      players.length > 0 &&
+      players[0].gameSessions.status === "in_progress"
+    ) {
       setGameStart(true);
     }
   }, [players]);
 
- //Connnects web socket components, and verfies if game is avaible
- useEffect(() => {
-  const connect = async () => {
-    const user = auth.currentUser;
-    if (user) {
-      const token = await user.getIdToken();
+  //Connnects web socket components, and verfies if game is avaible
+  useEffect(() => {
+    const connect = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const token = await user.getIdToken();
 
-      // Check game status before connecting
-      const response = await fetch(
-        `http://localhost:8080/protected/game-session?lobbyCode=${sessionId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      if (!response.ok) {
-        console.error("Session not found or unauthorized.");
-        navigate("/"); // redirect home
-        return;
-      }
-
-      const session = await response.json();
-
-      if (session.status === "finished") {
-        console.alert("Cannot join a finished session.");
-        navigate("/"); // redirect home
-        return;
-      }
-
-      connectWebSocket(
-        sessionId,
-        token,
-        (playerList) => {
-          setPlayers(playerList);
-        },
-        (data) => {
-          if (typeof data === "string") {
-            setParagraphText(data);
-          } else if (data.type === "timer_update") {
-            setTimer(data.remainingTime);
-          } else if (data.type === "game_end") {
-            setGameEnded(true);
-            setGameStart(false);
-            setWinnerText(data.win_message)
-            setTimeout(() => {
-              navigate('/');
-            }, 10000);
-          } else if (data.text) {
-            setParagraphText(data.text);
+        // Check game status before connecting
+        const response = await fetch(
+          `http://localhost:8080/protected/game-session?lobbyCode=${sessionId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
           }
+        );
+
+        if (!response.ok) {
+          console.error("Session not found or unauthorized.");
+          navigate("/"); // redirect home
+          return;
         }
-      );
-    }
-  };
 
-  connect();
-  return () => {
-    disconnectWebSocket();
-  };
-}, [sessionId, navigate]);
+        const session = await response.json();
 
+        if (session.status === "finished") {
+          console.alert("Cannot join a finished session.");
+          navigate("/"); // redirect home
+          return;
+        }
+
+        connectWebSocket(
+          sessionId,
+          token,
+          (playerList) => {
+            setPlayers(playerList);
+          },
+          (data) => {
+            if (typeof data === "string") {
+              setParagraphText(data);
+            } else if (data.type === "timer_update") {
+              setTimer(data.remainingTime);
+            } else if (data.type === "game_end") {
+              setGameEnded(true);
+              setGameStart(false);
+              setWinnerText(data.win_message);
+              setTimeout(() => {
+                navigate("/");
+              }, 10000);
+            } else if (data.text) {
+              setParagraphText(data.text);
+            }
+          }
+        );
+      }
+    };
+
+    connect();
+    return () => {
+      disconnectWebSocket();
+    };
+  }, [sessionId, navigate]);
 
   if (loading || paragraphText === null) {
     return <div>Loading...</div>;
@@ -114,8 +119,7 @@ function GamePlay() {
         <div className="game-ended">
           <h1>Game Over!</h1>
           <h2>Final Scores:</h2>
-          
-          
+
           <ul>
             {players.map((p, index) => (
               <li key={index}>

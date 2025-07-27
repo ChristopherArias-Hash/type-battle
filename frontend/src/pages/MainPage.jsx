@@ -10,7 +10,7 @@ import RegisterModal from "../components/register/RegisterModal.jsx";
 import { useAuth } from "../utils/authContext.jsx";
 function MainPage() {
   // Get auth state from context
-  const { isUserLoggedIn, userInfo, logOutFirebase, loadUserInfo } = useAuth();
+  const { isUserLoggedIn, userInfo, logOutFirebase, loadUserInfo, loadLeaderboardInfo } = useAuth();
   
   // Modals for login and Register
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -46,7 +46,10 @@ function MainPage() {
           <CreateMatch/>
         </div>
         <div className="bottomSection">
-          <LeaderBoard></LeaderBoard>
+          <LeaderBoard 
+          loadLeaderboardInfo={loadLeaderboardInfo}
+          isUserLoggedIn={isUserLoggedIn}
+          ></LeaderBoard>
           <AboutUs></AboutUs>
         </div>
       </div>

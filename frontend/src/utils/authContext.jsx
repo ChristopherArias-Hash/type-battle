@@ -13,6 +13,7 @@ export const useAuth = () => {
   return context;
 };
 
+//Contains all fuctions that require auth protection
 export const AuthProvider = ({ children }) => {
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
   const [userInfo, setUserInfo] = useState({
@@ -20,10 +21,13 @@ export const AuthProvider = ({ children }) => {
     getGamesPlayedInfo: 0,
     getHighestWpmInfo: 0,
     getDisplayName: "",
-    getProfilePicture: null
+    getProfilePicture: null,
   });
+
+  //Loading screens
   const [loading, setLoading] = useState(true);
 
+  //GET: User Info
   const loadUserInfo = async () => {
     const user = auth.currentUser;
     if (!user) return;
@@ -42,13 +46,39 @@ export const AuthProvider = ({ children }) => {
         getGamesPlayedInfo: userDetails.gamesPlayed,
         getHighestWpmInfo: userDetails.highestWpm,
         getDisplayName: userDetails.displayName,
-        getProfilePicture: userDetails.imageUrl
+        getProfilePicture: userDetails.imageUrl,
       });
     } catch (error) {
       console.error("Error loading user info:", error);
     }
   };
 
+  //GET: Leaderboard info
+  const loadLeaderboardInfo = async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      return;
+    }
+    try {
+      const idToken = await user.getIdToken();
+      const response = await axios.get(
+        "http://localhost:8080/protected/leader-board",
+        {
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+          },
+        }
+      );
+
+      const leaderboard = response.data;
+      console.log(leaderboard);
+      return response;
+    } catch (error) {
+      console.error("Error loading leaderboard data:", error);
+    }
+  };
+
+  //Firebase logout
   const logOutFirebase = async () => {
     try {
       await signOut(auth);
@@ -58,7 +88,7 @@ export const AuthProvider = ({ children }) => {
         getGamesPlayedInfo: 0,
         getHighestWpmInfo: 0,
         getDisplayName: "",
-        getProfilePicture: null
+        getProfilePicture: null,
       });
       console.log("User signed out successfully.");
     } catch (err) {
@@ -66,6 +96,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  //Keeps track if user is logged in or out.
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -78,7 +109,7 @@ export const AuthProvider = ({ children }) => {
           getGamesPlayedInfo: 0,
           getHighestWpmInfo: 0,
           getDisplayName: "",
-          getProfilePicture: null
+          getProfilePicture: null,
         });
       }
       setLoading(false);
@@ -87,17 +118,15 @@ export const AuthProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
+  //Used for exporting above functions
   const value = {
     isUserLoggedIn,
     userInfo,
     loadUserInfo,
     logOutFirebase,
-    loading
+    loading,
+    loadLeaderboardInfo,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

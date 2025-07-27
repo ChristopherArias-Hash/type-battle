@@ -1,89 +1,113 @@
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  deleteUser,
+  signOut,
+} from "firebase/auth";
 import { auth } from "../firebase";
 import axios from "axios";
 
-
 const invalidRegistrationInput = (email, password, username, file) => {
-
-  if (!email || !password || !username){
-    alert("Please fill in all required fields.")
+  if (!email || !password || !username) {
+    alert("Please fill in all required fields.");
     return true;
   }
 
-  if(email.split("").includes("@") === false){
-     alert("Email is not in proper format")
-     return true; 
-  }
-
-  if(password.length < 6){
-    alert("Password must be at least 6 characters.")
+  if (email.split("").includes("@") === false) {
+    alert("Email is not in proper format");
     return true;
   }
 
-  if (file && !isAllowedImageType(file)){
+  if (password.length < 6) {
+    alert("Password must be at least 6 characters.");
+    return true;
+  }
+
+  if (file && !isAllowedImageType(file)) {
     alert("Unsupported image format. ");
     return true;
   }
 
-  return false
-}
+  return false;
+};
 
 const invalidLoginInput = (email, password) => {
-
-  if (!email || !password ){
-    alert("Please fill in all required fields.")
+  if (!email || !password) {
+    alert("Please fill in all required fields.");
     return true;
   }
 
-  if(email.split("").includes("@") === false){
-     alert("Email is not in proper format")
-     return true; 
-  }
-
-  if(password.length < 6){
-    alert("Password must be at least 6 characters.")
+  if (email.split("").includes("@") === false) {
+    alert("Email is not in proper format");
     return true;
   }
 
-  return false
-}
+  if (password.length < 6) {
+    alert("Password must be at least 6 characters.");
+    return true;
+  }
 
-const isAllowedImageType  = (file) => {
-  if(!file) return false;
+  return false;
+};
 
-  const validImageTypes = ["image/png", "image/jpg", "image/jpeg", "image/gif"]
+const isAllowedImageType = (file) => {
+  if (!file) return false;
+
+  const validImageTypes = ["image/png", "image/jpg", "image/jpeg", "image/gif"];
   const fileType = file.type;
 
   return validImageTypes.includes(fileType);
+};
 
-}
+const isSeverUp = async () => {
+  try {
+    const serverRespones = await axios.get("http://localhost:8080/ping");
+    if (serverRespones.status) {
+      return true;
+    }
+  } catch (error) {
+    console.log("Server is down, please try again later", error);
+    alert("Sever is down please try again later");
+    return false;
+  }
+};
 
 export async function handleLogin(email, password) {
-  if(invalidLoginInput(email, password)){
-    return; 
+  if (invalidLoginInput(email, password)) {
+    return;
+  }
+  if (!(await isSeverUp())) {
+    return;
   }
   try {
-  const userCredential = await signInWithEmailAndPassword(auth, email, password);
-  const token = await userCredential.user.getIdToken();
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+    console.log(userCredential);
+    const token = await userCredential.user.getIdToken();
 
-  const response = await fetch("http://localhost:8080/protected/verify-token", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+    const response = await fetch(
+      "http://localhost:8080/protected/verify-token",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-  if (!response.ok) {
-    throw new Error("Token verification failed");
+    if (!response.ok) {
+      throw new Error("Token verification failed");
+    }
+
+    return token;
+  } catch (error) {
+    signOut(auth);
+    alert("User does not exist");
   }
-
-  return token;
-} catch (error){
-  alert("User does not exist")
 }
-
-}
-
 
 export async function handleRegister(email, password, username, file) {
   if (invalidRegistrationInput(email, password, username, file)) {
@@ -91,11 +115,19 @@ export async function handleRegister(email, password, username, file) {
     return false;
   }
 
+  if (!(await isSeverUp())) {
+    console.log("fired");
+    return;
+  }
   let firebaseUser = null;
 
   try {
     // Step 1: Firebase Auth
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
     firebaseUser = userCredential.user;
     const idToken = await firebaseUser.getIdToken();
 
@@ -152,14 +184,12 @@ export async function handleRegister(email, password, username, file) {
 
     alert("Registration successful!");
     return true;
-
   } catch (error) {
     console.error("Registration error (Firebase):", error.message);
     alert("Failed to register with Firebase.");
     return;
   }
 }
-
 
 export async function createGame() {
   const user = auth.currentUser;
@@ -184,40 +214,42 @@ export async function createGame() {
     console.log("Lobby created:", res.data);
     return res.data.lobbyCode; // return the session ID from backend
   } catch (error) {
-    console.error("Failed to create lobby:", error.response?.data || error.message);
+    console.error(
+      "Failed to create lobby:",
+      error.response?.data || error.message
+    );
     throw error;
   }
 }
 
 export const joinGameUsingCode = async (code, navigate) => {
-       
-     if(code.length != 6){
-            alert("Code length must have a length of 6.")
-            return;
+  if (code.length != 6) {
+    alert("Code length must have a length of 6.");
+    return;
+  }
+  const user = auth.currentUser;
+  if (user) {
+    try {
+      const token = await user.getIdToken();
+      const response = await axios.get(
+        `http://localhost:8080/protected/game-session?lobbyCode=${code}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-        const user = auth.currentUser
-        if (user){
-        try{
-        const token = await user.getIdToken()
-        const response = await axios.get(`http://localhost:8080/protected/game-session?lobbyCode=${code}`, {
-                headers:{
-                    Authorization: `Bearer ${token}`,
-                }
-            });
+      );
 
-        const lobbyData = response.data
-        
-        if (lobbyData.lobbyCode == code){
-            navigate(`/game/${code}`)
+      const lobbyData = response.data;
 
-        }
-        } catch(error){
-            console.log("Error getting info", error)
-            alert("CODE IS NOT CORRECT")
-        }
-    }else{
-        alert("USER NOT LOGGED IN")
+      if (lobbyData.lobbyCode == code) {
+        navigate(`/game/${code}`);
+      }
+    } catch (error) {
+      console.log("Error getting info", error);
+      alert("CODE IS NOT CORRECT");
     }
-
-}
-
+  } else {
+    alert("USER NOT LOGGED IN");
+  }
+};
