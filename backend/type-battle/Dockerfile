@@ -1,21 +1,30 @@
-FROM ubuntu:latest
-LABEL authors="Christopher"
 
-# Use a base image with Java 21 (Temurin is OpenJDK based)
-FROM openjdk:21-jdk-slim
 
-# Set the working directory inside the container
+# Stage 1: Build the JAR inside a Maven container
+FROM maven:3.9.4-eclipse-temurin-22-alpine AS build
+
 WORKDIR /app
 
-# Copy the Maven/Gradle build artifact into the container
-# If you are using Maven:
-COPY target/*.jar app.jar
+# Copy only pom.xml and download dependencies first (cache layer)
+COPY pom.xml .
+RUN mvn dependency:go-offline
 
-# If you are using Gradle:
-# COPY build/libs/*.jar app.jar
+# Copy source code
+COPY src ./src
 
-# Expose the port your Spring Boot application listens on (default is 8080)
+# Build the JAR (skip tests for faster builds)
+RUN mvn clean package -DskipTests
+
+# Stage 2: Run the app with OpenJDK 22 slim
+FROM eclipse-temurin:22-jre-alpine
+
+WORKDIR /app
+
+# Copy the JAR from the build stage
+COPY --from=build /app/target/*.jar app.jar
+
+# Expose your app port (change if needed)
 EXPOSE 8080
 
-# Run the JAR file when the container starts
+# Run the app
 ENTRYPOINT ["java", "-jar", "app.jar"]
