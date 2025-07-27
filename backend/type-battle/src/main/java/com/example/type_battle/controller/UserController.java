@@ -14,7 +14,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/protected")
@@ -135,6 +138,23 @@ public class UserController {
         }
     }
 
+    //Grabs list of all users, sorts by leaderboard wins.
+    @GetMapping("leader-board")
+    public ResponseEntity<List<User>> leaderboard(HttpServletRequest request) {
+        String uid = (String) request.getAttribute("uid");
+
+        if (uid == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        List<User> users = userRepository.findAll().stream()
+                .sorted(Comparator.comparingInt(User::getGamesWon).reversed())
+                .collect(Collectors.toList());
+
+        if (users.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        return ResponseEntity.ok(users);
+    }
 
 
 

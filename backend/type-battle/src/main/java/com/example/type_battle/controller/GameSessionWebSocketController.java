@@ -42,7 +42,7 @@ public class GameSessionWebSocketController {
 
     @Autowired
     private GameTimer gameTimer;
-
+    //Function to grab UID, to test if user is auth
     private String resolveUid(SimpMessageHeaderAccessor headerAccessor) {
         String uid = (String) headerAccessor.getSessionAttributes().get("uid");
         if (uid == null) {
@@ -53,6 +53,8 @@ public class GameSessionWebSocketController {
         }
         return uid;
     }
+
+    //Listener that handles ready up of all users.
     @MessageMapping("/ready_up/{sessionId}")
     public void handlePlayerReadyUp(@DestinationVariable String sessionId, SimpMessageHeaderAccessor headerAccessor) {
         String uid = resolveUid(headerAccessor);
@@ -62,6 +64,7 @@ public class GameSessionWebSocketController {
             return;
         }
 
+        //Check if session or user is real
         Optional<GameSessions> sessionOpt = sessionRepository.findByLobbyCode(sessionId);
         Optional<User> userOpt = userRepository.findByFirebaseUid(uid);
 
@@ -70,6 +73,7 @@ public class GameSessionWebSocketController {
             return;
         }
 
+        //find participant by using session and user
         GameSessions session = sessionOpt.get();
         User user = userOpt.get();
         Optional<GameParticipants> participantOpt = participantsRepository.findByGameSessionsAndUser(session, user);
@@ -83,12 +87,13 @@ public class GameSessionWebSocketController {
             return;
         }
 
+        //Once found set ready to true
         GameParticipants participant = participantOpt.get();
         participant.setReady(true);
         participantsRepository.save(participant);
 
+        //Grab list of everyone, check if all ready. if everyone ready start game.
         List<GameParticipants> allParticipants = participantsRepository.findAllByGameSessions(session);
-
         boolean everyoneReady = allParticipants.stream()
                 .allMatch(GameParticipants::isReady);
 
