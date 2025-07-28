@@ -21,7 +21,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .setAllowedOrigins("http://localhost:5173", "https://typebattle.org") // Add your production frontend URL
+                .setAllowedOrigins("http://localhost:5173", "https://typebattle.org", "https://type-battle-9cjw.onrender.com") // Add your production frontend URL
                 .withSockJS();
     }
     @Override
