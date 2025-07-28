@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: type-battle
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASS}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+
+firebase:
+  config:
+    path: ${FIREBASE_CONFIG_PATH}
+
+cloudflare:
+  r2:
+    endpoint: ${R2_ENDPOINT}
+    accessKey: ${R2_ACCESS_KEY}
+    secretKey: ${R2_SECRET_KEY}
+    bucket: ${R2_BUCKET}

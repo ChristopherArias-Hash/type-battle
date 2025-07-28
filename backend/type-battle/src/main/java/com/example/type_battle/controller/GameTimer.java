@@ -51,7 +51,7 @@ public class GameTimer {
             }
 
             long currentTime = System.currentTimeMillis();
-            long elapsedSeconds = (currentTime - session.getGameStartTime()) / 100;
+            long elapsedSeconds = (currentTime - session.getGameStartTime()) / 1000; //1000 60 seconds
             int remainingTime = durationSeconds - (int) elapsedSeconds;
 
             if (remainingTime <= 0) {
@@ -77,6 +77,7 @@ public class GameTimer {
         }
     }
 
+
     private void endGame(String sessionId) {
         Optional<GameSessions> sessionOpt = sessionRepository.findByLobbyCode(sessionId);
         if (sessionOpt.isEmpty()) return;
@@ -93,6 +94,29 @@ public class GameTimer {
 
         //Once game is over it checks everyones scores, whoever has the highest score wins
         List<GameParticipants> allParticipantsScores = participantsRepository.findAllByGameSessions(session);
+
+        //Calculate WPM and set WPM if higher then max
+        List<Map<String, Object>> wpmData = new ArrayList<>();
+
+        for (GameParticipants participants : allParticipantsScores) {
+            int score = participants.getScore();
+            User user = participants.getUser();
+            int wpm = (score/5); //Assuming 1 min = 60 seconds, if time change we need diff val
+
+            Map<String, Object> userWpm = new HashMap<>();
+            userWpm.put("userId", user.getId());
+            userWpm.put("displayName", user.getDisplayName());
+            userWpm.put("wpm", wpm);
+            wpmData.add(userWpm);
+
+            if (user.getGamesWon() < wpm){
+                user.setHighestWpm(wpm);
+                userRepository.save(user);
+            }
+
+        }
+
+        gameEndMessage.put("wpm_data", wpmData);
         Optional<GameParticipants> winner = allParticipantsScores.stream()
                 .max(Comparator.comparing(GameParticipants::getScore));
 
