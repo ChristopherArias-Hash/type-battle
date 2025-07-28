@@ -22,6 +22,7 @@ function GamePlay() {
   const [players, setPlayers] = useState([]);
   const [gameStart, setGameStart] = useState(false);
   const [gameEnded, setGameEnded] = useState(false);
+  const [wpm, setWpm] = useState(0);
   const [winnerText, setWinnerText] = useState("");
 
   const ready_up = () => {
@@ -43,6 +44,8 @@ function GamePlay() {
   useEffect(() => {
     const connect = async () => {
       const user = auth.currentUser;
+      
+    
       if (user) {
         const token = await user.getIdToken();
 
@@ -83,6 +86,15 @@ function GamePlay() {
               setGameEnded(true);
               setGameStart(false);
               setWinnerText(data.win_message);
+              console.log("Matching WPM entry for userInfo.id:", userInfo.id);
+console.log("Full wpm_data array:", data.wpm_data);
+              const currentUserWpm = data.wpm_data?.find( //Loops through wpm data inside the object, checks if current user id matches wpm object
+                (entry) => entry.userId ===Number(userInfo.id)
+              );
+              
+              if (currentUserWpm) {
+                setWpm(currentUserWpm.wpm);
+              }
               setTimeout(() => {
                 navigate("/");
               }, 10000);
@@ -127,6 +139,7 @@ function GamePlay() {
               </li>
             ))}
           </ul>
+          <p>Your wpm {wpm}</p>
           <p>{winnerText}</p>
 
           <p>Returning to main menu in 10 seconds...</p>

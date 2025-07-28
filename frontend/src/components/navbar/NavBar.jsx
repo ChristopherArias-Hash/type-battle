@@ -9,7 +9,7 @@ function NavBar({onLoginClick, onRegisterClick, isUserLoggedIn, logOut, userInfo
             <>
             <li className="nav-item pull-right"><img src={userInfo.getProfilePicture}/></li>
             <li className="nav-item pull-right">name: {userInfo.getDisplayName}</li>
-            <li className="nav-item pull-right">WPM Max: {userInfo.getWinsInfo}</li>
+            <li className="nav-item pull-right">WPM Max: {userInfo.getHighestWpmInfo}</li>
             <li className="nav-item pull-right">Games Played: {userInfo.getGamesPlayedInfo}</li>
             <li className="nav-item pull-right">WINS: {userInfo.getWinsInfo}</li>
             <li className="nav-item pull-right"><button onClick={logOut}>Logout</button></li>
