@@ -165,6 +165,7 @@ public class GameSessionWebSocketController {
     public void joinGame(@DestinationVariable String sessionId, SimpMessageHeaderAccessor headerAccessor) {
         //Check for auth user
         String uid = resolveUid(headerAccessor);
+        int maxParticipantAmount = 4;
 
         if (uid == null) {
             System.out.println("[WebSocket] joinGame called with no UID available!");
@@ -195,6 +196,14 @@ public class GameSessionWebSocketController {
         //Check if user is in game session, if not then edit participant db.
         Optional<GameParticipants> participantOpt = participantsRepository.findByGameSessionsAndUser(session, user);
         if (participantOpt.isEmpty()) {
+            if (session.getPlayersInLobby() == maxParticipantAmount){
+                System.out.println("[WebSocket] Lobby is full 4/4");
+                return;
+            }else{
+                session.setPlayersInLobby(session.getPlayersInLobby() + 1);
+                sessionRepository.save(session);
+                System.out.println("[WebSocket] Lobby is at " + session.getPlayersInLobby() + " /4");
+            }
             GameParticipants participant = new GameParticipants();
             participant.setReady(false);
             participant.setGameSessions(session);
@@ -202,9 +211,12 @@ public class GameSessionWebSocketController {
             participant.setScore(0);
             participantsRepository.save(participant);
             System.out.println("[WebSocket] User " + user.getDisplayName() + " joined game session " + sessionId);
+
         } else {
             System.out.println("[WebSocket] User " + user.getDisplayName() + " already in game session " + sessionId);
         }
+
+
 
         // Creates list of people in lobby and sends it to everyone
         List<GameParticipants> allParticipants = participantsRepository.findAllByGameSessions(session);

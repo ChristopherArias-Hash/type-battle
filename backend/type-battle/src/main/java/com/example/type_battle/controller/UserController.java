@@ -1,22 +1,23 @@
 package com.example.type_battle.controller;
 
 import com.example.type_battle.DTO.LobbyResponse;
+import com.example.type_battle.model.GameParticipants;
 import com.example.type_battle.model.GameSessions;
 import com.example.type_battle.model.Paragraphs;
 import com.example.type_battle.model.User;
+import com.example.type_battle.repository.GameParticipantsRepository;
 import com.example.type_battle.repository.GameSessionsRepository;
 import com.example.type_battle.repository.ParagraphsRepository;
 import com.example.type_battle.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.websocket.Session;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -27,6 +28,8 @@ public class UserController {
     //Connects DB to backend
     private UserRepository userRepository;
 
+    @Autowired
+    private GameParticipantsRepository participantsRepository;
 
     @Autowired
     private GameSessionsRepository sessionRepository;
@@ -129,14 +132,32 @@ public class UserController {
         if (uid == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         }
-        Optional<GameSessions> sessionOpt = sessionRepository.findByLobbyCode(lobbyCode);
 
-        if (sessionOpt.isPresent()) {
-            return ResponseEntity.ok(sessionOpt.get());
-        }else{
+        Optional<User> userOpt = userRepository.findByFirebaseUid(uid);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+        User user = userOpt.get();
+
+        Optional<GameSessions> sessionOpt = sessionRepository.findByLobbyCode(lobbyCode);
+        if (sessionOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Session not found");
         }
+
+        GameSessions session = sessionOpt.get();
+
+        // Allow rejoin if user is already in this session
+        List<GameParticipants> existingParticipants = participantsRepository.findAllByGameSessions(session);
+        boolean isAlreadyParticipant = existingParticipants.stream()
+                .anyMatch(p -> p.getUser().getId().equals(user.getId()));
+
+        if (!Objects.equals(session.getStatus(), "waiting") && !isAlreadyParticipant) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Session already started");
+        }
+
+        return ResponseEntity.ok(session);
     }
+
 
     //Grabs list of all users, sorts by leaderboard wins.
     @GetMapping("leader-board")
@@ -148,6 +169,7 @@ public class UserController {
         }
         List<User> users = userRepository.findAll().stream()
                 .sorted(Comparator.comparingInt(User::getGamesWon).reversed())
+                .limit(10) //limits list size
                 .collect(Collectors.toList());
 
         if (users.isEmpty()) {

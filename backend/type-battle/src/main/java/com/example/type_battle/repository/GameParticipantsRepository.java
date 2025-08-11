@@ -13,4 +13,5 @@ public interface GameParticipantsRepository extends JpaRepository<GameParticipan
     List<GameParticipants> findAllByGameSessionsId(Long id);
     boolean existsByGameSessionsAndUser(GameSessions session, User user);
     Optional<GameParticipants> findByGameSessionsAndUser(GameSessions session, User user);
+    List<GameParticipants> findAllByUser(User user);
 }

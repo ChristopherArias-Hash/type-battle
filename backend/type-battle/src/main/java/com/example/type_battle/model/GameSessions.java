@@ -30,6 +30,20 @@ public class GameSessions {
     @Column(name = "game_duration")
     private Integer gameDuration = 60; // 60 seconds default
 
+    @Column(name = "players_in_lobby")
+    private Integer playersInLobby = 0; // 0 default, 4 is max.
+
+
+    public Integer getPlayersInLobby() {
+        return playersInLobby;
+    }
+
+    public void setPlayersInLobby(Integer playersInLobby) {
+        this.playersInLobby = playersInLobby;
+    }
+
+
+
     // Existing getters and setters...
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
