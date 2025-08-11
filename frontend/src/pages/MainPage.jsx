@@ -8,9 +8,10 @@ import AboutUs from "../components/about-us/AboutUs.jsx";
 import LoginModal from "../components/login/LoginModal.jsx";
 import RegisterModal from "../components/register/RegisterModal.jsx";
 import { useAuth } from "../utils/authContext.jsx";
+import { isSeverUp } from "../utils/authHelpers.jsx";
 function MainPage() {
   // Get auth state from context
-  const { isUserLoggedIn, userInfo, logOutFirebase, loadUserInfo, loadLeaderboardInfo } = useAuth();
+  const { isUserLoggedIn, userInfo, logOutFirebase, loadUserInfo, loadLeaderboardInfo, severStatus } = useAuth();
   
   // Modals for login and Register
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -22,6 +23,7 @@ function MainPage() {
         userInfo={userInfo}
         logOut={logOutFirebase}
         isUserLoggedIn={isUserLoggedIn}
+        severStatus={severStatus}
         onLoginClick={() => {
           setShowLoginModal(true);
           setShowRegisterModal(false);

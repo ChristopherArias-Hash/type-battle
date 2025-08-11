@@ -1,10 +1,12 @@
 import "./NavBar.css"
 
-function NavBar({onLoginClick, onRegisterClick, isUserLoggedIn, logOut, userInfo}) {
+function NavBar({onLoginClick, onRegisterClick, isUserLoggedIn, logOut, userInfo, severStatus}) {
+    console.log(severStatus)
     return(
         <>
         <ul className="nav-bar">
             <li className="nav-item pull-left"><h1><a href="/">TYPE BATTLE</a></h1></li>
+            <li className="nav-item pull-left"><p>server up: {severStatus ?"true":"false"}</p></li>
             {isUserLoggedIn ?    
             <>
             <li className="nav-item pull-right"><img src={userInfo.getProfilePicture}/></li>

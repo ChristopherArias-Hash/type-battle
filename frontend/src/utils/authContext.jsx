@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import {isSeverUp} from "./authHelpers"
 import { auth } from "../firebase";
-import { onAuthStateChanged, signOut, deleteUser } from "firebase/auth";
+import { onAuthStateChanged, signOut} from "firebase/auth";
 import axios from "axios";
 
 const AuthContext = createContext();
@@ -16,6 +17,7 @@ export const useAuth = () => {
 //Contains all fuctions that require auth protection
 export const AuthProvider = ({ children }) => {
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
+  const [severStatus, setServerStatus] = useState(false)
   const [userInfo, setUserInfo] = useState({
     getWinsInfo: 0,
     getGamesPlayedInfo: 0,
@@ -27,6 +29,13 @@ export const AuthProvider = ({ children }) => {
   //Loading screens
   const [loading, setLoading] = useState(true);
 
+  const loadServerStatus = async () =>{
+    if(!await isSeverUp()){
+      setServerStatus(false)
+  }else{
+    setServerStatus(true)
+  }
+}
   //GET: User Info
   const loadUserInfo = async () => {
     const user = auth.currentUser;
@@ -96,6 +105,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  useEffect(() => {
+  loadServerStatus();
+}, []);
+
   //Keeps track if user is logged in or out.
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -126,6 +139,7 @@ export const AuthProvider = ({ children }) => {
     logOutFirebase,
     loading,
     loadLeaderboardInfo,
+    severStatus,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

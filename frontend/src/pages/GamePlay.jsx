@@ -1,6 +1,7 @@
 import "./GamePlay.css";
 import NavBar from "../components/navbar/NavBar";
 import TypingSentences from "../components/typing-sentences/TypingSentences";
+import useUserLeavingWarning from "../utils/useUserLeavingWarning";
 import { useAuth } from "../utils/authContext";
 import { useEffect, useState } from "react";
 import { Navigate, useParams, useNavigate } from "react-router-dom";
@@ -15,6 +16,7 @@ import { auth } from "../firebase";
 function GamePlay() {
   const { id: sessionId } = useParams();
   const navigate = useNavigate();
+  const [enableWarning, disableWarning] = useUserLeavingWarning();
   const [timer, setTimer] = useState(60);
   const { isUserLoggedIn, userInfo, logOutFirebase, loading } = useAuth();
   const [playerReady, setPlayerReady] = useState(false);
@@ -40,12 +42,29 @@ function GamePlay() {
     }
   }, [players]);
 
+  //Watches players and kicks if lobby full and user not in lobby
+  useEffect(() => {
+    if (players.length > 0) {
+      const currentUserId = auth.currentUser?.uid;
+
+      const isInLobby = players.some(
+        (p) => p.user?.firebaseUid === currentUserId
+      );
+
+      if (!isInLobby && players.length >= 4) {
+        disableWarning();
+        alert("Cannot join: lobby is full.");
+        navigate("/");
+      }
+    }
+  }, [players, navigate]);
   //Connnects web socket components, and verfies if game is avaible
   useEffect(() => {
+    enableWarning();
+
     const connect = async () => {
       const user = auth.currentUser;
-      
-    
+
       if (user) {
         const token = await user.getIdToken();
 
@@ -66,11 +85,10 @@ function GamePlay() {
         const session = await response.json();
 
         if (session.status === "finished") {
-          console.alert("Cannot join a finished session.");
+          alert("Cannot join a finished session.");
           navigate("/"); // redirect home
           return;
         }
-
         connectWebSocket(
           sessionId,
           token,
@@ -86,12 +104,13 @@ function GamePlay() {
               setGameEnded(true);
               setGameStart(false);
               setWinnerText(data.win_message);
-              console.log("Matching WPM entry for userInfo.id:", userInfo.id);
-console.log("Full wpm_data array:", data.wpm_data);
-              const currentUserWpm = data.wpm_data?.find( //Loops through wpm data inside the object, checks if current user id matches wpm object
-                (entry) => entry.userId ===Number(userInfo.id)
+
+              const currentUserWpm = data.wpm_data?.find(
+                //Loops through wpm data inside the object, checks if current user id matches wpm object
+
+                (entry) => entry.displayName === userInfo.getDisplayName
               );
-              
+
               if (currentUserWpm) {
                 setWpm(currentUserWpm.wpm);
               }
@@ -109,6 +128,8 @@ console.log("Full wpm_data array:", data.wpm_data);
     connect();
     return () => {
       disconnectWebSocket();
+      disableWarning();
+
     };
   }, [sessionId, navigate]);
 
@@ -121,6 +142,7 @@ console.log("Full wpm_data array:", data.wpm_data);
   }
 
   if (gameEnded) {
+    disableWarning();
     return (
       <>
         <NavBar
@@ -158,7 +180,8 @@ console.log("Full wpm_data array:", data.wpm_data);
 
       <div className="lobby">
         <h2>
-          Lobby (Game Session #{sessionId}) Time left: {timer}s
+          Lobby {players.length}/4 (Game Session #{sessionId}) Time left:{" "}
+          {timer}s
         </h2>
         {!gameStart && (
           <button onClick={() => ready_up()} disabled={playerReady}>

@@ -9,7 +9,6 @@ function TypingSentences({ paragraphText, sessionId, timer }) {
   const [inputStatus, setInputStatus] = useState([]);
   const [letters, setLetters] = useState(0);
   const [restored, setRestored] = useState(false);
-  const [wpm, setWpm] = useState(0)
 
   //Sends correct strokes to backend, it first gets batched and it does it ever 800ms so backend dont get overloaded
   useEffect(() => {

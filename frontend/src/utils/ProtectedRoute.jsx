@@ -1,7 +1,7 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../utils/authContext";
 
-function ProtectedRoute({ children }) {
+export default function ProtectedRoute({ children }) {  // Add children prop
   const { isUserLoggedIn, loading } = useAuth();
 
   if (loading) {
@@ -12,7 +12,5 @@ function ProtectedRoute({ children }) {
     return <Navigate to="/" replace />;
   }
 
-  return children;
+  return children || <Outlet/>;  // Support both patterns
 }
-
-export default ProtectedRoute;

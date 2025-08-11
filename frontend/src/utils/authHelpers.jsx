@@ -59,7 +59,7 @@ const isAllowedImageType = (file) => {
   return validImageTypes.includes(fileType);
 };
 
-const isSeverUp = async () => {
+export const isSeverUp = async () => {
   try {
     const serverRespones = await axios.get("http://localhost:8080/ping");
     if (serverRespones.status) {
