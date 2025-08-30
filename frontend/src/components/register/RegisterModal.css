@@ -1,0 +1,37 @@
+/* Base modal colors*/
+.dark-modal .dark-modal-content {
+  --bs-modal-bg: #4a4a4a;
+  --bs-modal-color: #ffffff; /* Borders & separators */
+  --bs-modal-border-color: rgba(255, 255, 255, 0.12);
+  --bs-modal-header-border-color: rgba(255, 255, 255, 0.12);
+  --bs-modal-footer-border-color: rgba(
+    255,
+    255,
+    255,
+    0.12
+  ); 
+
+} 
+
+/* Tweaking padding/margins around the whole moda */
+.dark-modal .modal-header,
+.dark-modal .modal-footer {
+  padding: 0.9rem 1rem;
+
+} /*  Inputs for dark background */
+.dark-modal .form-control {
+  background-color: #3d3d3d;
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+/* Controls width and height of modal */
+.dark-modal .modal-dialog {
+  max-width: 600px;   /* control width */
+  width: 100%;        /* take available space */
+}
+
+.dark-modal .btn-close {
+  filter: invert(1);   /* makes the black "X" white */
+  opacity: 1;          /* ensures it’s fully visible */
+}

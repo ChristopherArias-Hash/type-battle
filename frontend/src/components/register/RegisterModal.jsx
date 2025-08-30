@@ -4,7 +4,9 @@ import { handleRegister, handleLogin } from "../../utils/authHelpers"
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import Form from "react-bootstrap/Form";
-function RegisterModal({ onClose, onUserInfoUpdated}) {
+import "./RegisterModal.css"
+
+function RegisterModal({ onClose, show, onUserInfoUpdated}) {
   //User Info that is added
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,7 +37,13 @@ const registerAndLogin = async () => {
       className="modal show"
       style={{ display: "block", position: "initial" }}
     >
-      <Modal.Dialog>
+      <Modal
+      show={show}           
+      onHide={onClose}         
+      centered
+      className="dark-modal"
+      contentClassName="dark-modal-content"
+      >
         <Modal.Header closeButton onHide={onClose}>
           <Modal.Title>Register</Modal.Title>
         </Modal.Header>
@@ -82,7 +90,7 @@ const registerAndLogin = async () => {
             Register
           </Button>
         </Modal.Footer>
-      </Modal.Dialog>
+      </Modal>
     </div>
   );
 }

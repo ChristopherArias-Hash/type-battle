@@ -5,7 +5,6 @@ import useUserLeavingWarning from "../utils/useUserLeavingWarning";
 import { useAuth } from "../utils/authContext";
 import { useEffect, useState } from "react";
 import { Navigate, useParams, useNavigate } from "react-router-dom";
-
 import {
   connectWebSocket,
   disconnectWebSocket,
@@ -14,11 +13,13 @@ import {
 import { auth } from "../firebase";
 
 function GamePlay() {
-  const { id: sessionId } = useParams();
   const navigate = useNavigate();
-  const [enableWarning, disableWarning] = useUserLeavingWarning();
+  const { id: sessionId } = useParams(); //Grabs session id from url
+  const [enableWarning, disableWarning] = useUserLeavingWarning(); //Warning for refresh page
+  const { isUserLoggedIn, userInfo, logOutFirebase, loading } = useAuth(); //User state
+
+  //Game functions
   const [timer, setTimer] = useState(60);
-  const { isUserLoggedIn, userInfo, logOutFirebase, loading } = useAuth();
   const [playerReady, setPlayerReady] = useState(false);
   const [paragraphText, setParagraphText] = useState(null);
   const [players, setPlayers] = useState([]);
@@ -27,6 +28,9 @@ function GamePlay() {
   const [wpm, setWpm] = useState(0);
   const [winnerText, setWinnerText] = useState("");
 
+  const disableLogout = true; //Disables logout function navbar during gameplay
+
+  //Ready up user and sends info to websocket server
   const ready_up = () => {
     setPlayerReady(true);
     sendReadyUp(sessionId);
@@ -58,6 +62,7 @@ function GamePlay() {
       }
     }
   }, [players, navigate]);
+  
   //Connnects web socket components, and verfies if game is avaible
   useEffect(() => {
     enableWarning();
@@ -102,6 +107,7 @@ function GamePlay() {
               setTimer(data.remainingTime);
             } else if (data.type === "game_end") {
               setGameEnded(true);
+              disableWarning();
               setGameStart(false);
               setWinnerText(data.win_message);
 
@@ -129,7 +135,6 @@ function GamePlay() {
     return () => {
       disconnectWebSocket();
       disableWarning();
-
     };
   }, [sessionId, navigate]);
 
@@ -142,7 +147,6 @@ function GamePlay() {
   }
 
   if (gameEnded) {
-    disableWarning();
     return (
       <>
         <NavBar
@@ -173,6 +177,7 @@ function GamePlay() {
   return (
     <>
       <NavBar
+        disableLogout={disableLogout}
         userInfo={userInfo}
         isUserLoggedIn={isUserLoggedIn}
         logOut={logOutFirebase}

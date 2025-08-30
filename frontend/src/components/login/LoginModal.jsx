@@ -3,7 +3,9 @@ import { handleLogin } from "../../utils/authHelpers";
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import Form from "react-bootstrap/Form";
-function LoginModal({ onClose }) {
+import "./LoginModal.css"
+
+function LoginModal({ onClose, show }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -14,12 +16,13 @@ function LoginModal({ onClose }) {
   }
 };
   return (
-    <div
-      className="modal show"
-      style={{ display: "block", position: "initial" }}
-    >
-      <Modal.Dialog>
-        <Modal.Header closeButton onHide={onClose}>
+    <Modal
+      show={show}           
+      onHide={onClose}         
+      centered
+      className="dark-modal"
+      contentClassName="dark-modal-content"
+    >        <Modal.Header closeButton onHide={onClose}>
           <Modal.Title>Login</Modal.Title>
         </Modal.Header>
         <Modal.Body>
@@ -52,8 +55,7 @@ function LoginModal({ onClose }) {
             Login
           </Button>
         </Modal.Footer>
-      </Modal.Dialog>
-    </div>
+    </Modal>
   );
 }
 export default LoginModal;

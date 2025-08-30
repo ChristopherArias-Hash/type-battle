@@ -8,7 +8,6 @@ import AboutUs from "../components/about-us/AboutUs.jsx";
 import LoginModal from "../components/login/LoginModal.jsx";
 import RegisterModal from "../components/register/RegisterModal.jsx";
 import { useAuth } from "../utils/authContext.jsx";
-import { isSeverUp } from "../utils/authHelpers.jsx";
 function MainPage() {
   // Get auth state from context
   const { isUserLoggedIn, userInfo, logOutFirebase, loadUserInfo, loadLeaderboardInfo, severStatus } = useAuth();
@@ -34,10 +33,10 @@ function MainPage() {
         }}
       />
       {showLoginModal && (
-        <LoginModal onClose={() => setShowLoginModal(false)} />
+        <LoginModal  show={showLoginModal}     onClose={() => setShowLoginModal(false)} />
       )}
       {showRegisterModal && (
-        <RegisterModal 
+        <RegisterModal show={showRegisterModal}    
           onClose={() => setShowRegisterModal(false)} 
           onUserInfoUpdated={loadUserInfo}
         />

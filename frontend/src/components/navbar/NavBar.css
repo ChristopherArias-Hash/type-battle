@@ -1,31 +1,224 @@
-
 .nav-bar {
-    
-    list-style-type: none;
-    margin: 0;
-    padding: 0; 
-    border: solid 3px; 
-    overflow: hidden;
-
-    
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  border-bottom: solid 2px;
+  border-radius: 5px;
+  overflow: hidden;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
 .nav-item {
-  display: inline-block; /* or flex, depending on your layout */
+  display: inline-block;
+}
+
+.pull-left {
+  margin: 10px;
+  font-size: 20px;
 }
 
 
-.pull-left{
-    margin:10px;
-    float:left; 
-    font-size: 20px;
+/* Fixed snake animation */
+.home-button a {
+  --c: #f6f6f6; /* stroke color */
+  --t: 5.5px; /* thickness */
+  --l: 20px; /* corner length */
+
+  display: inline-block;
+  padding: 0.75rem 1.25rem;
+  color: #fff;
+  text-decoration: none;
+  position: relative;
+
+  /* Strategy: Use lines that grow FROM the corner positions to consume them */
+  background:
+                /* (1) LEFT line – grows down from top-left, consuming TL corner */ linear-gradient(
+        var(--c) 0 0
+      )
+      left top / var(--t) 0 no-repeat,
+    /* (2) BOTTOM line – grows right from bottom-left, consuming BR corner */
+      linear-gradient(var(--c) 0 0) left bottom / 0 var(--t) no-repeat,
+    /* (3) RIGHT line at bottom – grows left from bottom-right, gets consumed by bottom line */
+      linear-gradient(var(--c) 0 0) right bottom / 0 var(--t) no-repeat,
+    /* (4)(5) TL corner - will be covered by left line */
+      linear-gradient(var(--c) 0 0) top left / var(--t) var(--l) no-repeat,
+    linear-gradient(var(--c) 0 0) top left / var(--l) var(--t) no-repeat,
+    /* (6)(7) BR corner - will be covered by right line then bottom line */
+      linear-gradient(var(--c) 0 0) bottom right / var(--t) var(--l) no-repeat,
+    linear-gradient(var(--c) 0 0) bottom right / var(--l) var(--t) no-repeat;
 }
 
-.pull-right{
-    margin:10px;
-    float:right;
+/* start the blink after the snake finishes */
+.home-button a:hover{
+  color: grey;
+  background-color: rgba(207, 207, 207, 0.057);
+  --c: rgba(255, 255, 255, 0.9);
+  animation:
+    snake 0.6s ease forwards,
+    underline-blink .6s steps(1, end) 0.6s infinite; /* delay = snake duration */
 }
 
-.pull-right img {
-    width:50px;
-    height:auto;
+/* blink JUST the bottom underline (2nd layer) */
+@keyframes underline-blink {
+  /* layer order must match your .home-button a background: 
+     [1] left line, [2] bottom line, [3] right-bottom line, [4][5] TL, [6][7] BR */
+  0%,50% {
+    background-size:
+      var(--t) 0,            /* 1: left line collapsed */
+      100% var(--t),         /* 2: underline visible */
+      0 var(--t),            /* 3: right-bottom line collapsed */
+      0 0, 0 0,              /* 4–5: TL corners hidden */
+      0 0, 0 0;              /* 6–7: BR corners hidden */
+  }
+  51%,100% {
+    background-size:
+      var(--t) 0,            /* 1 */
+      0 var(--t),            /* 2: underline hidden */
+      0 var(--t),            /* 3 */
+      0 0, 0 0,              /* 4–5 */
+      0 0, 0 0;              /* 6–7 */
+  }
+}
+/* PERFECT FLOW - left line transitions smoothly into bottom line:
+           0%   corners only visible
+           50%  left line grows down, right line grows left, corners consumed
+           75%  left line reaches bottom and starts becoming bottom line
+           90%  lines meet in the middle perfectly
+           100% only bottom underline remains
+        */
+@keyframes snake {
+  0% {
+    background-size: var(--t) 0, /* left line height */ 0 var(--t),
+      /* bottom line width (from left) */ 0 var(--t),
+      /* right line width (from right) */ var(--t) var(--l), var(--l) var(--t),
+      /* TL corner visible */ var(--t) var(--l), var(--l) var(--t); /* BR corner visible */
+  }
+
+  /* Both lines start growing - left down, right left */
+  25% {
+    background-size: var(--t) 30%, /* left line growing down */ 0 var(--t),
+      /* bottom line still collapsed */ 15% var(--t),
+      /* right line growing left */ var(--t) calc(var(--l) * 0.7),
+      var(--l) var(--t), /* TL corner shrinking */ var(--t) calc(var(--l) * 0.8),
+      var(--l) calc(var(--t) * 0.8); /* BR corner shrinking */
+  }
+
+  /* Left reaches bottom, right continues left, corners consumed */
+  50% {
+    background-size: var(--t) 100%, /* left line at full height */ 0 var(--t),
+      /* bottom line still collapsed */ 35% var(--t),
+      /* right line halfway */ 0 0, 0 0, /* TL corner consumed */ 0 0, 0 0; /* BR corner consumed */
+  }
+
+  /* SMOOTH TRANSITION: left line stays up while bottom line grows from its position */
+  75% {
+    background-size: var(--t) 100%, /* left line still fully up */ 25% var(--t),
+      /* bottom line growing from left edge */ 50% var(--t),
+      /* right line approaching center */ 0 0, 0 0, /* no corners */ 0 0, 0 0; /* no corners */
+  }
+
+  /* Lines meet in middle - left line still connecting smoothly */
+  90% {
+    background-size: var(--t) 100%,
+      /* left line STILL up, maintaining connection */ 50% var(--t),
+      /* bottom line at middle */ 50% var(--t),
+      /* right line at middle - MEET! */ 0 0, 0 0, /* no corners */ 0 0, 0 0; /* no corners */
+  }
+
+  /* Final state: left line gradually shrinks as bottom line completes */
+  100% {
+    background-size: var(--t) 0,
+      /* NOW left line gently collapses */ 100% var(--t),
+      /* bottom line complete */ 0 var(--t), /* right line collapses */ 0 0, 0 0,
+      /* no corners */ 0 0, 0 0; /* no corners */
+  }
+}
+/* User card styling */
+.user-card {
+  display: flex;
+  margin-right: 10px;
+  align-items: center;
+  background: #4a4a4a;
+  border: 2px solid #666;
+  border-radius: 8px;
+  padding: 8px;
+  max-width: 280px;
+  gap: 8px;
+}
+
+.user-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.user-info .user-name {
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.user-stats {
+  color: #ccc;
+  font-size: 12px;
+  margin: 0;
+}
+
+.user-card img {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: none;
+}
+.logout-btn {
+  background: #666;
+  border: 1px solid #888;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+  background: #777;
+}
+
+/* Auth links styling */
+.auth-links {
+  display: flex;
+  gap: 15px;
+  margin-right: 10px;
+}
+
+.auth-links a {
+  color: #f6f6f6;
+  text-decoration: none;
+  padding: 8px 16px;
+  border: 1px solid #f6f6f6;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.auth-links a:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
 }
