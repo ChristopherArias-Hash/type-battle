@@ -9,10 +9,13 @@ const [code, setCode] = useState("")
 
   return(
         <>
-        <div className = "matchForm">
+        <div className = "input-container">
         <h2>Enter code to join a match</h2>
-        <input value={code} placeholder="Enter code" onChange={(e)=> setCode(e.target.value)}></input>
-        <button onClick={()=> joinGameUsingCode(code, navigate)}>Submit</button>
+        <input type ="text"  name ="text" className ="input" value={code} placeholder="Enter code" onChange={(e)=> setCode(e.target.value)}></input>
+
+        <button className = "keycap-submit" onClick={()=> joinGameUsingCode(code, navigate)}>
+        <span className="letter-submit">Submit</span>
+        </button>
         </div>
         </>
     )

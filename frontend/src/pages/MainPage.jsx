@@ -10,7 +10,7 @@ import RegisterModal from "../components/register/RegisterModal.jsx";
 import { useAuth } from "../utils/authContext.jsx";
 function MainPage() {
   // Get auth state from context
-  const { isUserLoggedIn, userInfo, logOutFirebase, loadUserInfo, loadLeaderboardInfo, severStatus } = useAuth();
+  const { isUserLoggedIn, userInfo, logOutFirebase, loadUserInfo, loadLeaderboardInfo, serverStatus } = useAuth();
   
   // Modals for login and Register
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -22,7 +22,7 @@ function MainPage() {
         userInfo={userInfo}
         logOut={logOutFirebase}
         isUserLoggedIn={isUserLoggedIn}
-        severStatus={severStatus}
+        serverStatus={serverStatus}
         onLoginClick={() => {
           setShowLoginModal(true);
           setShowRegisterModal(false);

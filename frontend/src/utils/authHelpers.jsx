@@ -59,15 +59,17 @@ const isAllowedImageType = (file) => {
   return validImageTypes.includes(fileType);
 };
 
-export const isSeverUp = async () => {
+export const isServerUp = async () => {
   try {
     const serverRespones = await axios.get("http://localhost:8080/ping");
     if (serverRespones.status) {
+       console.log("server is up")
       return true;
+     
     }
   } catch (error) {
     console.log("Server is down, please try again later", error);
-    alert("Sever is down please try again later");
+    alert("Server is down please try again later");
     return false;
   }
 };
@@ -76,7 +78,7 @@ export async function handleLogin(email, password) {
   if (invalidLoginInput(email, password)) {
     return;
   }
-  if (!(await isSeverUp())) {
+  if (!(await isServerUp())) {
     return;
   }
   try {
@@ -115,7 +117,7 @@ export async function handleRegister(email, password, username, file) {
     return false;
   }
 
-  if (!(await isSeverUp())) {
+  if (!(await isServerUp())) {
     console.log("fired");
     return;
   }

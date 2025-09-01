@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import {isSeverUp} from "./authHelpers"
+import {isServerUp} from "./authHelpers"
 import { auth } from "../firebase";
 import { onAuthStateChanged, signOut} from "firebase/auth";
 import axios from "axios";
@@ -17,7 +17,7 @@ export const useAuth = () => {
 //Contains all fuctions that require auth protection
 export const AuthProvider = ({ children }) => {
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
-  const [severStatus, setServerStatus] = useState(false)
+  const [serverStatus, setServerStatus] = useState(false)
   const [userInfo, setUserInfo] = useState({
     getWinsInfo: 0,
     getGamesPlayedInfo: 0,
@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const loadServerStatus = async () =>{
-    if(!await isSeverUp()){
+    if(!await isServerUp()){
       setServerStatus(false)
   }else{
     setServerStatus(true)
@@ -139,7 +139,7 @@ export const AuthProvider = ({ children }) => {
     logOutFirebase,
     loading,
     loadLeaderboardInfo,
-    severStatus,
+    serverStatus,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

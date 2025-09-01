@@ -16,9 +16,12 @@ function CreateMatch() {
   };
   return (
     <>
-      <div className="createForm">
+      <div className="input-form2">
         <h2>Create match</h2>
-        <button onClick={() => handleCreate()}>Enter</button>
+        <button className ="keycap-enter" onClick={() => handleCreate()}>
+        <span className="letter-enter">Enter</span>
+        </button>
+       
       </div>
     </>
   );

@@ -1,0 +1,117 @@
+.input-container {
+  width: 220px;
+  position: relative;
+}
+
+
+.input {
+  width: 100%;
+  height: 40px;
+  padding: 10px;
+  transition: .2s linear;
+  border: 2.5px solid black;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-top: 10px;
+}
+
+.input:focus {
+  outline: none;
+  border: 0.5px solid black;
+  box-shadow: -5px -5px 0px black;
+}
+
+.input-container:hover > .icon {
+  animation: anim 1s linear infinite;
+}
+
+@keyframes anim {
+  0%,
+  100% {
+    transform: translateY(calc(-50% - 5px)) scale(1);
+  }
+
+  50% {
+    transform: translateY(calc(-50% - 5px)) scale(1.1);
+  }
+}
+
+.keycap-submit {
+  position: relative;
+  display: inline-block;
+  padding: 0;                  
+  width: 110px;  
+  height: 45px;   
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+
+  background: linear-gradient(180deg, #282828, #202020);
+  box-shadow:
+    inset -3px 0 3px rgba(0, 0, 0, 0.15),
+    inset 0 -3px 3px rgba(0, 0, 0, 0.25),
+    0 0 0 2px rgba(0, 0, 0, 0.75),
+    5px 8px 12px rgba(0, 0, 0, 0.4);
+
+  transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+    margin-top: 10px;
+
+}
+
+.keycap-submit::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  bottom: 8px;
+  right: 8px;
+  background: linear-gradient(90deg, #232323, #4a4a4a);
+  border-radius: 6px;
+  box-shadow:
+    -3px -3px 3px rgba(255, 255, 255, 0.25),
+    3px 2px 3px rgba(0, 0, 0, 0.15);
+  border-left: 1px solid #0004;
+  border-bottom: 1px solid #0004;
+  border-top: 1px solid #0009;
+}
+
+.keycap-submit .letter-submit {
+  position: absolute;
+  left: 10px;     /* tuck into top-left */
+  top: 10px;
+  z-index: 1;
+  color: #e9e9e9;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 500;
+
+  pointer-events: none;
+  transition: transform 0.1s ease-in-out;
+}
+
+.keycap-submit:active {
+  transform: translateY(1px);
+  box-shadow:
+    inset -2px 0 2px rgba(0, 0, 0, 0.1),
+    inset 0 -2px 2px rgba(0, 0, 0, 0.15),
+    0 0 0 2px rgba(0, 0, 0, 0.5),
+    3px 5px 6px rgba(0, 0, 0, 0.3);
+}
+.keycap-submit:active::before {
+  top: 5px;
+  left: 5px;
+  bottom: 6px;
+  right: 6px;
+}
+.keycap-submit:active .letter-submit {
+  transform: translateY(1px);
+}
+
+.keycap-submit:focus-visible {
+  outline: 2px solid #7dd3fc;
+  outline-offset: 2px;
+}
