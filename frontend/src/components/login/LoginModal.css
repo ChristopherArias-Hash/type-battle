@@ -1,28 +1,27 @@
 /* Base modal colors*/
 .dark-modal .dark-modal-content {
-  --bs-modal-bg: #4a4a4a;
+  --bs-modal-bg: #212121;
   --bs-modal-color: #ffffff; /* Borders & separators */
-  --bs-modal-border-color: rgba(255, 255, 255, 0.12);
-  --bs-modal-header-border-color: rgba(255, 255, 255, 0.12);
-  --bs-modal-footer-border-color: rgba(
-    255,
-    255,
-    255,
-    0.12
-  ); 
+  --bs-modal-border-color: #212121;
+  --bs-modal-header-border-color:#14adffab;
+  --bs-modal-footer-border-color: #14adffab;
+
 
 } 
 
 /* Tweaking padding/margins around the whole moda */
 .dark-modal .modal-header,
 .dark-modal .modal-footer {
+
   padding: 0.9rem 1rem;
 
 } /*  Inputs for dark background */
 .dark-modal .form-control {
+  
   background-color: #3d3d3d;
   color: #fff;
   border-color: rgba(255, 255, 255, 0.16);
+  
 }
 
 /* Controls width and height of modal */

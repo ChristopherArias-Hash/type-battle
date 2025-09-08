@@ -1,5 +1,7 @@
 import { useState } from "react";
-import "./MainPage.css";
+    import useSound from 'use-sound';
+
+import clickSound from '../sounds/keyboard-press.wav';
 import NavBar from "../components/navbar/NavBar.jsx";
 import JoinMatch from "../components/join-match/JoinMatch.jsx";
 import CreateMatch from "../components/create-match/CreateMatch.jsx";
@@ -8,6 +10,8 @@ import AboutUs from "../components/about-us/AboutUs.jsx";
 import LoginModal from "../components/login/LoginModal.jsx";
 import RegisterModal from "../components/register/RegisterModal.jsx";
 import { useAuth } from "../utils/authContext.jsx";
+import "./MainPage.css";
+
 function MainPage() {
   // Get auth state from context
   const { isUserLoggedIn, userInfo, logOutFirebase, loadUserInfo, loadLeaderboardInfo, serverStatus } = useAuth();
@@ -16,6 +20,9 @@ function MainPage() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
 
+  // Sound
+
+  const [playClickSound] = useSound(clickSound)
   return (
     <>
       <NavBar
@@ -43,8 +50,10 @@ function MainPage() {
       )}
       <div className="container">
         <div className="topSection">
-          <JoinMatch />
-          <CreateMatch/>
+          <JoinMatch
+          playClickSound={playClickSound} />
+          <CreateMatch
+           playClickSound={playClickSound}/>
         </div>
         <div className="bottomSection">
           <LeaderBoard 

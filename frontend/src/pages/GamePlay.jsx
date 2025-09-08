@@ -17,7 +17,6 @@ function GamePlay() {
   const { id: sessionId } = useParams(); //Grabs session id from url
   const [enableWarning, disableWarning] = useUserLeavingWarning(); //Warning for refresh page
   const { isUserLoggedIn, userInfo, logOutFirebase, loading } = useAuth(); //User state
-
   //Game functions
   const [timer, setTimer] = useState(60);
   const [playerReady, setPlayerReady] = useState(false);
@@ -62,7 +61,7 @@ function GamePlay() {
       }
     }
   }, [players, navigate]);
-  
+
   //Connnects web socket components, and verfies if game is avaible
   useEffect(() => {
     enableWarning();
@@ -122,7 +121,7 @@ function GamePlay() {
               }
               setTimeout(() => {
                 navigate("/");
-              }, 10000);
+              }, 1000000); //default 10000
             } else if (data.text) {
               setParagraphText(data.text);
             }
@@ -154,21 +153,21 @@ function GamePlay() {
           isUserLoggedIn={isUserLoggedIn}
           logOut={logOutFirebase}
         />
-        <div className="game-ended">
-          <h1>Game Over!</h1>
-          <h2>Final Scores:</h2>
+        <div className="game-ended-container">
+          <h2>Game Over!</h2>
+          <h3>Final Scores</h3>
 
-          <ul>
+          <ul className ="win-list">
             {players.map((p, index) => (
               <li key={index}>
                 {p.user?.displayName || p.user?.firebaseUid} - Score: {p.score}
               </li>
             ))}
           </ul>
-          <p>Your wpm {wpm}</p>
-          <p>{winnerText}</p>
+          <p className ="user-wpm">Your wpm {wpm}</p>
+          <p className ="winner-text">{winnerText}</p>
 
-          <p>Returning to main menu in 10 seconds...</p>
+          <p className ="return-screen">Returning to main menu in 10 seconds...</p>
         </div>
       </>
     );
@@ -183,24 +182,37 @@ function GamePlay() {
         logOut={logOutFirebase}
       />
 
-      <div className="lobby">
-        <h2>
-          Lobby {players.length}/4 (Game Session #{sessionId}) Time left:{" "}
-          {timer}s
+      <div className="lobby-container">
+        <h2 className="lobby-info">
+          Lobby {players.length}/4 (Game Session #
+          <b
+            className="session-id-text"
+            onClick={() => {
+              navigator.clipboard.writeText(sessionId);
+              alert("Session ID copied to clipboard!");
+            }}
+          >
+            {sessionId}
+          </b>
+          )
         </h2>
-        {!gameStart && (
-          <button onClick={() => ready_up()} disabled={playerReady}>
-            {playerReady ? "Ready!" : "Ready Up"}
-          </button>
-        )}
         <ul>
           {players.map((p, index) => (
             <li key={index}>
-              {p.user?.displayName || p.user?.firebaseUid} - Score: {p.score} |
-              Is ready: {p.ready ? "yes" : "no"}
+              {p.user?.displayName || p.user?.firebaseUid} – Score: {p.score}
+              {!gameStart && <> | Is ready: {p.ready ? "🟢" : " 🚩 "} </>}
             </li>
           ))}
         </ul>
+        {!playerReady && (
+          <button
+            className="ready-up-button"
+            onClick={() => ready_up()}
+            disabled={playerReady}
+          >
+            {playerReady ? "Ready!" : "Ready Up"}
+          </button>
+        )}
       </div>
       {gameStart ? (
         <TypingSentences
@@ -209,7 +221,7 @@ function GamePlay() {
           timer={timer}
         />
       ) : (
-        <h2>Please ready up to start the game</h2>
+        <h2 className="please-ready-text">Please ready up to start the game</h2>
       )}
     </>
   );

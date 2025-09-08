@@ -1,11 +1,15 @@
 
+.timer-display{
+  color:white;
+}
+
 .typing-area {
   position: relative;
   width: 100%;
   font-size: 1.5rem;
   font-family: monospace;
-  padding: 0.5rem;
-  background-color: #f0f0f0; /* Light gray background */
+  padding: 15px;
+  background-color: #272727; 
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   overflow: hidden;
@@ -13,42 +17,45 @@
 }
 
 .ghost-text {
-  left: 0.5rem;
-  color: #ccc; /* light gray for ghost text */
-  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25ch 0.1ch;   /* (row-gap col-gap): adjust to taste */
+  color: #cccccc;
   white-space: pre-wrap;
   pointer-events: none;
   width: 100%;
   overflow: hidden;
 }
 
+/* Each word as an inline flex group of letters */
 .word {
-    position: relative;
-    font-size: 1em;
-    line-height: 1em;
-    margin: .30em .3em;
-    border-bottom: 2px solid transparent;
-    float:left;
-    display:inline-block; 
+  display: inline-flex;
+  gap: 0;              
+  margin: 0;           
+  border-bottom: 2px solid transparent;
+}
+
+.letter {
+  display: inline-block;
+  position: relative;
+  line-height: 1.2em;
+  transition: border-color 0.1s ease-in-out; /* smooth fade */
 
 }
 
-.letter.correct{
-  color:green;
- 
+/* Space takes up a normal character width; still visible and focusable for caret */
+.letter.space {
+  white-space: pre;   
+  width: 1ch;         
 }
 
-.letter.incorrect{
-  color:red;
- 
-}
+.letter.correct { color: green; }
+.letter.incorrect { color: red; }
 
+/* caret effect on the current letter, including spaces */
 .letter.current {
-  border-bottom: 2px solid #00f;
-  animation: blink 0.8s step-end infinite;
+  border-bottom: 2px solid #1e83ba;
+
 }
 
-@keyframes blink {
-  from, to { border-color: transparent; }
-  50% { border-color: #00f; }
-}
