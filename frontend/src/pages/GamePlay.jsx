@@ -10,6 +10,8 @@ import {
   disconnectWebSocket,
   sendReadyUp,
 } from "../websocket";
+import Modal from "react-bootstrap/Modal";
+
 import { auth } from "../firebase";
 
 function GamePlay() {
@@ -24,6 +26,8 @@ function GamePlay() {
   const [players, setPlayers] = useState([]);
   const [gameStart, setGameStart] = useState(false);
   const [gameEnded, setGameEnded] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [pauseCountdown, setPauseCountdown] = useState(0);
   const [wpm, setWpm] = useState(0);
   const [winnerText, setWinnerText] = useState("");
 
@@ -100,6 +104,12 @@ function GamePlay() {
             setPlayers(playerList);
           },
           (data) => {
+            if (data.type == "game_pause") {
+              setIsPaused(true);
+              setPauseCountdown(data.duration);
+            } else if (data.type === "game_resume") {
+              setIsPaused(false);
+            }
             if (typeof data === "string") {
               setParagraphText(data);
             } else if (data.type === "timer_update") {
@@ -136,7 +146,14 @@ function GamePlay() {
       disableWarning();
     };
   }, [sessionId, navigate]);
-
+  useEffect(() => {
+    if (isPaused && pauseCountdown > 0) {
+      const interval = setInterval(() => {
+        setPauseCountdown((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [isPaused, pauseCountdown]);
   if (loading || paragraphText === null) {
     return <div>Loading...</div>;
   }
@@ -157,17 +174,19 @@ function GamePlay() {
           <h2 className="game-over">Game Over!</h2>
           <h3 className="final-scores">Final Scores</h3>
 
-          <ul className ="win-list">
+          <ul className="win-list">
             {players.map((p, index) => (
               <li key={index}>
                 {p.user?.displayName || p.user?.firebaseUid} - Score: {p.score}
               </li>
             ))}
           </ul>
-          <p className ="user-wpm">Your wpm {wpm}</p>
-          <p className ="winner-text">{winnerText}</p>
+          <p className="user-wpm">Your wpm {wpm}</p>
+          <p className="winner-text">{winnerText}</p>
 
-          <p className ="return-screen">Returning to main menu in 10 seconds...</p>
+          <p className="return-screen">
+            Returning to main menu in 10 seconds...
+          </p>
         </div>
       </>
     );
@@ -223,6 +242,14 @@ function GamePlay() {
       ) : (
         <h2 className="please-ready-text">Please ready up to start the game</h2>
       )}
+      <Modal show={isPaused} centered>
+        <Modal.Header>
+          <Modal.Title>Game Paused</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          The game will resume in {pauseCountdown} seconds.
+        </Modal.Body>
+      </Modal>
     </>
   );
 }
