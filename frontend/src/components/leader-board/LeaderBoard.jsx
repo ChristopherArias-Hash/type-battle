@@ -11,7 +11,7 @@ function LeaderBoard({ loadLeaderboardInfo, isUserLoggedIn}) {
       const response = await loadLeaderboardInfo(); // now works
       const data = response.data; 
       const items = data.map((user, index) => (
-        <li key={index}>{user.displayName} | Wins: {user.gamesWon}</li>
+        <li key={index}>{user.displayName}  <b className ="player-wins">WINS: <span className="player-wins-number">{user.gamesWon}</span></b></li>
       ));
       setListItems(items);
     }catch(error){
@@ -27,7 +27,7 @@ function LeaderBoard({ loadLeaderboardInfo, isUserLoggedIn}) {
       <h2>Leaderboard</h2>
       {isUserLoggedIn ? <ol className="leader-board-list">{listItems}</ol> 
       :
-      <li>Please login to see leadboard</li> 
+      <p>Please login to see leaderboard</p> 
       }
     </div>
   );

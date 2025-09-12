@@ -18,6 +18,7 @@ body {
   background-image: radial-gradient(rgba(255, 255, 255, 0.171) 2px, transparent 0);
   background-size: 45px 45px;
   background-position: -5px -5px
+  
 }
 .container {
   display: flex;
@@ -33,20 +34,43 @@ body {
   display: flex;
   justify-content: center;
   text-align: center;
+  flex-wrap: wrap;
   gap: 10rem;
   border-color: #14adffab;
   background-color: rgb(22, 22, 22);
-   box-shadow: 0 0 8px rgba(14, 165, 233, 0.6); /* soft glow */
+  box-shadow: 0 0 8px rgba(14, 165, 233, 0.6); /* soft glow */
   border-radius: 8px;
+  gap: clamp(1rem, 3vw, 10rem); 
+
   
 }
 
 .input-container, .input-container-2,
 .leader-board, .about-us {
  padding: 15px;
+  min-width: 0;       /* allows flexbox to calculate shrinking properly */
   width:400px;
   display: flex;
   flex-direction: column;
   align-items: center; /* aligns h2 to the left within each box */
   text-align: center;
+  
 }
+
+.container > div {
+  transform: translateY(10px);
+  opacity: 0;
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+.container > div:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+@keyframes fadeInUp {
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
