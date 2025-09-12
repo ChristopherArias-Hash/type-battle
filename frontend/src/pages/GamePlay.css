@@ -1,10 +1,9 @@
-.lobby-container{
-    background-color: #171717;
-    padding:15px;
-
+.lobby-container {
+  background-color: #171717;
+  padding: 15px;
 }
 
-.ready-up-button{
+.ready-up-button {
   background: linear-gradient(135deg, #2a2a2a 0%, #404040 100%);
   width: 220px;
   border: 1px solid rgba(20, 173, 255, 0.3);
@@ -17,53 +16,66 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  box-shadow: 
-    0 2px 8px rgba(0, 0, 0, 0.2),
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
   z-index: 2;
   position: relative;
 }
 
-.ready-up-button:hover{
-      background: linear-gradient(135deg, #14adff 0%, #1e83ba 100%);
+.ready-up-button:hover {
+  background: linear-gradient(135deg, #14adff 0%, #1e83ba 100%);
   border-color: rgba(255, 255, 255, 0.2);
   transform: translateY(-1px);
-  box-shadow: 
-    0 4px 12px rgba(20, 173, 255, 0.3),
-    0 2px 8px rgba(0, 0, 0, 0.3),
+  box-shadow: 0 4px 12px rgba(20, 173, 255, 0.3), 0 2px 8px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
-.session-id-text{
-  color:#1e83ba;
+.session-id-text {
+  color: #1e83ba;
 }
 
-.session-id-text:hover{
-  cursor:pointer;
+.session-id-text:hover {
+  cursor: pointer;
 }
 
-.please-ready-text{
-  font-weight: bold;   /* or use 700 */
-  
+.please-ready-text {
+  font-weight: bold; /* or use 700 */
+
   padding-left: 15px;
   margin-top: 15px;
-  color:white;
+  color: white;
   background-color: #212121;
- 
 }
-.game-ended-container{
+.game-ended-container {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   padding: 15px;
-  margin:40px;
+  margin: 40px;
   text-align: center;
   list-style-position: inside;
-  background-color:#171717;
-  border:  2px solid #14adff;
+  background-color: #171717;
+  border: 2px solid #14adff;
   border-radius: 10px;
-
- 
+  width: 500px;
+  
 }
 
+.game-over {
+  font-size: 50px;
+}
 
-.h3{
+.final-scores {
   text-decoration: underline;
+  text-decoration-color: #14adff;
+  text-underline-offset: 6px; /* adjust this value */
+  
 }
+.user-wpm,
+.winner-text,
+.return-screen {
+  text-align: center;
+  color: red;
+}
+

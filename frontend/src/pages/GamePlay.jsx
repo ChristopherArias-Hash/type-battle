@@ -154,8 +154,8 @@ function GamePlay() {
           logOut={logOutFirebase}
         />
         <div className="game-ended-container">
-          <h2>Game Over!</h2>
-          <h3>Final Scores</h3>
+          <h2 className="game-over">Game Over!</h2>
+          <h3 className="final-scores">Final Scores</h3>
 
           <ul className ="win-list">
             {players.map((p, index) => (
@@ -200,7 +200,7 @@ function GamePlay() {
           {players.map((p, index) => (
             <li key={index}>
               {p.user?.displayName || p.user?.firebaseUid} – Score: {p.score}
-              {!gameStart && <> | Is ready: {p.ready ? "🟢" : " 🚩 "} </>}
+              {!gameStart && <> | Is ready: {p.ready ? "🟢" : "🔴"} </>}
             </li>
           ))}
         </ul>
