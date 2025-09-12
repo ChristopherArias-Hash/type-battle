@@ -59,6 +59,7 @@ public class WebSocketDisconnectListener {
             return;
         }
 
+        // Goes through all the user's participant db section to find games they left.
         for (GameParticipants participant : participantList) {
             GameSessions session = participant.getGameSessions();
 
@@ -67,8 +68,8 @@ public class WebSocketDisconnectListener {
                 participantsRepository.delete(participant);
 
                 // Decrease lobby player count
-                int currentPlayers = session.getPlayersInLobby() != null ? session.getPlayersInLobby() : 0;
-                session.setPlayersInLobby(Math.max(0, currentPlayers - 1));
+                int currentLobbyPlayers = session.getPlayersInLobby() != null ? session.getPlayersInLobby() : 0;
+                session.setPlayersInLobby(Math.max(0, currentLobbyPlayers - 1));
                 sessionRepository.save(session);
 
                 // Check if lobby is now empty

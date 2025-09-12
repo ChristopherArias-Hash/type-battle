@@ -51,8 +51,9 @@ public class GameTimer {
             }
 
             long currentTime = System.currentTimeMillis();
-            long elapsedSeconds = (currentTime - session.getGameStartTime()) / 1000; //1000 60 seconds
+            long elapsedSeconds = (currentTime - session.getGameStartTime()) / 1000; //1 second
             int remainingTime = durationSeconds - (int) elapsedSeconds;
+
 
             if (remainingTime <= 0) {
                 // Game over
@@ -99,17 +100,23 @@ public class GameTimer {
         List<Map<String, Object>> wpmData = new ArrayList<>();
 
         for (GameParticipants participants : allParticipantsScores) {
-            int score = participants.getScore();
             User user = participants.getUser();
-            int wpm = (score/5); //Assuming 1 min = 60 seconds, if time change we need diff val
 
+            //Logic to add +1 to user's games played db section
+            int gamesPlayedByUser = user.getGamesPlayed();
+            user.setGamesPlayed(gamesPlayedByUser + 1);
+            userRepository.save(user);
+
+            //Wpm logic
+            int score = participants.getScore();
+            int wpm = (score/5); //Assuming 1 min = 60 seconds, if time change we need diff val
             Map<String, Object> userWpm = new HashMap<>();
             userWpm.put("userId", user.getId());
             userWpm.put("displayName", user.getDisplayName());
             userWpm.put("wpm", wpm);
             wpmData.add(userWpm);
 
-            if (user.getGamesWon() < wpm){
+            if (user.getHighestWpm() < wpm){
                 user.setHighestWpm(wpm);
                 userRepository.save(user);
             }
@@ -128,7 +135,7 @@ public class GameTimer {
                 int currentWins = winnerUser.getGamesWon();
                 winnerUser.setGamesWon(currentWins + 1);
                 userRepository.save(winnerUser);
-                gameEndMessage.put("win_message", "Winner is: " + winnerUser.getDisplayName() + "Won with a score of " + winnerParticipant.getScore()) ;
+                gameEndMessage.put("win_message", "Winner is: " + winnerUser.getDisplayName() + " with a score of " + winnerParticipant.getScore()) ;
                 System.out.println("[WebSocket] Winner is " + winnerUser.getDisplayName() + " with updated wins: " + winnerUser.getGamesWon());
 
             }

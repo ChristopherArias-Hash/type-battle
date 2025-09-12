@@ -3,42 +3,68 @@ package com.example.type_battle.config;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
+import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
 @Component
-public class FirebaseAuthFilter extends OncePerRequestFilter {
+public class FirebaseAuthFilter implements Filter {
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain)
-            throws ServletException, IOException {
-        String header = request.getHeader("Authorization");
+    public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
+            throws IOException, ServletException {
 
-        if (header != null && header.startsWith("Bearer ")) {
-            String idToken = header.substring(7);
+        HttpServletRequest request = (HttpServletRequest) req;
+        HttpServletResponse response = (HttpServletResponse) res;
 
-            try {
-                FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
-                String uid = decodedToken.getUid();
-
-                // You can also set a user context here
-                request.setAttribute("uid", uid);
-            } catch (FirebaseAuthException e) {
-                response.setStatus(HttpStatus.UNAUTHORIZED.value());
-                return;
-            }
+        // Handle CORS preflight requests immediately
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            addCorsHeaders(request, response);
+            response.setStatus(HttpServletResponse.SC_OK);
+            return;
         }
 
-        filterChain.doFilter(request, response);
+        String authHeader = request.getHeader("Authorization");
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            addCorsHeaders(request, response);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        }
+
+        String token = authHeader.substring(7);
+
+        try {
+            FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(token);
+            request.setAttribute("uid", decodedToken.getUid());
+            chain.doFilter(req, res);
+        } catch (FirebaseAuthException e) {
+            addCorsHeaders(request, response);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        }
+    }
+
+    /**
+     * Adds CORS headers for allowed origins so even error responses are CORS-compliant.
+     */
+    private void addCorsHeaders(HttpServletRequest request, HttpServletResponse response) {
+        String origin = request.getHeader("Origin");
+        if (origin != null && (
+                origin.equals("http://localhost:5173") ||
+                        origin.equals("https://typebattle.org") ||
+                        origin.equals("https://type-battle-9cjw.onrender.com")
+        )) {
+            response.setHeader("Access-Control-Allow-Origin", origin);
+        }
+        response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        response.setHeader("Access-Control-Allow-Headers", "*");
+        response.setHeader("Access-Control-Allow-Credentials", "true");
     }
 }
-

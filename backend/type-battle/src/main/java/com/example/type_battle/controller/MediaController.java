@@ -31,7 +31,6 @@ public class MediaController {
         // Upload file
         String key = mediaService.uploadFile(file, uid);
 
-        // Construct public URL if you want (optional)
         String imageUrl = "https://media.christopher-arias.com/" + key;
 
 
