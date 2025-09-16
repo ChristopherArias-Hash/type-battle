@@ -1,4 +1,5 @@
 import "./GamePlay.css";
+import MiniGameScreen from "../components/mini-game-screen/MiniGameScreen"
 import NavBar from "../components/navbar/NavBar";
 import TypingSentences from "../components/typing-sentences/TypingSentences";
 import useUserLeavingWarning from "../utils/useUserLeavingWarning";
@@ -10,7 +11,6 @@ import {
   disconnectWebSocket,
   sendReadyUp,
 } from "../websocket";
-import Modal from "react-bootstrap/Modal";
 
 import { auth } from "../firebase";
 
@@ -238,18 +238,16 @@ function GamePlay() {
           sessionId={sessionId}
           paragraphText={paragraphText}
           timer={timer}
+          isPaused={isPaused}
         />
       ) : (
         <h2 className="please-ready-text">Please ready up to start the game</h2>
       )}
-      <Modal show={isPaused} centered>
-        <Modal.Header>
-          <Modal.Title>Game Paused</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          The game will resume in {pauseCountdown} seconds.
-        </Modal.Body>
-      </Modal>
+     {isPaused && (
+      <MiniGameScreen
+      players={players}/>
+     ) }
+
     </>
   );
 }

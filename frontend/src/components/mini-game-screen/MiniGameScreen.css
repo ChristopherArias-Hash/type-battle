@@ -1,0 +1,25 @@
+.mini-game-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.6); /* backdrop */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 4; /* on top of game canvas */
+}
+
+.mini-game-container {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  width: 1200px;
+  height: 600px;
+  background: #0b1220;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+

@@ -2,7 +2,7 @@ import "./TypingSentences.css";
 import { sendCorrectStrokesOptimized } from "../../websocket";
 import { useState, useEffect, useRef } from "react";
 
-function TypingSentences({ paragraphText, sessionId, timer }) {
+function TypingSentences({ paragraphText, sessionId, timer, isPaused }) {
   const pendingStrokesRef = useRef(0);
   const [strokes, setStrokes] = useState("");
   const [correctStrokes, setCorrectStrokes] = useState(0);
@@ -54,6 +54,7 @@ function TypingSentences({ paragraphText, sessionId, timer }) {
 
   // 4) Key handling
   useEffect(() => {
+    if (isPaused) return; // When game paused disable main game
     const handleKeyDown = (event) => {
       const key = event.key;
 
@@ -85,16 +86,71 @@ function TypingSentences({ paragraphText, sessionId, timer }) {
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [letters, inputStatus, correctStrokes]);
+  }, [letters, inputStatus, correctStrokes, isPaused]);
 
   const approvedLetters = [
-    "a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z",
-    "A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z",
-    ","," ",".", "-"
+    "a",
+    "b",
+    "c",
+    "d",
+    "e",
+    "f",
+    "g",
+    "h",
+    "i",
+    "j",
+    "k",
+    "l",
+    "m",
+    "n",
+    "o",
+    "p",
+    "q",
+    "r",
+    "s",
+    "t",
+    "u",
+    "v",
+    "w",
+    "x",
+    "y",
+    "z",
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+    "P",
+    "Q",
+    "R",
+    "S",
+    "T",
+    "U",
+    "V",
+    "W",
+    "X",
+    "Y",
+    "Z",
+    ",",
+    " ",
+    ".",
+    "-",
   ];
 
   // Render helpers
-  const currentSentence = paragraphText ? paragraphText.split(" ") : ["Loading..."];
+  const currentSentence = paragraphText
+    ? paragraphText.split(" ")
+    : ["Loading..."];
   const flatLetters = paragraphText ? paragraphText.split("") : ["Loading..."];
 
   const checkIfStrokesCorrect = (newStroke) => {
