@@ -1,13 +1,7 @@
 package com.example.type_battle.controller;
 
-import com.example.type_battle.model.GameParticipants;
-import com.example.type_battle.model.GameSessions;
-import com.example.type_battle.model.Paragraphs;
-import com.example.type_battle.model.User;
-import com.example.type_battle.repository.GameParticipantsRepository;
-import com.example.type_battle.repository.GameSessionsRepository;
-import com.example.type_battle.repository.ParagraphsRepository;
-import com.example.type_battle.repository.UserRepository;
+import com.example.type_battle.model.*;
+import com.example.type_battle.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.example.type_battle.DTO.StrokeData;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -37,6 +31,10 @@ public class GameSessionWebSocketController {
     @Autowired
     private ParagraphsRepository paragraphsRepository;
 
+    @Autowired private MiniGameSessionRepository miniGameSessionRepository;
+
+    @Autowired private MiniGameParticipantsRepository miniGameParticipantRepository;
+
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
@@ -53,6 +51,52 @@ public class GameSessionWebSocketController {
         }
         return uid;
     }
+
+    @MessageMapping("mini_game/ready_up/{miniGameSessionId}")
+    public void readyUp(@DestinationVariable Long miniGameSessionId, SimpMessageHeaderAccessor headerAccessor) {
+        String uid = resolveUid(headerAccessor);
+
+        if (uid == null) {
+            System.out.println("[WebSocket] handlePlayerReadyUp called with no UID available!");
+            return;
+        }
+        Optional<MiniGameSession> sessionOpt = miniGameSessionRepository.findById(miniGameSessionId);
+        Optional<User> userOpt = userRepository.findByFirebaseUid(uid);
+        if (sessionOpt.isEmpty() || userOpt.isEmpty()) {
+            System.out.println("[WebSocket] User or Session not available");
+            return;
+        }
+        MiniGameSession miniGameSession = sessionOpt.get();
+        User user = userOpt.get();
+
+        Optional<MiniGameParticipants> participantOpt = miniGameParticipantRepository.findByMiniGameSessionAndUser(miniGameSession, user);
+
+        if (participantOpt.isEmpty()) {
+            System.out.println("[WebSocket] Participant not available");
+            return;
+        }
+       MiniGameParticipants miniGameParticipant = participantOpt.get();
+
+        miniGameParticipant.setIs_ready(true);
+        miniGameParticipantRepository.save(miniGameParticipant);
+
+        List<MiniGameParticipants> allParticipants = miniGameParticipantRepository.findAllByMiniGameSession(miniGameSession);
+        boolean everyoneReady = allParticipants.stream().allMatch(MiniGameParticipants::isIs_ready);
+
+        if (everyoneReady) {
+            miniGameSession.setStatus("in_progress");
+            miniGameSessionRepository.save(miniGameSession);
+            System.out.println("All players ready! Starting mini-game: " + miniGameSession.getId());
+
+            // TODO: Broadcast a "mini_game_started" message to all players
+        }
+
+        // Broadcast the updated participant list to a NEW, DEDICATED topic
+        messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId, allParticipants);
+
+    }
+
+
 
     //Listener that handles ready up of all users.
     @MessageMapping("/ready_up/{sessionId}")
@@ -161,6 +205,7 @@ public class GameSessionWebSocketController {
         messagingTemplate.convertAndSend("/topic/lobby/" + sessionId, participantsRepository.findAllByGameSessions(session));
     }
 
+
     @MessageMapping("/join/{sessionId}")
     public void joinGame(@DestinationVariable String sessionId, SimpMessageHeaderAccessor headerAccessor) {
         //Check for auth user
@@ -217,7 +262,6 @@ public class GameSessionWebSocketController {
         }
 
 
-
         // Creates list of people in lobby and sends it to everyone
         List<GameParticipants> allParticipants = participantsRepository.findAllByGameSessions(session);
         messagingTemplate.convertAndSend("/topic/lobby/" + sessionId, allParticipants);
@@ -231,5 +275,11 @@ public class GameSessionWebSocketController {
         } else {
             System.out.println("[WebSocket] WARNING: Session has no paragraph assigned.");
         }
+
+    }
+
+    @MessageMapping("/join-mini-game/{sessionId}")
+    public void joinMiniGame(@DestinationVariable String sessionId, SimpMessageHeaderAccessor headerAccessor) {
+        String uid = resolveUid(headerAccessor);
     }
 }

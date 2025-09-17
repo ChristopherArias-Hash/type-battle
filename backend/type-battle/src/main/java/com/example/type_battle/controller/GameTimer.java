@@ -1,15 +1,13 @@
 package com.example.type_battle.controller;
 
-import com.example.type_battle.model.GameParticipants;
-import com.example.type_battle.model.GameSessions;
-import com.example.type_battle.model.User;
-import com.example.type_battle.repository.GameParticipantsRepository;
-import com.example.type_battle.repository.GameSessionsRepository;
-import com.example.type_battle.repository.UserRepository;
+import com.example.type_battle.model.*;
+import com.example.type_battle.repository.*;
 import jakarta.annotation.PreDestroy;
 import java.util.*;
 import java.util.concurrent.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.s3.endpoints.internal.Value;
@@ -20,9 +18,17 @@ public class GameTimer {
 
     @Autowired private GameParticipantsRepository participantsRepository;
 
+    @Autowired private MiniGamesRepository miniGamesRepository;
+
+    @Autowired private MiniGameSessionRepository miniGameSessionRepository;
+
+    @Autowired private MiniGameParticipantsRepository miniGameParticipantRepository;
+
     @Autowired private UserRepository userRepository;
 
     @Autowired private SimpMessagingTemplate messagingTemplate;
+
+
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);
     private final Map<String, ScheduledFuture<?>> gameTimers = new ConcurrentHashMap<>();
@@ -30,7 +36,7 @@ public class GameTimer {
     private final Map<String, Integer> remainingTimeBeforePause = new ConcurrentHashMap<>();
     private final Map<String, Set<Integer>> triggeredPausePoints = new ConcurrentHashMap<>();
     private final Set<Integer> pausePoints = Set.of(45, 30, 15);
-    private final int PAUSE_DURATION = 30;
+    private final int PAUSE_DURATION = 100000;
     public void startGameTimer(String sessionId, int durationSeconds) {
         // Cancel existing timer if any
         stopGameTimer(sessionId);
@@ -82,13 +88,58 @@ public class GameTimer {
     }
 
     private void pauseGame(String sessionId, int remainingTime) {
+
+        Optional<GameSessions> sessionOpt = sessionRepository.findByLobbyCode(sessionId);
+        if (sessionOpt.isEmpty()) {
+            System.out.println("[GameTimer] ERROR: Could not find session " + sessionId + " to create a mini-game for.");
+            return;
+        }
+        GameSessions mainSession = sessionOpt.get();
+
+
+        MiniGameSession newMiniGameSession = new MiniGameSession();
+        newMiniGameSession.setGameSessions(mainSession);
+        newMiniGameSession.setTriggerTime(remainingTime);
+        newMiniGameSession.setStatus("waiting");
+
+        long totalMiniGames = miniGamesRepository.count();
+        if(totalMiniGames > 0) {
+            long randomId = (long) (Math.random() * totalMiniGames) +1;
+            Optional<MiniGames> miniGameOpt = miniGamesRepository.findById(randomId);
+            if (miniGameOpt.isPresent()) {
+                newMiniGameSession.setMiniGames(miniGameOpt.get());
+            } else {
+                System.out.println("[GameTimer] ERROR: Randomly selected mini-game ID " + randomId + " was not found.");
+                return; // Stop if a game can't be assigned.
+            }
+        } else {
+            // Log an error if no mini-games exist in the database.
+            System.out.println("[GameTimer] ERROR: No mini-games are available in the database to create a session.");
+            return;
+        }
+        miniGameSessionRepository.save(newMiniGameSession);
+        System.out.println("[GameTimer] Successfully created mini-game session " + newMiniGameSession.getId());
+
+        List<GameParticipants> mainSessionParticipants = participantsRepository.findAllByGameSessions(mainSession);
+
+        for (GameParticipants participant : mainSessionParticipants) {
+            MiniGameParticipants miniGameParticipant = new MiniGameParticipants();
+            miniGameParticipant.setScore(0);
+            miniGameParticipant.setUser(participant.getUser());
+            miniGameParticipant.setIs_ready(false);
+            miniGameParticipant.setMiniGameSession(newMiniGameSession);
+            miniGameParticipantRepository.save(miniGameParticipant);
+
+        }
         gamePaused.put(sessionId, true);
         remainingTimeBeforePause.put(sessionId, remainingTime);
 
         Map<String, Object> pauseMessage = new HashMap<>();
         pauseMessage.put("type", "game_pause");
         pauseMessage.put("duration", PAUSE_DURATION);
+        pauseMessage.put("miniGameSessionId", newMiniGameSession.getId());
         messagingTemplate.convertAndSend("/topic/game/" + sessionId, pauseMessage);
+
         scheduler.schedule(
                 () -> resumeGame(sessionId), PAUSE_DURATION, TimeUnit.SECONDS);
     }
