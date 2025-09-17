@@ -1,10 +1,12 @@
 import "./MiniGameScreen.css";
 import Stacker from "../mini-games/stacker/Stacker"
-function miniGameScreen ({players}){
+function miniGameScreen ({miniGamePlayers, miniGameId}){
   return(
     <div className="mini-game-overlay">
         <div className="mini-game-container">
-          <Stacker players={players}/>
+          <Stacker miniGamePlayers={miniGamePlayers}
+           miniGameId={miniGameId}/>
+       
         </div>
       </div>
   );

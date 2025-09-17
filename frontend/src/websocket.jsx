@@ -46,7 +46,7 @@ export function connectWebSocket(sessionId, firebaseToken, onPlayerListUpdate, o
         body: "",
       });
     },
-
+    
     onStompError: (frame) => {
       console.error("[WebSocket] STOMP error:", frame.headers["message"]);
       console.error("[WebSocket] Error details:", frame.body);
@@ -113,3 +113,30 @@ export function sendReadyUp(sessionId) {
   }
 }
 
+
+export function subscribeToMiniGameLobby(miniGameSessionId, onMiniGamePlayerListUpdate) {
+  if (!stompClient || !stompClient.connected) {
+    console.error("[WebSocket] Cannot subscribe to mini-game, client not connected.");
+    return null;
+  }
+
+  console.log(`[WebSocket] Subscribing to mini-game lobby: /topic/mini-game-lobby/${miniGameSessionId}`);
+
+  // Subscribe to the new topic and pass the handler function
+  return stompClient.subscribe(`/topic/mini-game-lobby/${miniGameSessionId}`, (message) => {
+    const updatedPlayers = JSON.parse(message.body);
+    onMiniGamePlayerListUpdate(updatedPlayers);
+  });
+}
+
+export function sendMiniGameReadyUp(miniGameSessionId) {
+  if (stompClient && stompClient.connected) {
+    stompClient.publish({
+      destination: `/app/mini_game/ready_up/${miniGameSessionId}`,
+      body: "",
+    });
+    console.log(`[WebSocket] Sent ready_up to /app/mini_game/ready_up/${miniGameSessionId}`);
+  } else {
+    console.log("[WebSocket] Mini_game ready_up not sent, client not connected.");
+  }
+}

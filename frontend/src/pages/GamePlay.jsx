@@ -1,5 +1,5 @@
 import "./GamePlay.css";
-import MiniGameScreen from "../components/mini-game-screen/MiniGameScreen"
+import MiniGameScreen from "../components/mini-game-screen/MiniGameScreen";
 import NavBar from "../components/navbar/NavBar";
 import TypingSentences from "../components/typing-sentences/TypingSentences";
 import useUserLeavingWarning from "../utils/useUserLeavingWarning";
@@ -10,6 +10,7 @@ import {
   connectWebSocket,
   disconnectWebSocket,
   sendReadyUp,
+  subscribeToMiniGameLobby,
 } from "../websocket";
 
 import { auth } from "../firebase";
@@ -17,6 +18,8 @@ import { auth } from "../firebase";
 function GamePlay() {
   const navigate = useNavigate();
   const { id: sessionId } = useParams(); //Grabs session id from url
+ const [miniGameId, setMiniGameId] = useState(null);
+  const [miniGamePlayers, setMiniGamePlayers] = useState([]);
   const [enableWarning, disableWarning] = useUserLeavingWarning(); //Warning for refresh page
   const { isUserLoggedIn, userInfo, logOutFirebase, loading } = useAuth(); //User state
   //Game functions
@@ -104,12 +107,24 @@ function GamePlay() {
             setPlayers(playerList);
           },
           (data) => {
-            if (data.type == "game_pause") {
+            if (data.type === "game_pause") {
               setIsPaused(true);
-              setPauseCountdown(data.duration);
+              const newMiniGameId = data.miniGameSessionId;
+              setMiniGameId(newMiniGameId);
+
+              if (newMiniGameId) {
+                subscribeToMiniGameLobby(
+                  newMiniGameId,
+                  (updatedMiniGamePlayers) => {
+                    setMiniGamePlayers(updatedMiniGamePlayers);
+                  }
+                );
+              }
             } else if (data.type === "game_resume") {
               setIsPaused(false);
+              setMiniGamePlayers([]); // Clear the state when it's over
             }
+
             if (typeof data === "string") {
               setParagraphText(data);
             } else if (data.type === "timer_update") {
@@ -243,11 +258,7 @@ function GamePlay() {
       ) : (
         <h2 className="please-ready-text">Please ready up to start the game</h2>
       )}
-     {isPaused && (
-      <MiniGameScreen
-      players={players}/>
-     ) }
-
+      {isPaused && <MiniGameScreen miniGamePlayers={miniGamePlayers} miniGameId={miniGameId} />}
     </>
   );
 }

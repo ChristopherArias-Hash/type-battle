@@ -1,12 +1,22 @@
 import "./Stacker.css";
 import { useEffect, useState, useRef, useCallback } from "react";
-
-function Stacker({ players }) {
+import {
+  sendMiniGameReadyUp
+} from "../../../websocket"
+function Stacker({ miniGamePlayers, miniGameId }) {
   const canvasRef = useRef(null);
   const [score, setScore] = useState(0);
   const [highScore, setHighScore] = useState(0);
   const [gameState, setGameState] = useState("waiting"); // 'waiting', 'playing', 'ended'
   const [isPerfectFlash, setIsPerfectFlash] = useState(false);
+  const [playerIsReady, setPlayerIsReady] = useState(false)
+  
+  const handleReadyUp = () => {
+    if (!playerIsReady && miniGameId) {
+      sendMiniGameReadyUp(miniGameId); // 2. CALL the function on click
+      setPlayerIsReady(true);
+    }
+  };
 
   // Ref to track gameState inside useCallback without adding it as a dependency
   const gameStateRef = useRef(gameState);
@@ -15,7 +25,6 @@ function Stacker({ players }) {
   }, [gameState]);
 
   // Refs for game state values needed in the animation loop to avoid stale closures
-  const ready = false;
   const stackRef = useRef([]);
   const currentBlockRef = useRef(null);
   const directionRef = useRef(1);
@@ -332,14 +341,14 @@ function Stacker({ players }) {
     <div className="mini-game-stacker">
       <h3>Stacker - WAITING ROOM</h3>
       <ul>
-        {players.map((p, index) => (
+        {miniGamePlayers.map((p, index) => (
           <li key={index}>
             {p.user?.displayName || p.user?.firebaseUid} – Score: {p.score}
           </li>
         ))}
       </ul>
-      <button>Ready</button>
-      {ready && (
+      <button onClick={handleReadyUp}>Ready</button>
+      {playerIsReady && (
         <div className="game-wrapper">
           <div
             id="game-container"
