@@ -10,7 +10,7 @@ function TypingSentences({ paragraphText, sessionId, timer, isPaused }) {
   const [letters, setLetters] = useState(0);
   const [restored, setRestored] = useState(false);
 
-  // 1) RESTORE once the paragraph is available (or session changes)
+  //RESTORE once the paragraph is available (or session changes)
   useEffect(() => {
     if (!paragraphText) return;
 
@@ -30,7 +30,7 @@ function TypingSentences({ paragraphText, sessionId, timer, isPaused }) {
     setRestored(true);
   }, [paragraphText, sessionId]);
 
-  // 2) SAVE after we’ve attempted restore
+  //SAVE after we’ve attempted restore
   useEffect(() => {
     if (!restored) return;
     const dataToStore = { strokes, correctStrokes, letters, inputStatus };
@@ -40,7 +40,7 @@ function TypingSentences({ paragraphText, sessionId, timer, isPaused }) {
     );
   }, [strokes, correctStrokes, letters, inputStatus, sessionId, restored]);
 
-  // 3) Batch-send correct strokes (comment said 100ms; code was 800ms — pick one and keep it consistent)
+  //Batch-send correct strokes (comment said 100ms; code was 800ms — pick one and keep it consistent)
   useEffect(() => {
     const interval = setInterval(() => {
       const strokesToSend = pendingStrokesRef.current;
@@ -52,7 +52,7 @@ function TypingSentences({ paragraphText, sessionId, timer, isPaused }) {
     return () => clearInterval(interval);
   }, [sessionId]);
 
-  // 4) Key handling
+  //handling keystrokes
   useEffect(() => {
     if (isPaused) return; // When game paused disable main game
     const handleKeyDown = (event) => {
@@ -170,6 +170,7 @@ function TypingSentences({ paragraphText, sessionId, timer, isPaused }) {
     setLetters((prev) => prev + 1);
   };
 
+  //Creates <word> <letters> per word and letters to easily control css
   const listOfSentence = currentSentence.map((word, i) => {
     const wordLetters = word.split("");
 
