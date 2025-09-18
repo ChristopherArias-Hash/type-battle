@@ -231,7 +231,9 @@ function Stacker({ miniGamePlayers, miniGameId }) {
             const snappedX = Math.round(startOverlap / baseUnitWidth) * baseUnitWidth;
             newBlock = { x: snappedX, y: blockToDrop.y, width: newWidth };
         } else {
-            endGame(); return;
+            endGame();
+            startGame(); 
+            return;
         }
 
         let newStack = [...stack, newBlock];
