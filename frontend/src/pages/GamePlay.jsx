@@ -20,11 +20,9 @@ function GamePlay() {
   const { id: sessionId } = useParams();
   const [miniGameId, setMiniGameId] = useState(null);
   const miniGameIdRef = useRef(miniGameId); 
-
   const [miniGamePlayers, setMiniGamePlayers] = useState([]);
   const [enableWarning, disableWarning] = useUserLeavingWarning();
   const { isUserLoggedIn, userInfo, logOutFirebase, loading } = useAuth();
-
   const [timer, setTimer] = useState(() => JSON.parse(sessionStorage.getItem(`timer-${sessionId}`)) || 60);
   const [playerReady, setPlayerReady] = useState(() => JSON.parse(sessionStorage.getItem(`playerReady-${sessionId}`)) || false);
   const [paragraphText, setParagraphText] = useState(null);
@@ -36,7 +34,10 @@ function GamePlay() {
   const [winnerText, setWinnerText] = useState("");
 
   const disableLogout = true;
-
+    
+  const sleep = (ms) => {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    };
   // Restore miniGameId from sessionStorage if we were in a mini-game
   useEffect(() => {
     const savedMiniGameId = sessionStorage.getItem(`miniGameId-${sessionId}`);
@@ -54,7 +55,7 @@ function GamePlay() {
     }
   }, [miniGameId, sessionId]);
   
-  const ready_up = () => {
+  const ready_up = async () => {
     setPlayerReady(true);
     sendReadyUp(sessionId);
   };
