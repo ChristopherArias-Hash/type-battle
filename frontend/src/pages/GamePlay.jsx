@@ -14,54 +14,64 @@ import {
 } from "../websocket";
 
 import { auth } from "../firebase";
-
 function GamePlay() {
   const navigate = useNavigate();
   const { id: sessionId } = useParams();
   const [miniGameId, setMiniGameId] = useState(null);
-  const miniGameIdRef = useRef(miniGameId); 
+  const miniGameIdRef = useRef(miniGameId);
   const [miniGamePlayers, setMiniGamePlayers] = useState([]);
+  const [miniGameTimer, setMiniGameTimer] = useState(
+    () =>
+      JSON.parse(sessionStorage.getItem(`miniGameTimer-${sessionId}`)) || null
+  );
   const [enableWarning, disableWarning] = useUserLeavingWarning();
   const { isUserLoggedIn, userInfo, logOutFirebase, loading } = useAuth();
-  const [timer, setTimer] = useState(() => JSON.parse(sessionStorage.getItem(`timer-${sessionId}`)) || 60);
-  const [playerReady, setPlayerReady] = useState(() => JSON.parse(sessionStorage.getItem(`playerReady-${sessionId}`)) || false);
+  const [timer, setTimer] = useState(
+    () => JSON.parse(sessionStorage.getItem(`timer-${sessionId}`)) || 60
+  );
+  const [playerReady, setPlayerReady] = useState(
+    () =>
+      JSON.parse(sessionStorage.getItem(`playerReady-${sessionId}`)) || false
+  );
   const [paragraphText, setParagraphText] = useState(null);
   const [players, setPlayers] = useState([]);
-  const [gameStart, setGameStart] = useState(() => JSON.parse(sessionStorage.getItem(`gameStart-${sessionId}`)) || false);
+  const [gameStart, setGameStart] = useState(
+    () => JSON.parse(sessionStorage.getItem(`gameStart-${sessionId}`)) || false
+  );
   const [gameEnded, setGameEnded] = useState(false);
-  const [isPaused, setIsPaused] = useState(() => JSON.parse(sessionStorage.getItem(`isPaused-${sessionId}`)) || false);
+  const [isPaused, setIsPaused] = useState(
+    () => JSON.parse(sessionStorage.getItem(`isPaused-${sessionId}`)) || false
+  );
   const [wpm, setWpm] = useState(0);
   const [winnerText, setWinnerText] = useState("");
 
   const disableLogout = true;
-    
-  const sleep = (ms) => {
-      return new Promise(resolve => setTimeout(resolve, ms));
-    };
+
   // Restore miniGameId from sessionStorage if we were in a mini-game
   useEffect(() => {
     const savedMiniGameId = sessionStorage.getItem(`miniGameId-${sessionId}`);
     if (savedMiniGameId && isPaused) {
       setMiniGameId(savedMiniGameId);
-      // Don't subscribe here - wait for WebSocket connection
     }
   }, [sessionId, isPaused]);
 
   useEffect(() => {
     miniGameIdRef.current = miniGameId;
-    // Save miniGameId to sessionStorage
     if (miniGameId) {
       sessionStorage.setItem(`miniGameId-${sessionId}`, miniGameId);
     }
   }, [miniGameId, sessionId]);
-  
+
   const ready_up = async () => {
     setPlayerReady(true);
     sendReadyUp(sessionId);
   };
 
   useEffect(() => {
-    if (players.length > 0 && players[0].gameSessions.status === "in_progress") {
+    if (
+      players.length > 0 &&
+      players[0].gameSessions.status === "in_progress"
+    ) {
       setGameStart(true);
     }
   }, [players]);
@@ -69,7 +79,9 @@ function GamePlay() {
   useEffect(() => {
     if (players.length > 0) {
       const currentUserId = auth.currentUser?.uid;
-      const isInLobby = players.some(p => p.user?.firebaseUid === currentUserId);
+      const isInLobby = players.some(
+        (p) => p.user?.firebaseUid === currentUserId
+      );
       if (!isInLobby && players.length >= 4) {
         disableWarning();
         alert("Cannot join: lobby is full.");
@@ -82,8 +94,15 @@ function GamePlay() {
     sessionStorage.setItem(`timer-${sessionId}`, JSON.stringify(timer));
     sessionStorage.setItem(`isPaused-${sessionId}`, JSON.stringify(isPaused));
     sessionStorage.setItem(`gameStart-${sessionId}`, JSON.stringify(gameStart));
-    sessionStorage.setItem(`playerReady-${sessionId}`, JSON.stringify(playerReady));
-  }, [timer, isPaused, gameStart, playerReady, sessionId]);
+    sessionStorage.setItem(
+      `playerReady-${sessionId}`,
+      JSON.stringify(playerReady)
+    );
+    sessionStorage.setItem(
+      `miniGameTimer-${sessionId}`,
+      JSON.stringify(miniGameTimer)
+    );
+  }, [timer, isPaused, gameStart, playerReady, miniGameTimer, sessionId]);
 
   useEffect(() => {
     enableWarning();
@@ -91,9 +110,12 @@ function GamePlay() {
       const user = auth.currentUser;
       if (user) {
         const token = await user.getIdToken();
-        const response = await fetch(`http://localhost:8080/protected/game-session?lobbyCode=${sessionId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await fetch(
+          `http://localhost:8080/protected/game-session?lobbyCode=${sessionId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
 
         if (!response.ok) {
           console.error("Session not found or unauthorized.");
@@ -114,29 +136,40 @@ function GamePlay() {
           (data) => {
             if (data.type === "game_pause") {
               const newMiniGameId = data.miniGameSessionId;
+              const newMiniGameTimer = data.duration;
               setMiniGameId(newMiniGameId);
               setIsPaused(true);
+              setMiniGameTimer(newMiniGameTimer);
               if (newMiniGameId) {
-                subscribeToMiniGameLobby(newMiniGameId, (updatedMiniGamePlayers) => {
-                  setMiniGamePlayers(updatedMiniGamePlayers);
+                subscribeToMiniGameLobby(newMiniGameId, (miniGameData) => {
+                  if (Array.isArray(miniGameData)) {
+                    setMiniGamePlayers(miniGameData);
+                  } else if (miniGameData && miniGameData.players) {
+                    setMiniGamePlayers(miniGameData.players);
+                    if (miniGameData.remainingTime !== undefined) {
+                      setMiniGameTimer(miniGameData.remainingTime);
+                    }
+                  }
                 });
               }
             } else if (data.type === "game_resume") {
-              // Only clean up sessionStorage after we've successfully resumed
               const completedMiniGameId = miniGameIdRef.current;
-              
               setIsPaused(false);
               setMiniGamePlayers([]);
               setMiniGameId(null);
-              
-              // Clean up sessionStorage for the completed mini-game
               if (completedMiniGameId) {
-                console.log(`🧹 Cleaning up session storage for completed mini-game: ${completedMiniGameId}`);
-                sessionStorage.removeItem(`stackerGameState-${completedMiniGameId}`);
+                console.log(
+                  `🧹 Cleaning up session storage for completed mini-game: ${completedMiniGameId}`
+                );
+                sessionStorage.removeItem(
+                  `stackerGameState-${completedMiniGameId}`
+                );
+                sessionStorage.removeItem(
+                  `stackerHighScore-${completedMiniGameId}`
+                );
+                sessionStorage.removeItem(`miniGameTimer-${sessionId}`);
               }
-              // Clean up the miniGameId from main game sessionStorage
               sessionStorage.removeItem(`miniGameId-${sessionId}`);
-              
             } else if (data.type === "timer_update") {
               setTimer(data.remainingTime);
             } else if (data.type === "game_end") {
@@ -144,19 +177,44 @@ function GamePlay() {
               disableWarning();
               setGameStart(false);
               setWinnerText(data.win_message);
-              const currentUserWpm = data.wpm_data?.find(entry => entry.displayName === userInfo.getDisplayName);
+              const currentUserWpm = data.wpm_data?.find(
+                (entry) => entry.displayName === userInfo.getDisplayName
+              );
               if (currentUserWpm) setWpm(currentUserWpm.wpm);
-              
-              // Clean up ALL sessionStorage when game ends
               sessionStorage.removeItem(`timer-${sessionId}`);
               sessionStorage.removeItem(`isPaused-${sessionId}`);
               sessionStorage.removeItem(`gameStart-${sessionId}`);
               sessionStorage.removeItem(`playerReady-${sessionId}`);
               sessionStorage.removeItem(`miniGameId-${sessionId}`);
-              
+              sessionStorage.removeItem(`miniGameTimer-${sessionId}`);
               setTimeout(() => navigate("/"), 10000);
             } else if (data.text) {
               setParagraphText(data.text);
+            }
+          },
+          () => {
+            // This callback runs once the WebSocket is connected.
+            const restoredMiniGameId = sessionStorage.getItem(
+              `miniGameId-${sessionId}`
+            );
+            const isRestoredPaused = JSON.parse(
+              sessionStorage.getItem(`isPaused-${sessionId}`)
+            );
+
+            if (isRestoredPaused && restoredMiniGameId) {
+              console.log(
+                `[Re-Subscribing] Found existing mini-game ${restoredMiniGameId} on reconnect.`
+              );
+              subscribeToMiniGameLobby(restoredMiniGameId, (miniGameData) => {
+                if (Array.isArray(miniGameData)) {
+                  setMiniGamePlayers(miniGameData);
+                } else if (miniGameData && miniGameData.players) {
+                  setMiniGamePlayers(miniGameData.players);
+                  if (miniGameData.remainingTime !== undefined) {
+                    setMiniGameTimer(miniGameData.remainingTime);
+                  }
+                }
+              });
             }
           }
         );
@@ -172,14 +230,14 @@ function GamePlay() {
   // Clean up sessionStorage when component unmounts (but not when refreshing)
   useEffect(() => {
     return () => {
-      // Only clean up if we're actually leaving (not refreshing)
-      const isRefreshing = sessionStorage.getItem('isRefreshing');
+      const isRefreshing = sessionStorage.getItem("isRefreshing");
       if (!isRefreshing) {
         sessionStorage.removeItem(`timer-${sessionId}`);
         sessionStorage.removeItem(`isPaused-${sessionId}`);
         sessionStorage.removeItem(`gameStart-${sessionId}`);
         sessionStorage.removeItem(`playerReady-${sessionId}`);
         sessionStorage.removeItem(`miniGameId-${sessionId}`);
+        sessionStorage.removeItem(`miniGameTimer-${sessionId}`);
       }
     };
   }, [sessionId]);
@@ -187,19 +245,16 @@ function GamePlay() {
   // Track refresh vs actual navigation
   useEffect(() => {
     const handleBeforeUnload = () => {
-      sessionStorage.setItem('isRefreshing', 'true');
+      sessionStorage.setItem("isRefreshing", "true");
     };
-    
     const handleLoad = () => {
-      sessionStorage.removeItem('isRefreshing');
+      sessionStorage.removeItem("isRefreshing");
     };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    window.addEventListener('load', handleLoad);
-    
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("load", handleLoad);
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      window.removeEventListener('load', handleLoad);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("load", handleLoad);
     };
   }, []);
 
@@ -209,7 +264,11 @@ function GamePlay() {
   if (gameEnded) {
     return (
       <>
-        <NavBar userInfo={userInfo} isUserLoggedIn={isUserLoggedIn} logOut={logOutFirebase} />
+        <NavBar
+          userInfo={userInfo}
+          isUserLoggedIn={isUserLoggedIn}
+          logOut={logOutFirebase}
+        />
         <div className="game-ended-container">
           <h2 className="game-over">Game Over!</h2>
           <h3 className="final-scores">Final Scores</h3>
@@ -222,7 +281,9 @@ function GamePlay() {
           </ul>
           <p className="user-wpm">Your wpm {wpm}</p>
           <p className="winner-text">{winnerText}</p>
-          <p className="return-screen">Returning to main menu in 10 seconds...</p>
+          <p className="return-screen">
+            Returning to main menu in 10 seconds...
+          </p>
         </div>
       </>
     );
@@ -230,13 +291,22 @@ function GamePlay() {
 
   return (
     <>
-      <NavBar disableLogout={disableLogout} userInfo={userInfo} isUserLoggedIn={isUserLoggedIn} logOut={logOutFirebase} />
+      <NavBar
+        disableLogout={disableLogout}
+        userInfo={userInfo}
+        isUserLoggedIn={isUserLoggedIn}
+        logOut={logOutFirebase}
+      />
       <div className="lobby-container">
         <h2 className="lobby-info">
           Lobby {players.length}/4 (Game Session #
-          <b className="session-id-text" onClick={() => navigator.clipboard.writeText(sessionId)}>
+          <b
+            className="session-id-text"
+            onClick={() => navigator.clipboard.writeText(sessionId)}
+          >
             {sessionId}
-          </b>)
+          </b>
+          )
         </h2>
         <ul>
           {players.map((p, index) => (
@@ -247,17 +317,32 @@ function GamePlay() {
           ))}
         </ul>
         {!playerReady && (
-          <button className="ready-up-button" onClick={ready_up} disabled={playerReady}>
+          <button
+            className="ready-up-button"
+            onClick={ready_up}
+            disabled={playerReady}
+          >
             {playerReady ? "Ready!" : "Ready Up"}
           </button>
         )}
       </div>
       {gameStart ? (
-        <TypingSentences sessionId={sessionId} paragraphText={paragraphText} timer={timer} isPaused={isPaused} />
+        <TypingSentences
+          sessionId={sessionId}
+          paragraphText={paragraphText}
+          timer={timer}
+          isPaused={isPaused}
+        />
       ) : (
         <h2 className="please-ready-text">Please ready up to start the game</h2>
       )}
-      {isPaused && <MiniGameScreen miniGamePlayers={miniGamePlayers} miniGameId={miniGameId} />}
+      {isPaused && (
+        <MiniGameScreen
+          miniGamePlayers={miniGamePlayers}
+          miniGameId={miniGameId}
+          miniGameTimer={miniGameTimer}
+        />
+      )}
     </>
   );
 }
