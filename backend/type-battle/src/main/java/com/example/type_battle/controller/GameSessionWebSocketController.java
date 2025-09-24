@@ -14,6 +14,7 @@ import org.springframework.stereotype.Controller;
 import java.security.Principal;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Controller
@@ -75,7 +76,7 @@ public class GameSessionWebSocketController {
             System.out.println("[WebSocket] Participant not available");
             return;
         }
-       MiniGameParticipants miniGameParticipant = participantOpt.get();
+        MiniGameParticipants miniGameParticipant = participantOpt.get();
 
         miniGameParticipant.setIs_ready(true);
         miniGameParticipantRepository.save(miniGameParticipant);
@@ -87,8 +88,9 @@ public class GameSessionWebSocketController {
             miniGameSession.setStatus("in_progress");
             miniGameSessionRepository.save(miniGameSession);
             System.out.println("All players ready! Starting mini-game: " + miniGameSession.getId());
+            gameTimer.startMiniGameTimer(miniGameSessionId);
 
-            // TODO: Broadcast a "mini_game_started" message to all players
+
         }
 
         // Broadcast the updated participant list to a NEW, DEDICATED topic
@@ -205,7 +207,47 @@ public class GameSessionWebSocketController {
         messagingTemplate.convertAndSend("/topic/lobby/" + sessionId, participantsRepository.findAllByGameSessions(session));
     }
 
+    @MessageMapping ("/stacker_points/{miniGameSessionId}")
+    public void hanldeStackerPoints(@DestinationVariable Long miniGameSessionId, SimpMessageHeaderAccessor headerAccessor, @Payload Map<String, Object> stackerPointsData) {
+        String uid = resolveUid(headerAccessor);
+        if (uid == null) {
+            System.out.println("[WebSocket] handleStackerPoints called with no UID available!");
+            return;
+        }
+        Optional<User> userOpt = userRepository.findByFirebaseUid(uid);
+        if (userOpt.isEmpty()) {
+            System.out.println("[WebSocket] User not found!");
+            return;
 
+        }
+        Optional<MiniGameSession> miniGameSessionOpt = miniGameSessionRepository.findById(miniGameSessionId);
+        if (miniGameSessionOpt.isEmpty()) {
+            System.out.println("[WebSocket] MiniGameSession not found!");
+            return;
+
+        }
+
+        MiniGameSession miniGameSession = miniGameSessionOpt.get();
+        User user = userOpt.get();
+        Optional<MiniGameParticipants> miniGameParticipantsOpt = miniGameParticipantRepository.findByMiniGameSessionAndUser(miniGameSession, user);
+
+        if (miniGameParticipantsOpt.isEmpty()) {
+            System.out.println("[WebSocket] MiniGameParticipants not found!");
+            return;
+
+        }
+        Integer pointsToAdd = (Integer) stackerPointsData.get("highScore");
+
+        if(pointsToAdd == null) {
+            System.out.println("[WebSocket] Stacker points data is null!");
+            return;
+        }
+        MiniGameParticipants miniGameParticipants = miniGameParticipantsOpt.get();
+        miniGameParticipants.setScore(pointsToAdd);
+        miniGameParticipantRepository.save(miniGameParticipants);
+
+
+    }
     @MessageMapping("/join/{sessionId}")
     public void joinGame(@DestinationVariable String sessionId, SimpMessageHeaderAccessor headerAccessor) {
         //Check for auth user

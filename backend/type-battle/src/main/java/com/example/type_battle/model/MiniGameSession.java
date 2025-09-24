@@ -15,6 +15,9 @@ public class MiniGameSession {
     @JoinColumn(name="game_session_id")
     private GameSessions gameSessions;
 
+    @Column(name="start_time")
+    private Long startTime;
+
     @ManyToOne
     @JoinColumn(name="mini_game_id")
     private MiniGames miniGames;
@@ -63,5 +66,12 @@ public class MiniGameSession {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+    public Long getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(Long startTime) {
+        this.startTime = startTime;
     }
 }
