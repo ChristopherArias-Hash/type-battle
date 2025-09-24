@@ -67,6 +67,7 @@ function GamePlay() {
     sendReadyUp(sessionId);
   };
 
+  //useEffect checks if all players ready'd up start game
   useEffect(() => {
     if (
       players.length > 0 &&
@@ -76,6 +77,7 @@ function GamePlay() {
     }
   }, [players]);
 
+  //useEffect to check if player is already in lobby, if player is not and lobby full kick player
   useEffect(() => {
     if (players.length > 0) {
       const currentUserId = auth.currentUser?.uid;
@@ -90,6 +92,7 @@ function GamePlay() {
     }
   }, [players, navigate]);
 
+  //Session Storage for timers 
   useEffect(() => {
     sessionStorage.setItem(`timer-${sessionId}`, JSON.stringify(timer));
     sessionStorage.setItem(`isPaused-${sessionId}`, JSON.stringify(isPaused));
@@ -104,6 +107,7 @@ function GamePlay() {
     );
   }, [timer, isPaused, gameStart, playerReady, miniGameTimer, sessionId]);
 
+  //Login, Game state websocket handler
   useEffect(() => {
     enableWarning();
     const connect = async () => {
@@ -152,6 +156,7 @@ function GamePlay() {
                   }
                 });
               }
+            //If timer resumes 
             } else if (data.type === "game_resume") {
               const completedMiniGameId = miniGameIdRef.current;
               setIsPaused(false);
