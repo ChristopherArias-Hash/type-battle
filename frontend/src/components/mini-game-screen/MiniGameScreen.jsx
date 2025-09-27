@@ -1,6 +1,15 @@
 import "./MiniGameScreen.css";
 import Stacker from "../mini-games/stacker/Stacker"
-function miniGameScreen ({miniGamePlayers, miniGameId, miniGameTimer}){
+import CrossyRoad from "../mini-games/crossy-road/CrossyRoad"
+
+const GAME_COMPONENTS = {
+  1: Stacker,
+  2: CrossyRoad
+}
+
+function MiniGameScreen ({miniGamePlayers, miniGameId, miniGameTimer, miniGame}){
+
+  const CurrentGame = GAME_COMPONENTS[miniGame]
   return(
     <div className="mini-game-overlay">
         <div className="mini-game-container">
@@ -10,12 +19,12 @@ function miniGameScreen ({miniGamePlayers, miniGameId, miniGameTimer}){
               {p.user.displayName} score: {p.score}
             </li>
           ))}</ul>
-          <Stacker miniGamePlayers={miniGamePlayers}
-           miniGameId={miniGameId}/>
+          {CurrentGame ? <CurrentGame miniGamePlayers={miniGamePlayers}
+           miniGameId={miniGameId}/> : <div>Loading yo</div> }
        
         </div>
       </div>
   );
 }
 
-export default miniGameScreen
+export default MiniGameScreen

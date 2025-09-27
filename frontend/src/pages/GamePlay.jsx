@@ -18,6 +18,7 @@ function GamePlay() {
   const navigate = useNavigate();
   const { id: sessionId } = useParams();
   const [miniGameId, setMiniGameId] = useState(null);
+  const [miniGame, setMiniGame] = useState(null)
   const miniGameIdRef = useRef(miniGameId);
   const [miniGamePlayers, setMiniGamePlayers] = useState([]);
   const [miniGameTimer, setMiniGameTimer] = useState(
@@ -139,11 +140,14 @@ function GamePlay() {
           (playerList) => setPlayers(playerList),
           (data) => {
             if (data.type === "game_pause") {
+              console.log(data)
               const newMiniGameId = data.miniGameSessionId;
               const newMiniGameTimer = data.duration;
+              const newMiniGame = data.miniGameId
               setMiniGameId(newMiniGameId);
               setIsPaused(true);
               setMiniGameTimer(newMiniGameTimer);
+              setMiniGame(newMiniGame)
               if (newMiniGameId) {
                 subscribeToMiniGameLobby(newMiniGameId, (miniGameData) => {
                   if (Array.isArray(miniGameData)) {
@@ -346,6 +350,7 @@ function GamePlay() {
           miniGamePlayers={miniGamePlayers}
           miniGameId={miniGameId}
           miniGameTimer={miniGameTimer}
+          miniGame={miniGame}
         />
       )}
     </>
