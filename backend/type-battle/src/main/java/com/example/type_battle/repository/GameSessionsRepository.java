@@ -7,6 +7,7 @@ import java.util.Optional;
 
 public interface GameSessionsRepository extends JpaRepository<GameSessions, Long> {
     boolean existsByLobbyCode(String lobbyCode);
+
     Optional<GameSessions> findByLobbyCode(String lobbyCode);
 
 }

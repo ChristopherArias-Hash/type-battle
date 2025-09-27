@@ -3,7 +3,7 @@ package com.example.type_battle.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name="game_participants")
+@Table(name = "game_participants")
 public class GameParticipants {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,10 +20,10 @@ public class GameParticipants {
     @Column(name = "score")
     private int score;
 
-    @Column(name ="in_game")
+    @Column(name = "in_game")
     private boolean inGame;
 
-    @Column(name= "is_ready")
+    @Column(name = "is_ready")
     private boolean isReady;
 
 

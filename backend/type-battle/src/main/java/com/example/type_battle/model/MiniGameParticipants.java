@@ -3,25 +3,25 @@ package com.example.type_battle.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name ="mini_game_participants")
+@Table(name = "mini_game_participants")
 public class MiniGameParticipants {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name="mini_game_session_id")
+    @JoinColumn(name = "mini_game_session_id")
     private MiniGameSession miniGameSession;
 
     @ManyToOne
-    @JoinColumn(name="user_id")
+    @JoinColumn(name = "user_id")
     private User user;
 
-    @Column(name="score")
+    @Column(name = "score")
     private int score = 0;
 
 
-    @Column(name="is_ready")
+    @Column(name = "is_ready")
     private boolean is_ready = false;
 
     public boolean isIs_ready() {
@@ -63,8 +63,6 @@ public class MiniGameParticipants {
     public void setId(Long id) {
         this.id = id;
     }
-
-
 
 
 }
