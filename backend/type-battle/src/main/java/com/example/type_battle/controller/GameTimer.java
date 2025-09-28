@@ -89,10 +89,10 @@ public class GameTimer {
         newMiniGameSession.setGameSessions(mainSession);
         newMiniGameSession.setTriggerTime(remainingTime);
         newMiniGameSession.setStatus("waiting");
-
+        long randomId = 0;
         long totalMiniGames = miniGamesRepository.count();
         if (totalMiniGames > 0) {
-            long randomId = (long) (Math.random() * totalMiniGames) + 1;
+            randomId = (long) (Math.random() * totalMiniGames) + 1;
             Optional<MiniGames> miniGameOpt = miniGamesRepository.findById(randomId);
             if (miniGameOpt.isPresent()) {
                 newMiniGameSession.setMiniGames(miniGameOpt.get());
@@ -123,6 +123,7 @@ public class GameTimer {
         pauseMessage.put("type", "game_pause");
         pauseMessage.put("duration", PAUSE_DURATION);
         pauseMessage.put("miniGameSessionId", newMiniGameSession.getId());
+        pauseMessage.put ("miniGameId", randomId);
         messagingTemplate.convertAndSend("/topic/game/" + sessionId, pauseMessage);
     }
 
