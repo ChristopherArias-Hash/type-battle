@@ -43,27 +43,61 @@ public class GameSessions {
     }
 
 
-
     // Existing getters and setters...
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public Paragraphs getParagraph() { return paragraph; }
-    public void setParagraph(Paragraphs paragraph) { this.paragraph = paragraph; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public User getHostUser() { return hostUser; }
-    public void setHostUser(User hostUser) { this.hostUser = hostUser; }
+    public Paragraphs getParagraph() {
+        return paragraph;
+    }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public void setParagraph(Paragraphs paragraph) {
+        this.paragraph = paragraph;
+    }
 
-    public String getLobbyCode() { return lobbyCode; }
-    public void setLobbyCode(String lobbyCode) { this.lobbyCode = lobbyCode; }
+    public User getHostUser() {
+        return hostUser;
+    }
+
+    public void setHostUser(User hostUser) {
+        this.hostUser = hostUser;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getLobbyCode() {
+        return lobbyCode;
+    }
+
+    public void setLobbyCode(String lobbyCode) {
+        this.lobbyCode = lobbyCode;
+    }
 
     // NEW TIMER GETTERS AND SETTERS
-    public Long getGameStartTime() { return gameStartTime; }
-    public void setGameStartTime(Long gameStartTime) { this.gameStartTime = gameStartTime; }
+    public Long getGameStartTime() {
+        return gameStartTime;
+    }
 
-    public Integer getGameDuration() { return gameDuration; }
-    public void setGameDuration(Integer gameDuration) { this.gameDuration = gameDuration; }
+    public void setGameStartTime(Long gameStartTime) {
+        this.gameStartTime = gameStartTime;
+    }
+
+    public Integer getGameDuration() {
+        return gameDuration;
+    }
+
+    public void setGameDuration(Integer gameDuration) {
+        this.gameDuration = gameDuration;
+    }
 }

@@ -43,6 +43,7 @@ public class UserController {
         String uid = (String) request.getAttribute("uid");
         return ResponseEntity.ok("Token valid. UID: " + uid);
     }
+
     //Adding users, checks for uid, then adds it to DB
     @PostMapping("/users")
     public ResponseEntity<?> registerUser(HttpServletRequest request, @RequestBody User newUserData) {
@@ -177,7 +178,6 @@ public class UserController {
         }
         return ResponseEntity.ok(users);
     }
-
 
 
 }

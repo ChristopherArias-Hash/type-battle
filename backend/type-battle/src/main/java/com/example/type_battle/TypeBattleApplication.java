@@ -7,20 +7,23 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.io.IOException;
+
 //test
 @SpringBootApplication
-public class 	TypeBattleApplication {
+public class TypeBattleApplication {
 
-	@Autowired
-	private FirebaseConfig firebaseConfig;
-	public static void main(String[] args) {
-		SpringApplication.run(TypeBattleApplication.class, args);
-	}
-	@PostConstruct
-	public void init() throws IOException {
-		firebaseConfig.initFirebase();
+    @Autowired
+    private FirebaseConfig firebaseConfig;
 
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(TypeBattleApplication.class, args);
+    }
+
+    @PostConstruct
+    public void init() throws IOException {
+        firebaseConfig.initFirebase();
+
+    }
 }
 
 

@@ -32,15 +32,18 @@ public class GameSessionWebSocketController {
     @Autowired
     private ParagraphsRepository paragraphsRepository;
 
-    @Autowired private MiniGameSessionRepository miniGameSessionRepository;
+    @Autowired
+    private MiniGameSessionRepository miniGameSessionRepository;
 
-    @Autowired private MiniGameParticipantsRepository miniGameParticipantRepository;
+    @Autowired
+    private MiniGameParticipantsRepository miniGameParticipantRepository;
 
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
     @Autowired
     private GameTimer gameTimer;
+
     //Function to grab UID, to test if user is auth
     private String resolveUid(SimpMessageHeaderAccessor headerAccessor) {
         String uid = (String) headerAccessor.getSessionAttributes().get("uid");
@@ -99,7 +102,6 @@ public class GameSessionWebSocketController {
     }
 
 
-
     //Listener that handles ready up of all users.
     @MessageMapping("/ready_up/{sessionId}")
     public void handlePlayerReadyUp(@DestinationVariable String sessionId, SimpMessageHeaderAccessor headerAccessor) {
@@ -124,7 +126,7 @@ public class GameSessionWebSocketController {
         User user = userOpt.get();
         Optional<GameParticipants> participantOpt = participantsRepository.findByGameSessionsAndUser(session, user);
 
-        if("finished".equals(session.getStatus())) {
+        if ("finished".equals(session.getStatus())) {
             System.out.println("[WebSocket] session has ended");
         }
 
@@ -207,7 +209,7 @@ public class GameSessionWebSocketController {
         messagingTemplate.convertAndSend("/topic/lobby/" + sessionId, participantsRepository.findAllByGameSessions(session));
     }
 
-    @MessageMapping ("/stacker_points/{miniGameSessionId}")
+    @MessageMapping("/stacker_points/{miniGameSessionId}")
     public void hanldeStackerPoints(@DestinationVariable Long miniGameSessionId, SimpMessageHeaderAccessor headerAccessor, @Payload Map<String, Object> stackerPointsData) {
         String uid = resolveUid(headerAccessor);
         if (uid == null) {
@@ -238,7 +240,7 @@ public class GameSessionWebSocketController {
         }
         Integer pointsToAdd = (Integer) stackerPointsData.get("highScore");
 
-        if(pointsToAdd == null) {
+        if (pointsToAdd == null) {
             System.out.println("[WebSocket] Stacker points data is null!");
             return;
         }
@@ -248,6 +250,7 @@ public class GameSessionWebSocketController {
 
 
     }
+
     @MessageMapping("/join/{sessionId}")
     public void joinGame(@DestinationVariable String sessionId, SimpMessageHeaderAccessor headerAccessor) {
         //Check for auth user
@@ -283,10 +286,10 @@ public class GameSessionWebSocketController {
         //Check if user is in game session, if not then edit participant db.
         Optional<GameParticipants> participantOpt = participantsRepository.findByGameSessionsAndUser(session, user);
         if (participantOpt.isEmpty()) {
-            if (session.getPlayersInLobby() == maxParticipantAmount){
+            if (session.getPlayersInLobby() == maxParticipantAmount) {
                 System.out.println("[WebSocket] Lobby is full 4/4");
                 return;
-            }else{
+            } else {
                 session.setPlayersInLobby(session.getPlayersInLobby() + 1);
                 sessionRepository.save(session);
                 System.out.println("[WebSocket] Lobby is at " + session.getPlayersInLobby() + " /4");

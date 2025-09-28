@@ -21,6 +21,7 @@ public class MediaController {
     private final MediaService mediaService;
     @Autowired
     private UserRepository userRepository;
+
     @PostMapping("/upload")
     public ResponseEntity<String> uploadImage(HttpServletRequest request, @RequestParam("file") MultipartFile file) {
         String uid = (String) request.getAttribute("uid");
@@ -46,4 +47,4 @@ public class MediaController {
 
         return ResponseEntity.ok(key);
     }
-    }
+}

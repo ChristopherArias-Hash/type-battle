@@ -1,6 +1,7 @@
 package com.example.type_battle.model;
 
 import jakarta.persistence.*;
+
 import java.sql.Timestamp;
 
 @Entity // Auto-creates the 'users' table in MySQL

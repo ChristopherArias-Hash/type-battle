@@ -18,13 +18,13 @@ public class GameEvents {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name="event_type")
+    @Column(name = "event_type")
     private String eventType; // e.g., "joined", "progress", "finished"
 
-    @Column(name="score")
+    @Column(name = "score")
     private int score;
 
-    @Column(name= "is_ready")
+    @Column(name = "is_ready")
     private boolean isReady;
 
     public Long getId() {
@@ -74,7 +74,6 @@ public class GameEvents {
     public void setReady(boolean ready) {
         isReady = ready;
     }
-
 
 
 }
