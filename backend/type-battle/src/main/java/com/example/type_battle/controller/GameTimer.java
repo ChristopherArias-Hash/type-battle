@@ -34,15 +34,13 @@ public class GameTimer {
     private final Map<String, ScheduledFuture<?>> gameTimers = new ConcurrentHashMap<>();
     private final Map<Long, ScheduledFuture<?>> miniGameTimers = new ConcurrentHashMap<>();
 
-    // --- NEW: Add a "lock" set to prevent race conditions ---
     private final Set<Long> processingMiniGames = ConcurrentHashMap.newKeySet();
-
     private final Map<String, Boolean> gamePaused = new ConcurrentHashMap<>();
     private final Map<String, Integer> remainingTimeBeforePause = new ConcurrentHashMap<>();
     private final Map<String, Set<Integer>> triggeredPausePoints = new ConcurrentHashMap<>();
     private final Set<Integer> pausePoints = Set.of(45, 30, 15);
     private final List<Integer> miniGameBonusPoints = List.of(45, 30, 15, 5);
-    private final int PAUSE_DURATION = 3; // Duration of the mini-game in seconds
+    private final int PAUSE_DURATION = 60; // Duration of the mini-game in seconds
 
     public void startGameTimer(String sessionId, int durationSeconds) {
         stopGameTimer(sessionId);
