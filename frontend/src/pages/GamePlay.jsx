@@ -18,9 +18,17 @@ function GamePlay() {
   const navigate = useNavigate();
   const { id: sessionId } = useParams();
   const [miniGameId, setMiniGameId] = useState(null);
-  const [miniGame, setMiniGame] = useState(null)
+  const [miniGame, setMiniGame] = useState(() => {
+    const saved = sessionStorage.getItem(`miniGame-${sessionId}`);
+    return saved ? JSON.parse(saved) : null;
+  });
   const miniGameIdRef = useRef(miniGameId);
   const [miniGamePlayers, setMiniGamePlayers] = useState([]);
+  const [miniGameStartSignal, setMiniGameStartSignal] = useState(() => {
+    const saved = sessionStorage.getItem(`miniGameStartSignal-${sessionId}`);
+    return saved ? JSON.parse(saved) : false;
+  });
+
   const [miniGameTimer, setMiniGameTimer] = useState(
     () =>
       JSON.parse(sessionStorage.getItem(`miniGameTimer-${sessionId}`)) || null
@@ -68,16 +76,6 @@ function GamePlay() {
     sendReadyUp(sessionId);
   };
 
-  //useEffect checks if all players ready'd up start game
-  useEffect(() => {
-    if (
-      players.length > 0 &&
-      players[0].gameSessions.status === "in_progress"
-    ) {
-      setGameStart(true);
-    }
-  }, [players]);
-
   //useEffect to check if player is already in lobby, if player is not and lobby full kick player
   useEffect(() => {
     if (players.length > 0) {
@@ -93,7 +91,7 @@ function GamePlay() {
     }
   }, [players, navigate]);
 
-  //Session Storage for timers 
+  //Session Storage for timers
   useEffect(() => {
     sessionStorage.setItem(`timer-${sessionId}`, JSON.stringify(timer));
     sessionStorage.setItem(`isPaused-${sessionId}`, JSON.stringify(isPaused));
@@ -106,7 +104,22 @@ function GamePlay() {
       `miniGameTimer-${sessionId}`,
       JSON.stringify(miniGameTimer)
     );
-  }, [timer, isPaused, gameStart, playerReady, miniGameTimer, sessionId]);
+
+    sessionStorage.setItem(
+      `miniGameStartSignal-${sessionId}`,
+      JSON.stringify(miniGameStartSignal)
+    );
+    sessionStorage.setItem(`miniGame-${sessionId}`, JSON.stringify(miniGame));
+  }, [
+    timer,
+    isPaused,
+    gameStart,
+    playerReady,
+    miniGameTimer,
+    sessionId,
+    miniGameStartSignal,
+    miniGame,
+  ]);
 
   //Login, Game state websocket handler
   useEffect(() => {
@@ -139,17 +152,28 @@ function GamePlay() {
           token,
           (playerList) => setPlayers(playerList),
           (data) => {
-            if (data.type === "game_pause") {
-              console.log(data)
+            if (data.type === "game_start") {
+              setGameStart(true);
+            } else if (data.type === "game_pause") {
+              console.log(data);
               const newMiniGameId = data.miniGameSessionId;
               const newMiniGameTimer = data.duration;
-              const newMiniGame = data.miniGameId
+              const newMiniGame = data.miniGameId;
               setMiniGameId(newMiniGameId);
               setIsPaused(true);
               setMiniGameTimer(newMiniGameTimer);
-              setMiniGame(newMiniGame)
+              setMiniGame(newMiniGame);
               if (newMiniGameId) {
                 subscribeToMiniGameLobby(newMiniGameId, (miniGameData) => {
+                  // Handle the start signal - set it to true and keep it true
+                  if (miniGameData && miniGameData.type === "mini_game_start") {
+                    console.log(
+                      `🏁 Received mini-game start signal for ${newMiniGameId}!`
+                    );
+                    setMiniGameStartSignal(true); // This will stay true
+                  }
+
+                  // Handle player updates
                   if (Array.isArray(miniGameData)) {
                     setMiniGamePlayers(miniGameData);
                   } else if (miniGameData && miniGameData.players) {
@@ -160,12 +184,13 @@ function GamePlay() {
                   }
                 });
               }
-            //If timer resumes 
+              //If timer resumes
             } else if (data.type === "game_resume") {
               const completedMiniGameId = miniGameIdRef.current;
               setIsPaused(false);
               setMiniGamePlayers([]);
               setMiniGameId(null);
+              setMiniGameStartSignal(false);
               if (completedMiniGameId) {
                 console.log(
                   `🧹 Cleaning up session storage for completed mini-game: ${completedMiniGameId}`
@@ -177,6 +202,7 @@ function GamePlay() {
                   `stackerHighScore-${completedMiniGameId}`
                 );
                 sessionStorage.removeItem(`miniGameTimer-${sessionId}`);
+                sessionStorage.removeItem(`miniGame-${sessionId}`);
               }
               sessionStorage.removeItem(`miniGameId-${sessionId}`);
             } else if (data.type === "timer_update") {
@@ -247,6 +273,7 @@ function GamePlay() {
         sessionStorage.removeItem(`playerReady-${sessionId}`);
         sessionStorage.removeItem(`miniGameId-${sessionId}`);
         sessionStorage.removeItem(`miniGameTimer-${sessionId}`);
+        sessionStorage.removeItem(`miniGame-${sessionId}`);
       }
     };
   }, [sessionId]);
@@ -351,6 +378,7 @@ function GamePlay() {
           miniGameId={miniGameId}
           miniGameTimer={miniGameTimer}
           miniGame={miniGame}
+          miniGameStartSignal={miniGameStartSignal}
         />
       )}
     </>

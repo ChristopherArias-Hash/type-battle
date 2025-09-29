@@ -1,5 +1,6 @@
 import "./CrossyRoad.css"
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import MiniGameReadyUp from '../../mini-game-ready-up/MiniGameReadyUp';
 
 // --- Game Configuration ---
 const GRID_SIZE_V = 22;
@@ -97,11 +98,11 @@ const MessageOverlay = ({ status, onRestart, score }) => {
 };
 
 // --- Main App Component ---
-const CrossyRoad = () => {
+const CrossyRoad = ({ miniGamePlayers, miniGameId, miniGameStartSignal }) => {
     const [playerPos, setPlayerPos] = useState(PLAYER_START_POS);
     const [obstacles, setObstacles] = useState([]);
     const [crossings, setCrossings] = useState(0);
-    const [gameState, setGameState] = useState('playing');
+    const [gameState, setGameState] = useState('waiting'); // Start in waiting state
     const [crossingDirection, setCrossingDirection] = useState('up'); // 'up' or 'down'
 
     const roadLanes = useMemo(() => {
@@ -138,6 +139,14 @@ const CrossyRoad = () => {
         }
         setObstacles(initialObstacles);
     }, []);
+
+    // Start game when WebSocket signal is received
+    useEffect(() => {
+        if (miniGameStartSignal && gameState === 'waiting') {
+            console.log("🎮 Starting CrossyRoad based on WebSocket signal!");
+            setGameState('playing');
+        }
+    }, [miniGameStartSignal, gameState]);
 
     const handleKeyDown = useCallback((e) => {
         if (gameState !== 'playing') return;
@@ -213,6 +222,21 @@ const CrossyRoad = () => {
         }
     }, [playerPos, obstacles, gameState, crossingDirection]);
 
+    // Show ready up screen if waiting
+    if (gameState === 'waiting') {
+        return (
+            <div className="game-wrapper">
+                <div className="header">
+                    <h1>Crossy Road</h1>
+                    <p>Waiting for players...</p>
+                </div>
+                <MiniGameReadyUp 
+                    miniGamePlayers={miniGamePlayers}
+                    miniGameId={miniGameId}
+                />
+            </div>
+        );
+    }
 
     return (
         <React.Fragment>
@@ -240,4 +264,3 @@ const CrossyRoad = () => {
 };
 
 export default CrossyRoad;
-

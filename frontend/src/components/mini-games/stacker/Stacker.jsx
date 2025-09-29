@@ -1,8 +1,8 @@
 import "./Stacker.css";
 import { useEffect, useState, useRef, useCallback } from "react";
 import * as Tone from "tone"; // 🎵 Import Tone.js
-import { sendMiniGameReadyUp } from "../../../websocket";
 import { sendStackerPoints } from "../../../websocket";
+import MiniGameReadyUp from "../../mini-game-ready-up/MiniGameReadyUp";
 
 // Helper functions (draw3DBlock, drawGhostBlock, drawGroundPlane) remain the same...
 function draw3DBlock(ctx, x, y, width, height, depth, baseColor) {
@@ -84,7 +84,7 @@ function drawGroundPlane(ctx, canvasWidth, canvasHeight, depth, yOffset = 0) {
   ctx.stroke();
 }
 
-function Stacker({ miniGamePlayers, miniGameId }) {
+function Stacker({ miniGamePlayers, miniGameId, miniGameStartSignal }) {
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
   const animationFrameIdRef = useRef(null);
@@ -100,7 +100,6 @@ function Stacker({ miniGamePlayers, miniGameId }) {
   const audioStartedRef = useRef(false);
 
   const [gameState, setGameState] = useState("waiting");
-  const [playerIsReady, setPlayerIsReady] = useState(false);
   const [stack, setStack] = useState([]);
   const [score, setScore] = useState(0);
   const [highScore, setHighScore] = useState(0);
@@ -195,7 +194,6 @@ function Stacker({ miniGamePlayers, miniGameId }) {
       if (savedState) {
         const data = JSON.parse(savedState);
         setGameState(data.gameState);
-        setPlayerIsReady(data.playerIsReady);
         setStack(data.stack || []);
         setScore(data.score);
         currentBlockRef.current = data.currentBlock;
@@ -221,7 +219,6 @@ function Stacker({ miniGamePlayers, miniGameId }) {
       `stackerGameState-${miniGameId}`,
       JSON.stringify({
         gameState,
-        playerIsReady,
         stack,
         score,
         currentBlock: currentBlockRef.current,
@@ -230,13 +227,10 @@ function Stacker({ miniGamePlayers, miniGameId }) {
         groundOffset: groundOffsetRef.current,
       })
     );
-  }, [gameState, playerIsReady, stack, score, miniGameId]);
+  }, [gameState, stack, score, miniGameId]);
 
   const handleReadyUp = () => {
-    if (!playerIsReady && miniGameId) {
-      sendMiniGameReadyUp(miniGameId);
-      setPlayerIsReady(true);
-    }
+    console.log("✅ Player readied up in Stacker!");
   };
 
   const draw = useCallback(() => {
@@ -301,8 +295,13 @@ function Stacker({ miniGamePlayers, miniGameId }) {
 
   const initializeGame = useCallback(
     (isNewGame) => {
+      console.log("🎯 initializeGame called, isNewGame:", isNewGame);
+
       const canvas = canvasRef.current;
-      if (!canvas) return;
+      if (!canvas) {
+        console.log("❌ Canvas not found!");
+        return;
+      }
       const { newWidth, newHeight } = initializeCanvas();
       if (canvas.width === 0 || canvas.height === 0) {
         console.error(
@@ -341,7 +340,7 @@ function Stacker({ miniGamePlayers, miniGameId }) {
         };
         speedRef.current = 2.5;
       }
-      setGameState("playing");
+      console.log("✅ Game initialized successfully!");
     },
     [stack, initializeCanvas]
   );
@@ -357,7 +356,6 @@ function Stacker({ miniGamePlayers, miniGameId }) {
     if (miniGameId) {
       sessionStorage.removeItem(`stackerGameState-${miniGameId}`);
     }
-    // ✅ This is your original logic that I mistakenly removed. It's back now.
     initializeGame(true);
   }, [score, highScore, miniGameId, initializeGame]);
 
@@ -370,15 +368,31 @@ function Stacker({ miniGamePlayers, miniGameId }) {
     }
   }, [score, highScore, miniGameId]);
 
+  // 🎮 MODIFIED: Listen to gameStartSignal and set state to playing
   useEffect(() => {
-    if (!hasInitializedRef.current) return;
-    if (miniGamePlayers && miniGamePlayers.length > 0) {
-      const allReady = miniGamePlayers.every((p) => p.is_ready);
-      if (allReady && gameState === "waiting" && playerIsReady) {
-        initializeGame(true);
-      }
+    console.log("🔍 Game start check:", {
+      hasInitialized: hasInitializedRef.current,
+      miniGameStartSignal,
+      gameState,
+    });
+
+    if (!hasInitializedRef.current) {
+      console.log("⏸️ Not initialized yet, skipping game start");
+      return;
     }
-  }, [miniGamePlayers, gameState, playerIsReady, initializeGame]);
+
+    if (miniGameStartSignal && gameState === "waiting") {
+      console.log("🎮 Setting game state to playing!");
+      setGameState("playing");
+    }
+  }, [miniGameStartSignal, gameState]);
+
+  useEffect(() => {
+    if (gameState === "playing" && canvasRef.current && stack.length === 0) {
+      console.log("🎯 Canvas is ready, initializing game!");
+      initializeGame(true);
+    }
+  }, [gameState, initializeGame, stack.length]);
 
   useEffect(() => {
     initializeCanvas();
@@ -544,22 +558,13 @@ function Stacker({ miniGamePlayers, miniGameId }) {
   return (
     <div className="mini-game-stacker" ref={containerRef}>
       <h3>Stacker - {gameState.toUpperCase()}</h3>
-      {gameState === "waiting" && (
-        <ul>
-          {miniGamePlayers.map((p, index) => (
-            <li key={index}>
-              {p.user?.displayName || p.user?.firebaseUid} – Score: {p.score} |
-              Ready: {p.is_ready ? "✅" : "❌"}
-            </li>
-          ))}
-        </ul>
-      )}
-      {!playerIsReady && gameState === "waiting" && (
-        <div>
-          <button onClick={handleReadyUp}>Ready Up</button>
-        </div>
-      )}
-      {playerIsReady && (
+      {gameState === "waiting" ? (
+        <MiniGameReadyUp
+          miniGamePlayers={miniGamePlayers}
+          miniGameId={miniGameId}
+          onReady={handleReadyUp}
+        />
+      ) : (
         <div className="game-wrapper">
           <div id="game-container">
             <div

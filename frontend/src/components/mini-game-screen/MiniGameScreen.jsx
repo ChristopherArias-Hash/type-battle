@@ -4,11 +4,10 @@ import CrossyRoad from "../mini-games/crossy-road/CrossyRoad"
 
 const GAME_COMPONENTS = {
   1: Stacker,
-  2: CrossyRoad
+  2: Stacker
 }
 
-function MiniGameScreen ({miniGamePlayers, miniGameId, miniGameTimer, miniGame}){
-
+function MiniGameScreen ({miniGamePlayers, miniGameId, miniGameTimer, miniGame, miniGameStartSignal }){
   const CurrentGame = GAME_COMPONENTS[miniGame]
   return(
     <div className="mini-game-overlay">
@@ -20,7 +19,7 @@ function MiniGameScreen ({miniGamePlayers, miniGameId, miniGameTimer, miniGame})
             </li>
           ))}</ul>
           {CurrentGame ? <CurrentGame miniGamePlayers={miniGamePlayers}
-           miniGameId={miniGameId}/> : <div>Loading yo</div> }
+           miniGameId={miniGameId} miniGameStartSignal={miniGameStartSignal}/> : <div>Loading yo</div> }
        
         </div>
       </div>
