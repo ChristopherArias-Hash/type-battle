@@ -12,20 +12,20 @@ public class MiniGameSession {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name="game_session_id")
+    @JoinColumn(name = "game_session_id")
     private GameSessions gameSessions;
 
-    @Column(name="start_time")
+    @Column(name = "start_time")
     private Long startTime;
 
     @ManyToOne
-    @JoinColumn(name="mini_game_id")
+    @JoinColumn(name = "mini_game_id")
     private MiniGames miniGames;
 
-    @Column(name="trigger_time")
+    @Column(name = "trigger_time")
     private int triggerTime;
 
-    @Column(name="status")
+    @Column(name = "status")
     private String status;
 
     public Long getId() {
@@ -67,6 +67,7 @@ public class MiniGameSession {
     public void setStatus(String status) {
         this.status = status;
     }
+
     public Long getStartTime() {
         return startTime;
     }

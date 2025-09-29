@@ -3,7 +3,7 @@ package com.example.type_battle.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name ="paragraphs")
+@Table(name = "paragraphs")
 public class Paragraphs {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,8 +27,6 @@ public class Paragraphs {
     public void setId(long id) {
         this.id = id;
     }
-
-
 
 
 }

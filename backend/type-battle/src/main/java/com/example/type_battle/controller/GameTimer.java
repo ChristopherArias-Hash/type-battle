@@ -4,9 +4,11 @@ package com.example.type_battle.controller;
 import com.example.type_battle.model.*;
 import com.example.type_battle.repository.*;
 import jakarta.annotation.PreDestroy;
+
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
@@ -89,10 +91,10 @@ public class GameTimer {
         newMiniGameSession.setGameSessions(mainSession);
         newMiniGameSession.setTriggerTime(remainingTime);
         newMiniGameSession.setStatus("waiting");
-
+        long randomId = 0;
         long totalMiniGames = miniGamesRepository.count();
         if (totalMiniGames > 0) {
-            long randomId = (long) (Math.random() * totalMiniGames) + 1;
+            randomId = (long) (Math.random() * totalMiniGames) + 1;
             Optional<MiniGames> miniGameOpt = miniGamesRepository.findById(randomId);
             if (miniGameOpt.isPresent()) {
                 newMiniGameSession.setMiniGames(miniGameOpt.get());
@@ -122,7 +124,9 @@ public class GameTimer {
         Map<String, Object> pauseMessage = new HashMap<>();
         pauseMessage.put("type", "game_pause");
         pauseMessage.put("duration", PAUSE_DURATION);
+        pauseMessage.put("miniGameId", randomId);
         pauseMessage.put("miniGameSessionId", newMiniGameSession.getId());
+        pauseMessage.put ("miniGameId", randomId);
         messagingTemplate.convertAndSend("/topic/game/" + sessionId, pauseMessage);
     }
 
@@ -166,7 +170,6 @@ public class GameTimer {
         miniGameTimers.put(miniGameSessionId, future);
     }
 
-    // --- METHOD FIXED TO PREVENT RACE CONDITION ---
     private void endMiniGame(Long miniGameSessionId) {
         // Use the lock to ensure this logic only runs ONCE per mini-game.
         // If another thread is already in here for this ID, we exit immediately.

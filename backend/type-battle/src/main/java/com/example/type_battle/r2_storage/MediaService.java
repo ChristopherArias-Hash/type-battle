@@ -22,12 +22,17 @@ public class MediaService {
 
     //EXCEPTIONS
     public static class UnsupportedMediaTypeException extends RuntimeException {
-        public UnsupportedMediaTypeException(String msg) { super(msg); }
+        public UnsupportedMediaTypeException(String msg) {
+            super(msg);
+        }
     }
 
     public static class FileUploadException extends RuntimeException {
-        public FileUploadException(String msg, Throwable cause) { super(msg, cause); }
+        public FileUploadException(String msg, Throwable cause) {
+            super(msg, cause);
+        }
     }
+
     private boolean isAllowedImageExtension(String ext) {
         return ext.equals("png") || ext.equals("jpg") || ext.equals("jpeg") || ext.equals("gif");
     }

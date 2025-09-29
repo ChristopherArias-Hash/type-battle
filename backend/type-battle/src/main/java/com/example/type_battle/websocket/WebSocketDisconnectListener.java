@@ -64,7 +64,7 @@ public class WebSocketDisconnectListener {
             GameSessions session = participant.getGameSessions();
 
             // Remove the participant from database only if they are not ready
-            if (Objects.equals(session.getStatus(), "waiting")){
+            if (Objects.equals(session.getStatus(), "waiting")) {
                 participantsRepository.delete(participant);
 
                 // Decrease lobby player count
@@ -84,7 +84,7 @@ public class WebSocketDisconnectListener {
                             remainingParticipants);
                 }
             }
-            }
+        }
 
     }
 

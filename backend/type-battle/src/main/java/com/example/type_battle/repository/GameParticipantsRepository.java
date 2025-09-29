@@ -10,8 +10,12 @@ import java.util.Optional;
 
 public interface GameParticipantsRepository extends JpaRepository<GameParticipants, Long> {
     List<GameParticipants> findAllByGameSessions(GameSessions session);
+
     List<GameParticipants> findAllByGameSessionsId(Long id);
+
     boolean existsByGameSessionsAndUser(GameSessions session, User user);
+
     Optional<GameParticipants> findByGameSessionsAndUser(GameSessions session, User user);
+
     List<GameParticipants> findAllByUser(User user);
 }
