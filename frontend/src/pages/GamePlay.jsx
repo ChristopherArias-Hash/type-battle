@@ -14,6 +14,7 @@ import {
 } from "../websocket";
 
 import { auth } from "../firebase";
+
 function GamePlay() {
   const navigate = useNavigate();
   const { id: sessionId } = useParams();

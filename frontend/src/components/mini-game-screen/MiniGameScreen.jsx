@@ -3,8 +3,8 @@ import Stacker from "../mini-games/stacker/Stacker"
 import CrossyRoad from "../mini-games/crossy-road/CrossyRoad"
 
 const GAME_COMPONENTS = {
-  1: Stacker,
-  2: Stacker
+  1: CrossyRoad,
+  2: CrossyRoad
 }
 
 function MiniGameScreen ({miniGamePlayers, miniGameId, miniGameTimer, miniGame, miniGameStartSignal }){
