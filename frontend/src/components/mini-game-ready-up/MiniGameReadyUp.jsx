@@ -14,7 +14,9 @@ function MiniGameReadyUp({ miniGamePlayers, miniGameId, onReady }) {
 
   return (
     <div className="mini-game-ready-section">
+    
       <h3>Players</h3>
+        {/*List of players in lobby, for ready up (will remove soon)*/}
       <ul>
         {miniGamePlayers.map((p, index) => (
           <li key={index}>

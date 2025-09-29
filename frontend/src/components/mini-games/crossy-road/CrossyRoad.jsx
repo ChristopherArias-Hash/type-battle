@@ -1,6 +1,8 @@
 import "./CrossyRoad.css"
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import MiniGameReadyUp from '../../mini-game-ready-up/MiniGameReadyUp';
+import { sendCrossyRoadPosition } from '../../../websocket';
+import { auth } from '../../../firebase';
 
 const GRID_SIZE_V = 22;
 const GRID_SIZE_H = 14;
@@ -100,12 +102,13 @@ const MessageOverlay = ({ status, onRestart, score }) => {
 };
 
 // --- Main App Component ---
-const CrossyRoad = ({ miniGamePlayers, miniGameId, miniGameStartSignal }) => {
+const CrossyRoad = ({ miniGamePlayers, miniGamePlayerPositions, miniGameId, miniGameStartSignal }) => {
   const [playerPos, setPlayerPos] = useState({ x: Math.floor(GRID_SIZE_H / 2), y: GRID_SIZE_V - 1 });
   const [obstacles, setObstacles] = useState([]);
   const [crossings, setCrossings] = useState(0);
   const [gameState, setGameState] = useState('waiting');
   const [crossingDirection, setCrossingDirection] = useState('up');
+  const [otherPlayerPositions, setOtherPlayerPositions] = useState({});
 
   // NEW: scale handling
   const stageRef = useRef(null);
@@ -124,6 +127,19 @@ const CrossyRoad = ({ miniGamePlayers, miniGameId, miniGameStartSignal }) => {
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
+
+  useEffect(() => {
+    if (miniGamePlayerPositions) {
+      const currentUid = auth.currentUser?.uid;
+      const otherPlayers = {};
+      for (const uid in miniGamePlayerPositions) {
+        if (uid !== currentUid) {
+          otherPlayers[uid] = miniGamePlayerPositions[uid];
+        }
+      }
+      setOtherPlayerPositions(otherPlayers);
+    }
+  }, [miniGamePlayerPositions]);
 
   const roadLanes = useMemo(() => {
     const lanes = [];
@@ -172,9 +188,10 @@ const CrossyRoad = ({ miniGamePlayers, miniGameId, miniGameStartSignal }) => {
         case 'ArrowRight': case 'd': np.x = Math.min(GRID_SIZE_H - 1, prev.x + 1); break;
         default: return prev;
       }
+      sendCrossyRoadPosition(miniGameId, np);
       return np;
     });
-  }, [gameState]);
+  }, [gameState, miniGameId]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -248,6 +265,7 @@ const CrossyRoad = ({ miniGamePlayers, miniGameId, miniGameStartSignal }) => {
             <div className={`safe-zone end-zone ${crossingDirection === 'up' ? 'goal-zone' : ''}`} />
             {roadLanes}
             <Player pos={playerPos} />
+            {Object.values(otherPlayerPositions).map((pos, i) => <Player key={i} pos={pos} />)}
             {obstacles.map((obs, i) => <Obstacle key={i} obstacle={obs} />)}
             <MessageOverlay status={gameState} onRestart={resetGame} score={crossings} />
           </div>

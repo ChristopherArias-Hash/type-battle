@@ -161,3 +161,12 @@ export function sendStackerPoints(miniGameSessionId, scoreData) {
     });
   }
 }
+
+export function sendCrossyRoadPosition(miniGameSessionId, positionData) {
+    if (stompClient && stompClient.connected) {
+        stompClient.publish({
+            destination: `/app/mini_game/crossy_road/position/${miniGameSessionId}`,
+            body: JSON.stringify(positionData),
+        });
+    }
+}
