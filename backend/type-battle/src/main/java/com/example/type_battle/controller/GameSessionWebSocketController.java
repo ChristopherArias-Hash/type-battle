@@ -12,10 +12,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Controller
 public class GameSessionWebSocketController {
@@ -85,6 +82,8 @@ public class GameSessionWebSocketController {
         miniGameParticipantRepository.save(miniGameParticipant);
 
         List<MiniGameParticipants> allParticipants = miniGameParticipantRepository.findAllByMiniGameSession(miniGameSession);
+        messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId, allParticipants);
+
         boolean everyoneReady = allParticipants.stream().allMatch(MiniGameParticipants::isIs_ready);
 
         if (everyoneReady) {
@@ -93,11 +92,11 @@ public class GameSessionWebSocketController {
             System.out.println("All players ready! Starting mini-game: " + miniGameSession.getId());
             gameTimer.startMiniGameTimer(miniGameSessionId);
 
+            Map<String, Object> gameStartMessage = new HashMap<>();
+            gameStartMessage.put("type", "mini_game_start");
+            messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId, gameStartMessage);
 
         }
-
-        // Broadcast the updated participant list to a NEW, DEDICATED topic
-        messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId, allParticipants);
 
     }
 
@@ -124,6 +123,8 @@ public class GameSessionWebSocketController {
         //find participant by using session and user
         GameSessions session = sessionOpt.get();
         User user = userOpt.get();
+
+        //Check if participant is real
         Optional<GameParticipants> participantOpt = participantsRepository.findByGameSessionsAndUser(session, user);
 
         if ("finished".equals(session.getStatus())) {
@@ -142,6 +143,7 @@ public class GameSessionWebSocketController {
 
         //Grab list of everyone, check if all ready. if everyone ready start game.
         List<GameParticipants> allParticipants = participantsRepository.findAllByGameSessions(session);
+        messagingTemplate.convertAndSend("/topic/lobby/" + sessionId, allParticipants);
         boolean everyoneReady = allParticipants.stream()
                 .allMatch(GameParticipants::isReady);
 
@@ -154,11 +156,13 @@ public class GameSessionWebSocketController {
             // Start the game timer
             gameTimer.startGameTimer(sessionId, session.getGameDuration());
 
-            allParticipants = participantsRepository.findAllByGameSessions(session);
+            Map<String, Object> gameStartMessage = new HashMap<>();
+            gameStartMessage.put("type", "game_start");
+            messagingTemplate.convertAndSend("/topic/game/" + sessionId, gameStartMessage);
+
+
         }
 
-        // Send updated participant list to all clients
-        messagingTemplate.convertAndSend("/topic/lobby/" + sessionId, allParticipants);
     }
 
     @MessageMapping("/strokes/{sessionId}")
