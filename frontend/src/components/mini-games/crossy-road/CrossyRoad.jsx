@@ -1,11 +1,15 @@
 import "./CrossyRoad.css"
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import MiniGameReadyUp from '../../mini-game-ready-up/MiniGameReadyUp';
+import { sendCrossyRoadPosition } from '../../../websocket';
+import { auth } from '../../../firebase';
 
-// --- Game Configuration ---
 const GRID_SIZE_V = 22;
 const GRID_SIZE_H = 14;
-const TILE_SIZE = 40; // in pixels
+const TILE_SIZE   = 40; // px
+
+const BOARD_W = GRID_SIZE_H * TILE_SIZE;
+const BOARD_H = GRID_SIZE_V * TILE_SIZE;
 const PLAYER_START_POS = { x: Math.floor(GRID_SIZE_H / 2), y: GRID_SIZE_V - 1 };
 // Updated vehicle types
 const VEHICLE_TYPES = [
@@ -98,169 +102,179 @@ const MessageOverlay = ({ status, onRestart, score }) => {
 };
 
 // --- Main App Component ---
-const CrossyRoad = ({ miniGamePlayers, miniGameId, miniGameStartSignal }) => {
-    const [playerPos, setPlayerPos] = useState(PLAYER_START_POS);
-    const [obstacles, setObstacles] = useState([]);
-    const [crossings, setCrossings] = useState(0);
-    const [gameState, setGameState] = useState('waiting'); // Start in waiting state
-    const [crossingDirection, setCrossingDirection] = useState('up'); // 'up' or 'down'
+const CrossyRoad = ({ miniGamePlayers, miniGamePlayerPositions, miniGameId, miniGameStartSignal }) => {
+  const [playerPos, setPlayerPos] = useState({ x: Math.floor(GRID_SIZE_H / 2), y: GRID_SIZE_V - 1 });
+  const [obstacles, setObstacles] = useState([]);
+  const [crossings, setCrossings] = useState(0);
+  const [gameState, setGameState] = useState('waiting');
+  const [crossingDirection, setCrossingDirection] = useState('up');
+  const [otherPlayerPositions, setOtherPlayerPositions] = useState({});
 
-    const roadLanes = useMemo(() => {
-        const lanes = [];
-        for (let i = 1; i < GRID_SIZE_V - 1; i++) {
-            lanes.push(<RoadLane key={`lane-${i}`} y={i} />);
+  // NEW: scale handling
+  const stageRef = useRef(null);
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+
+    const ro = new ResizeObserver(entries => {
+      const { width, height } = entries[0].contentRect;
+      const s = Math.min(width / BOARD_W, height / BOARD_H);
+      // cap scaling >1 if you want crisp pixels; remove Math.min for upscaling
+      setScale(Math.max(0.1, Math.min(s, 1)));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (miniGamePlayerPositions) {
+      const currentUid = auth.currentUser?.uid;
+      const otherPlayers = {};
+      for (const uid in miniGamePlayerPositions) {
+        if (uid !== currentUid) {
+          otherPlayers[uid] = miniGamePlayerPositions[uid];
         }
-        return lanes;
-    }, []);
+      }
+      setOtherPlayerPositions(otherPlayers);
+    }
+  }, [miniGamePlayerPositions]);
 
-    const resetGame = useCallback(() => {
-        setPlayerPos(PLAYER_START_POS);
-        setCrossings(0);
-        setGameState('playing');
-        setCrossingDirection('up');
-    }, []);
+  const roadLanes = useMemo(() => {
+    const lanes = [];
+    for (let i = 1; i < GRID_SIZE_V - 1; i++) lanes.push(<RoadLane key={`lane-${i}`} y={i} />);
+    return lanes;
+  }, []);
 
-    // Initialize obstacles only once
-    useEffect(() => {
-        const initialObstacles = [];
-        for (let i = 1; i < GRID_SIZE_V - 1; i++) {
-            const carsInLane = Math.floor(Math.random() * 2) + 1;
-            const speed = (Math.random() * 0.03 + 0.02) * (Math.random() > 0.5 ? 1 : -1);
-            
-            for(let j = 0; j < carsInLane; j++){
-                const vehicleType = VEHICLE_TYPES[Math.floor(Math.random() * VEHICLE_TYPES.length)];
-                initialObstacles.push({
-                    y: i,
-                    x: Math.random() * GRID_SIZE_H + (j * (GRID_SIZE_H / carsInLane)),
-                    ...vehicleType,
-                    speed: speed,
-                });
-            }
-        }
-        setObstacles(initialObstacles);
-    }, []);
+  const resetGame = useCallback(() => {
+    setPlayerPos({ x: Math.floor(GRID_SIZE_H / 2), y: GRID_SIZE_V - 1 });
+    setCrossings(0);
+    setGameState('playing');
+    setCrossingDirection('up');
+  }, []);
 
-    // Start game when WebSocket signal is received
-    useEffect(() => {
-        if (miniGameStartSignal && gameState === 'waiting') {
-            console.log("🎮 Starting CrossyRoad based on WebSocket signal!");
-            setGameState('playing');
-        }
-    }, [miniGameStartSignal, gameState]);
-
-    const handleKeyDown = useCallback((e) => {
-        if (gameState !== 'playing') return;
-
-        setPlayerPos((prevPos) => {
-            let newPos = { ...prevPos };
-            switch (e.key) {
-                case 'ArrowUp': case 'w':
-                    newPos.y = Math.max(0, prevPos.y - 1);
-                    break;
-                case 'ArrowDown': case 's':
-                    newPos.y = Math.min(GRID_SIZE_V - 1, prevPos.y + 1);
-                    break;
-                case 'ArrowLeft': case 'a':
-                    newPos.x = Math.max(0, prevPos.x - 1);
-                    break;
-                case 'ArrowRight': case 'd':
-                    newPos.x = Math.min(GRID_SIZE_H - 1, prevPos.x + 1);
-                    break;
-                default:
-                    return prevPos;
-            }
-            return newPos;
+  // init obstacles (unchanged)
+  useEffect(() => {
+    const initial = [];
+    for (let i = 1; i < GRID_SIZE_V - 1; i++) {
+      const carsInLane = Math.floor(Math.random() * 2) + 1;
+      const speed = (Math.random() * 0.03 + 0.02) * (Math.random() > 0.5 ? 1 : -1);
+      for (let j = 0; j < carsInLane; j++) {
+        const vehicleType = VEHICLE_TYPES[Math.floor(Math.random() * VEHICLE_TYPES.length)];
+        initial.push({
+          y: i,
+          x: Math.random() * GRID_SIZE_H + (j * (GRID_SIZE_H / carsInLane)),
+          ...vehicleType,
+          speed,
         });
-    }, [gameState]);
+      }
+    }
+    setObstacles(initial);
+  }, []);
 
-    useEffect(() => {
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [handleKeyDown]);
+  useEffect(() => {
+    if (miniGameStartSignal && gameState === 'waiting') setGameState('playing');
+  }, [miniGameStartSignal, gameState]);
 
-    useEffect(() => {
-        if (gameState !== 'playing') return;
+  const handleKeyDown = useCallback((e) => {
+    if (gameState !== 'playing') return;
+    setPlayerPos(prev => {
+      const np = { ...prev };
+      switch (e.key) {
+        case 'ArrowUp': case 'w': np.y = Math.max(0, prev.y - 1); break;
+        case 'ArrowDown': case 's': np.y = Math.min(GRID_SIZE_V - 1, prev.y + 1); break;
+        case 'ArrowLeft': case 'a': np.x = Math.max(0, prev.x - 1); break;
+        case 'ArrowRight': case 'd': np.x = Math.min(GRID_SIZE_H - 1, prev.x + 1); break;
+        default: return prev;
+      }
+      sendCrossyRoadPosition(miniGameId, np);
+      return np;
+    });
+  }, [gameState, miniGameId]);
 
-        let animationFrameId;
-        const gameLoop = () => {
-            setObstacles(prevObstacles =>
-                prevObstacles.map(obs => {
-                    let newX = obs.x + obs.speed;
-                    if (newX < -obs.width) newX = GRID_SIZE_H;
-                    if (newX > GRID_SIZE_H) newX = -obs.width;
-                    return { ...obs, x: newX };
-                })
-            );
-            animationFrameId = requestAnimationFrame(gameLoop);
-        };
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
 
-        animationFrameId = requestAnimationFrame(gameLoop);
-        return () => cancelAnimationFrame(animationFrameId);
-    }, [gameState]);
+  useEffect(() => {
+    if (gameState !== 'playing') return;
+    let id;
+    const loop = () => {
+      setObstacles(prev => prev.map(obs => {
+        let x = obs.x + obs.speed;
+        if (x < -obs.width) x = GRID_SIZE_H;
+        if (x > GRID_SIZE_H) x = -obs.width;
+        return { ...obs, x };
+      }));
+      id = requestAnimationFrame(loop);
+    };
+    id = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(id);
+  }, [gameState]);
 
-    useEffect(() => {
-        if (gameState !== 'playing') return;
-        
-        // --- GOAL CHECK LOGIC ---
-        const goalReached = 
-            (crossingDirection === 'up' && playerPos.y === 0) ||
-            (crossingDirection === 'down' && playerPos.y === GRID_SIZE_V - 1);
+  useEffect(() => {
+    if (gameState !== 'playing') return;
 
-        if(goalReached) {
-            setCrossings(c => c + 1);
-            setCrossingDirection(dir => dir === 'up' ? 'down' : 'up');
-        }
+    const goalReached =
+      (crossingDirection === 'up'   && playerPos.y === 0) ||
+      (crossingDirection === 'down' && playerPos.y === GRID_SIZE_V - 1);
 
-        // --- COLLISION CHECK LOGIC ---
-        for (const obs of obstacles) {
-            const carStart = Math.floor(obs.x);
-            const carEnd = carStart + obs.width;
-            if (playerPos.y === obs.y && playerPos.x >= carStart && playerPos.x < carEnd) {
-                setGameState('gameOver');
-                return;
-            }
-        }
-    }, [playerPos, obstacles, gameState, crossingDirection]);
-
-    // Show ready up screen if waiting
-    if (gameState === 'waiting') {
-        return (
-            <div className="game-wrapper">
-                <div className="header">
-                    <h1>Crossy Road</h1>
-                    <p>Waiting for players...</p>
-                </div>
-                <MiniGameReadyUp 
-                    miniGamePlayers={miniGamePlayers}
-                    miniGameId={miniGameId}
-                />
-            </div>
-        );
+    if (goalReached) {
+      setCrossings(c => c + 1);
+      setCrossingDirection(d => (d === 'up' ? 'down' : 'up'));
     }
 
+    for (const obs of obstacles) {
+      const carStart = Math.floor(obs.x);
+      const carEnd = carStart + obs.width;
+      if (playerPos.y === obs.y && playerPos.x >= carStart && playerPos.x < carEnd) {
+        setGameState('gameOver');
+        return;
+      }
+    }
+  }, [playerPos, obstacles, gameState, crossingDirection]);
+
+  if (gameState === 'waiting') {
     return (
-        <React.Fragment>
-            <div className="game-wrapper">
-                <div className="header">
-                    <h1>Crossy Road</h1>
-                    <p>Cross the road... and then cross back!</p>
-                </div>
-                <div className="game-board">
-                    <div className={`safe-zone start-zone ${crossingDirection === 'down' ? 'goal-zone' : ''}`} />
-                    <div className={`safe-zone end-zone ${crossingDirection === 'up' ? 'goal-zone' : ''}`} />
-                    {roadLanes}
-                    <Player pos={playerPos} />
-                    {obstacles.map((obs, index) => (
-                        <Obstacle key={index} obstacle={obs} />
-                    ))}
-                    <MessageOverlay status={gameState} onRestart={resetGame} score={crossings} />
-                </div>
-                <div className="game-info">
-                    Crossings: {crossings}
-                </div>
-            </div>
-        </React.Fragment>
+      <div className="game-wrapper">
+        <div className="header">
+          <h1>Crossy Road</h1>
+          <p>Waiting for players...</p>
+        </div>
+        <div className="stage" ref={stageRef}>
+          {/* Show ready-up UI centered */}
+          <MiniGameReadyUp miniGamePlayers={miniGamePlayers} miniGameId={miniGameId} />
+        </div>
+      </div>
     );
+  }
+
+  return (
+    <div className="game-wrapper">
+      <div className="header">
+        <h1>Crossy Road</h1>
+        <p>Cross the road... and then cross back!</p>
+      </div>
+
+      <div className="stage" ref={stageRef}>
+        <div className="board-scale" style={{ '--scale': scale }}>
+          <div className="game-board" style={{ width: BOARD_W, height: BOARD_H }}>
+            <div className={`safe-zone start-zone ${crossingDirection === 'down' ? 'goal-zone' : ''}`} />
+            <div className={`safe-zone end-zone ${crossingDirection === 'up' ? 'goal-zone' : ''}`} />
+            {roadLanes}
+            <Player pos={playerPos} />
+            {Object.values(otherPlayerPositions).map((pos, i) => <Player key={i} pos={pos} />)}
+            {obstacles.map((obs, i) => <Obstacle key={i} obstacle={obs} />)}
+            <MessageOverlay status={gameState} onRestart={resetGame} score={crossings} />
+          </div>
+        </div>
+      </div>
+
+      <div className="game-info">Crossings: {crossings}</div>
+    </div>
+  );
 };
 
 export default CrossyRoad;

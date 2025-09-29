@@ -14,16 +14,54 @@ import {
 } from "../websocket";
 
 import { auth } from "../firebase";
+
 function GamePlay() {
+  //Important Support variables 
   const navigate = useNavigate();
   const { id: sessionId } = useParams();
+  const [enableWarning, disableWarning] = useUserLeavingWarning();
+  const { isUserLoggedIn, userInfo, logOutFirebase, loading } = useAuth();
+
+  //Main game variables
+
+  const [timer, setTimer] = useState(
+    () => JSON.parse(sessionStorage.getItem(`timer-${sessionId}`)) || 60
+  );
+  const [playerReady, setPlayerReady] = useState(
+    () =>
+      JSON.parse(sessionStorage.getItem(`playerReady-${sessionId}`)) || false
+  );
+  const [paragraphText, setParagraphText] = useState(null);
+
+  const [players, setPlayers] = useState([]);
+
+  const [gameStart, setGameStart] = useState(
+    () => JSON.parse(sessionStorage.getItem(`gameStart-${sessionId}`)) || false
+  );
+  const [gameEnded, setGameEnded] = useState(false);
+
+  const [isPaused, setIsPaused] = useState(
+    () => JSON.parse(sessionStorage.getItem(`isPaused-${sessionId}`)) || false
+  );
+  const [wpm, setWpm] = useState(0);
+
+  const [winnerText, setWinnerText] = useState("");
+
+  //Mini game variables
+
   const [miniGameId, setMiniGameId] = useState(null);
+
   const [miniGame, setMiniGame] = useState(() => {
     const saved = sessionStorage.getItem(`miniGame-${sessionId}`);
     return saved ? JSON.parse(saved) : null;
   });
+
   const miniGameIdRef = useRef(miniGameId);
+
   const [miniGamePlayers, setMiniGamePlayers] = useState([]);
+
+  const [miniGamePlayerPositions, setMiniGamePlayerPositions] = useState({});
+
   const [miniGameStartSignal, setMiniGameStartSignal] = useState(() => {
     const saved = sessionStorage.getItem(`miniGameStartSignal-${sessionId}`);
     return saved ? JSON.parse(saved) : false;
@@ -33,26 +71,6 @@ function GamePlay() {
     () =>
       JSON.parse(sessionStorage.getItem(`miniGameTimer-${sessionId}`)) || null
   );
-  const [enableWarning, disableWarning] = useUserLeavingWarning();
-  const { isUserLoggedIn, userInfo, logOutFirebase, loading } = useAuth();
-  const [timer, setTimer] = useState(
-    () => JSON.parse(sessionStorage.getItem(`timer-${sessionId}`)) || 60
-  );
-  const [playerReady, setPlayerReady] = useState(
-    () =>
-      JSON.parse(sessionStorage.getItem(`playerReady-${sessionId}`)) || false
-  );
-  const [paragraphText, setParagraphText] = useState(null);
-  const [players, setPlayers] = useState([]);
-  const [gameStart, setGameStart] = useState(
-    () => JSON.parse(sessionStorage.getItem(`gameStart-${sessionId}`)) || false
-  );
-  const [gameEnded, setGameEnded] = useState(false);
-  const [isPaused, setIsPaused] = useState(
-    () => JSON.parse(sessionStorage.getItem(`isPaused-${sessionId}`)) || false
-  );
-  const [wpm, setWpm] = useState(0);
-  const [winnerText, setWinnerText] = useState("");
 
   const disableLogout = true;
 
@@ -63,7 +81,7 @@ function GamePlay() {
       setMiniGameId(savedMiniGameId);
     }
   }, [sessionId, isPaused]);
-
+  //Sets mini game in local storage
   useEffect(() => {
     miniGameIdRef.current = miniGameId;
     if (miniGameId) {
@@ -91,24 +109,14 @@ function GamePlay() {
     }
   }, [players, navigate]);
 
-  //Session Storage for timers
+  //Session Storage for timers, game state, and mini game state.
   useEffect(() => {
     sessionStorage.setItem(`timer-${sessionId}`, JSON.stringify(timer));
     sessionStorage.setItem(`isPaused-${sessionId}`, JSON.stringify(isPaused));
     sessionStorage.setItem(`gameStart-${sessionId}`, JSON.stringify(gameStart));
-    sessionStorage.setItem(
-      `playerReady-${sessionId}`,
-      JSON.stringify(playerReady)
-    );
-    sessionStorage.setItem(
-      `miniGameTimer-${sessionId}`,
-      JSON.stringify(miniGameTimer)
-    );
-
-    sessionStorage.setItem(
-      `miniGameStartSignal-${sessionId}`,
-      JSON.stringify(miniGameStartSignal)
-    );
+    sessionStorage.setItem(`playerReady-${sessionId}`,JSON.stringify(playerReady));
+    sessionStorage.setItem(`miniGameTimer-${sessionId}`,JSON.stringify(miniGameTimer));
+    sessionStorage.setItem(`miniGameStartSignal-${sessionId}`,JSON.stringify(miniGameStartSignal));
     sessionStorage.setItem(`miniGame-${sessionId}`, JSON.stringify(miniGame));
   }, [
     timer,
@@ -125,6 +133,7 @@ function GamePlay() {
   useEffect(() => {
     enableWarning();
     const connect = async () => {
+      //Checks if user is auth
       const user = auth.currentUser;
       if (user) {
         const token = await user.getIdToken();
@@ -140,6 +149,8 @@ function GamePlay() {
           navigate("/");
           return;
         }
+
+        //Checks if game is done if so go back to home page
         const session = await response.json();
         if (session.status === "finished") {
           alert("Cannot join a finished session.");
@@ -152,8 +163,10 @@ function GamePlay() {
           token,
           (playerList) => setPlayers(playerList),
           (data) => {
+            //Main game starts when websocket message is recieved
             if (data.type === "game_start") {
               setGameStart(true);
+              //Main game pauses when websocket message is recieved, grabs mini game data and sets all variables
             } else if (data.type === "game_pause") {
               console.log(data);
               const newMiniGameId = data.miniGameSessionId;
@@ -163,9 +176,20 @@ function GamePlay() {
               setIsPaused(true);
               setMiniGameTimer(newMiniGameTimer);
               setMiniGame(newMiniGame);
+              //Once mini game is found, subscribe and depending on game type add variables.
               if (newMiniGameId) {
                 subscribeToMiniGameLobby(newMiniGameId, (miniGameData) => {
-                  // Handle the start signal - set it to true and keep it true
+                  if (miniGameData.type === "crossy_road_position_update") {
+                    setMiniGamePlayerPositions((prev) => ({
+                      ...prev,
+                      [miniGameData.data.uid]: {
+                        x: miniGameData.data.x,
+                        y: miniGameData.data.y,
+                      },
+                    }));
+                    return;
+                  }
+                  // Handle the start signal when all users ready
                   if (miniGameData && miniGameData.type === "mini_game_start") {
                     console.log(
                       `🏁 Received mini-game start signal for ${newMiniGameId}!`
@@ -184,13 +208,14 @@ function GamePlay() {
                   }
                 });
               }
-              //If timer resumes
+              //If timer resumes, reset all mini game data for next mini game variables
             } else if (data.type === "game_resume") {
               const completedMiniGameId = miniGameIdRef.current;
               setIsPaused(false);
               setMiniGamePlayers([]);
               setMiniGameId(null);
               setMiniGameStartSignal(false);
+              //Since timer resumes, mini game is complete now delete all sessionStorage for game
               if (completedMiniGameId) {
                 console.log(
                   `🧹 Cleaning up session storage for completed mini-game: ${completedMiniGameId}`
@@ -205,8 +230,10 @@ function GamePlay() {
                 sessionStorage.removeItem(`miniGame-${sessionId}`);
               }
               sessionStorage.removeItem(`miniGameId-${sessionId}`);
+              //Sets timer to websocket backend time
             } else if (data.type === "timer_update") {
               setTimer(data.remainingTime);
+              //When game ends reset all variables and remove session storage from game and mini games.
             } else if (data.type === "game_end") {
               setGameEnded(true);
               disableWarning();
@@ -241,6 +268,16 @@ function GamePlay() {
                 `[Re-Subscribing] Found existing mini-game ${restoredMiniGameId} on reconnect.`
               );
               subscribeToMiniGameLobby(restoredMiniGameId, (miniGameData) => {
+                if (miniGameData.type === "crossy_road_position_update") {
+                  setMiniGamePlayerPositions((prev) => ({
+                    ...prev,
+                    [miniGameData.data.uid]: {
+                      x: miniGameData.data.x,
+                      y: miniGameData.data.y,
+                    },
+                  }));
+                  return;
+                }
                 if (Array.isArray(miniGameData)) {
                   setMiniGamePlayers(miniGameData);
                 } else if (miniGameData && miniGameData.players) {
@@ -316,7 +353,7 @@ function GamePlay() {
             ))}
           </ul>
           <p className="user-wpm">Your wpm {wpm}</p>
-          <p className="winner-text">{winnerText}</p>
+          <p className="winnerText">{winnerText}</p>
           <p className="return-screen">
             Returning to main menu in 10 seconds...
           </p>
@@ -335,6 +372,7 @@ function GamePlay() {
       />
       <div className="lobby-container">
         <h2 className="lobby-info">
+          {/*Session info*/}
           Lobby {players.length}/4 (Game Session #
           <b
             className="session-id-text"
@@ -344,6 +382,7 @@ function GamePlay() {
           </b>
           )
         </h2>
+        {/*List of player in lobby, with ready up status*/}
         <ul>
           {players.map((p, index) => (
             <li key={index}>
@@ -362,6 +401,7 @@ function GamePlay() {
           </button>
         )}
       </div>
+      {/*When main game starts show type game*/}
       {gameStart ? (
         <TypingSentences
           sessionId={sessionId}
@@ -372,9 +412,11 @@ function GamePlay() {
       ) : (
         <h2 className="please-ready-text">Please ready up to start the game</h2>
       )}
+      {/*When main game is paused show mini game modal*/}
       {isPaused && (
         <MiniGameScreen
           miniGamePlayers={miniGamePlayers}
+          miniGamePlayerPositions={miniGamePlayerPositions}
           miniGameId={miniGameId}
           miniGameTimer={miniGameTimer}
           miniGame={miniGame}
