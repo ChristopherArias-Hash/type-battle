@@ -1,5 +1,6 @@
 package com.example.type_battle.controller;
 
+import com.example.type_battle.DTO.CrossyRoadPositionData;
 import com.example.type_battle.model.*;
 import com.example.type_battle.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -100,6 +101,16 @@ public class GameSessionWebSocketController {
 
     }
 
+    @MessageMapping("/mini_game/crossy_road/position/{miniGameSessionId}")
+    public void handleCrossyRoadPosition(@DestinationVariable Long miniGameSessionId, @Payload CrossyRoadPositionData positionData, SimpMessageHeaderAccessor headerAccessor) {
+        String uid = resolveUid(headerAccessor);
+        if (uid == null) {
+            return;
+        }
+        positionData.setUid(uid);
+        messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId,
+                Map.of("type", "crossy_road_position_update", "data", positionData));
+    }
 
     //Listener that handles ready up of all users.
     @MessageMapping("/ready_up/{sessionId}")
