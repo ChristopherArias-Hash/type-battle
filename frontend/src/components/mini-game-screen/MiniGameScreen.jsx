@@ -4,8 +4,8 @@ import CrossyRoad from "../mini-games/crossy-road/CrossyRoad";
 
 //Mini Games
 const GAME_COMPONENTS = {
-  1: Stacker,
-  2: Stacker,
+  1: CrossyRoad,
+  2: CrossyRoad,
 };
 
 function MiniGameScreen({

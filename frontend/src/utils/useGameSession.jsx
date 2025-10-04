@@ -11,7 +11,7 @@ import { auth } from "../firebase";
 export function useGameSession(sessionId, userDisplayName) {
   const navigate = useNavigate();
 
-  // Main game state
+  // Main game variables
   const [timer, setTimer] = useState(
     () => JSON.parse(sessionStorage.getItem(`timer-${sessionId}`)) || 60
   );
@@ -30,7 +30,7 @@ export function useGameSession(sessionId, userDisplayName) {
   const [wpm, setWpm] = useState(0);
   const [winnerText, setWinnerText] = useState("");
 
-  // Mini game state
+  // Mini game variables
   const [miniGameId, setMiniGameId] = useState(null);
   const [miniGame, setMiniGame] = useState(() => {
     const saved = sessionStorage.getItem(`miniGame-${sessionId}`);
@@ -110,9 +110,8 @@ export function useGameSession(sessionId, userDisplayName) {
     });
   }, []);
 
-  /**
-   * Cleans up session storage for a completed mini-game
-   */
+  
+  //Cleans up session storage for a completed mini-game
   const cleanupMiniGameStorage = useCallback((completedMiniGameId) => {
     console.log(`🧹 Cleaning up session storage for completed mini-game: ${completedMiniGameId}`);
     sessionStorage.removeItem(`stackerGameState-${completedMiniGameId}`);
@@ -122,9 +121,8 @@ export function useGameSession(sessionId, userDisplayName) {
     sessionStorage.removeItem(`miniGameId-${sessionId}`);
   }, [sessionId]);
 
-  /**
-   * Handles the main game pause event when a mini-game starts
-   */
+  
+  //Handles the main game pause event when a mini-game starts
   const handleGamePause = useCallback((data) => {
     console.log("Game paused for mini-game:", data);
     const newMiniGameId = data.miniGameSessionId;
@@ -141,9 +139,8 @@ export function useGameSession(sessionId, userDisplayName) {
     }
   }, [handleMiniGameSubscription]);
 
-  /**
-   * Handles the main game resume event when a mini-game ends
-   */
+  
+  //Handles the main game resume event when a mini-game ends
   const handleGameResume = useCallback(() => {
     const completedMiniGameId = miniGameIdRef.current;
     
@@ -157,9 +154,8 @@ export function useGameSession(sessionId, userDisplayName) {
     }
   }, [cleanupMiniGameStorage]);
 
-  /**
-   * Handles the game end event and cleanup
-   */
+  
+  //Handles the game end event and cleanup
   const handleGameEnd = useCallback((data) => {
     setGameEnded(true);
     setGameStart(false);
@@ -181,9 +177,8 @@ export function useGameSession(sessionId, userDisplayName) {
     setTimeout(() => navigate("/"), 10000);
   }, [userDisplayName, sessionId, navigate]);
 
-  /**
-   * Routes incoming WebSocket game data to appropriate handlers
-   */
+  
+  //Routes incoming WebSocket game data to appropriate handlers
   const handleGameDataReceived = useCallback((data) => {
     switch (data.type) {
       case "game_start":
@@ -223,17 +218,13 @@ export function useGameSession(sessionId, userDisplayName) {
     }
   }, [sessionId, handleMiniGameSubscription]);
 
-  /**
-   * Ready up function for the main game
-   */
+  //Ready up function for the main game
   const readyUp = useCallback(() => {
     setPlayerReady(true);
     sendReadyUp(sessionId);
   }, [sessionId]);
 
-  /**
-   * Validates the game session and establishes WebSocket connection
-   */
+  //Validates the game session and establishes WebSocket connection
   useEffect(() => {
     const validateAndConnect = async () => {
       const user = auth.currentUser;
@@ -279,9 +270,8 @@ export function useGameSession(sessionId, userDisplayName) {
     };
   }, [sessionId, navigate, handleGameDataReceived, restoreMiniGameSession]);
 
-  /**
-   * Validates lobby capacity and kicks player if full
-   */
+
+ //Validates lobby capacity and kicks player if full
   useEffect(() => {
     if (players.length > 0) {
       const currentUserId = auth.currentUser?.uid;
@@ -294,9 +284,8 @@ export function useGameSession(sessionId, userDisplayName) {
     }
   }, [players, navigate]);
 
-  /**
-   * Cleans up session storage on component unmount (except during refresh)
-   */
+  
+  //Cleans up session storage on component unmount (except during refresh)
   useEffect(() => {
     return () => {
       const isRefreshing = sessionStorage.getItem("isRefreshing");

@@ -3,6 +3,8 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import MiniGameReadyUp from '../../mini-game-ready-up/MiniGameReadyUp';
 import { sendCrossyRoadPosition } from '../../../websocket';
 import { auth } from '../../../firebase';
+import {sendStackerPoints} from "../../../websocket";
+
 
 const GRID_SIZE_V = 22;
 const GRID_SIZE_H = 14;
@@ -10,7 +12,6 @@ const TILE_SIZE   = 40; // px
 
 const BOARD_W = GRID_SIZE_H * TILE_SIZE;
 const BOARD_H = GRID_SIZE_V * TILE_SIZE;
-const PLAYER_START_POS = { x: Math.floor(GRID_SIZE_H / 2), y: GRID_SIZE_V - 1 };
 // Updated vehicle types
 const VEHICLE_TYPES = [
     { type: 'car', width: 2, style: 'car-red' },
@@ -88,19 +89,6 @@ const RoadLane = ({ y }) => (
     <div className="road-lane" style={{ top: `${y * TILE_SIZE}px` }} />
 );
 
-// Game Over Message Overlay
-const MessageOverlay = ({ status, onRestart, score }) => {
-    if (status !== 'gameOver') return null;
-    
-    return (
-        <div className="message-overlay">
-            <h2 className='lose'>Game Over</h2>
-            <p style={{color: 'white', fontSize: '1.2rem', margin: '-10px 0 20px'}}>Final Crossings: {score}</p>
-            <button onClick={onRestart}>Play Again</button>
-        </div>
-    );
-};
-
 // --- Main App Component ---
 const CrossyRoad = ({ miniGamePlayers, miniGamePlayerPositions, miniGameId, miniGameStartSignal }) => {
   const [playerPos, setPlayerPos] = useState({ x: Math.floor(GRID_SIZE_H / 2), y: GRID_SIZE_V - 1 });
@@ -147,14 +135,7 @@ const CrossyRoad = ({ miniGamePlayers, miniGamePlayerPositions, miniGameId, mini
     return lanes;
   }, []);
 
-  const resetGame = useCallback(() => {
-    setPlayerPos({ x: Math.floor(GRID_SIZE_H / 2), y: GRID_SIZE_V - 1 });
-    setCrossings(0);
-    setGameState('playing');
-    setCrossingDirection('up');
-  }, []);
-
-  // init obstacles (unchanged)
+  // init obstacles
   useEffect(() => {
     const initial = [];
     for (let i = 1; i < GRID_SIZE_V - 1; i++) {
@@ -226,15 +207,30 @@ const CrossyRoad = ({ miniGamePlayers, miniGamePlayerPositions, miniGameId, mini
       setCrossingDirection(d => (d === 'up' ? 'down' : 'up'));
     }
 
+    // ✅ MODIFIED: Collision detection now respawns the player instead of ending the game.
     for (const obs of obstacles) {
       const carStart = Math.floor(obs.x);
       const carEnd = carStart + obs.width;
       if (playerPos.y === obs.y && playerPos.x >= carStart && playerPos.x < carEnd) {
-        setGameState('gameOver');
-        return;
+        // If heading up, respawn at the bottom (start)
+        if (crossingDirection === 'up') {
+          setPlayerPos({ x: Math.floor(GRID_SIZE_H / 2), y: GRID_SIZE_V - 1 });
+        } else {
+          // If heading down, respawn at the top
+          setPlayerPos({ x: Math.floor(GRID_SIZE_H / 2), y: 0 });
+        }
+        return; // Exit check after one collision
       }
     }
   }, [playerPos, obstacles, gameState, crossingDirection]);
+
+  useEffect(() => {
+    // Don't send the initial score of 0
+    if (crossings > 0) {
+      sendStackerPoints(miniGameId, { highScore: crossings });
+    }
+  }, [crossings, miniGameId]);
+
 
   if (gameState === 'waiting') {
     return (
@@ -267,7 +263,7 @@ const CrossyRoad = ({ miniGamePlayers, miniGamePlayerPositions, miniGameId, mini
             <Player pos={playerPos} />
             {Object.values(otherPlayerPositions).map((pos, i) => <Player key={i} pos={pos} />)}
             {obstacles.map((obs, i) => <Obstacle key={i} obstacle={obs} />)}
-            <MessageOverlay status={gameState} onRestart={resetGame} score={crossings} />
+            {/* ❌ REMOVED: MessageOverlay component is no longer needed */}
           </div>
         </div>
       </div>
