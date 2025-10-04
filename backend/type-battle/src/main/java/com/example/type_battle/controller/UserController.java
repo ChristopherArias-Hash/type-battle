@@ -1,6 +1,6 @@
 package com.example.type_battle.controller;
 
-import com.example.type_battle.DTO.LobbyResponse;
+import com.example.type_battle.DTO.LobbyResponseData;
 import com.example.type_battle.model.GameParticipants;
 import com.example.type_battle.model.GameSessions;
 import com.example.type_battle.model.Paragraphs;
@@ -10,7 +10,6 @@ import com.example.type_battle.repository.GameSessionsRepository;
 import com.example.type_battle.repository.ParagraphsRepository;
 import com.example.type_battle.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.websocket.Session;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -103,7 +102,7 @@ public class UserController {
 
         GameSessions savedSession = sessionRepository.save(newSession);
 
-        return ResponseEntity.ok(new LobbyResponse(savedSession.getId(), savedSession.getStatus(), savedSession.getLobbyCode()));
+        return ResponseEntity.ok(new LobbyResponseData(savedSession.getId(), savedSession.getStatus(), savedSession.getLobbyCode()));
     }
 
     //Grabs user info, checks for uid first.

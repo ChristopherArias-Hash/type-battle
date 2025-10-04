@@ -1,11 +1,11 @@
 package com.example.type_battle.DTO;
 
-public class LobbyResponse {
+public class LobbyResponseData {
     private Long id;
     private String status;
     private String lobbyCode;
 
-    public LobbyResponse(Long id, String status, String lobbyCode) {
+    public LobbyResponseData(Long id, String status, String lobbyCode) {
         this.id = id;
         this.status = status;
         this.lobbyCode = lobbyCode;

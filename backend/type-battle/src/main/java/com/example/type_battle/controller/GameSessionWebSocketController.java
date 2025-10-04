@@ -1,8 +1,11 @@
 package com.example.type_battle.controller;
 
 import com.example.type_battle.DTO.CrossyRoadPositionData;
+import com.example.type_battle.DTO.ObstacleData;
 import com.example.type_battle.model.*;
 import com.example.type_battle.repository.*;
+import com.example.type_battle.service.GameTimerService;
+import com.example.type_battle.service.ObstacleGenerationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.example.type_battle.DTO.StrokeData;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -40,7 +43,10 @@ public class GameSessionWebSocketController {
     private SimpMessagingTemplate messagingTemplate;
 
     @Autowired
-    private GameTimer gameTimer;
+    private GameTimerService gameTimerService;
+
+    @Autowired
+    private ObstacleGenerationService obstacleGenerationService;
 
     //Function to grab UID, to test if user is auth
     private String resolveUid(SimpMessageHeaderAccessor headerAccessor) {
@@ -91,10 +97,17 @@ public class GameSessionWebSocketController {
             miniGameSession.setStatus("in_progress");
             miniGameSessionRepository.save(miniGameSession);
             System.out.println("All players ready! Starting mini-game: " + miniGameSession.getId());
-            gameTimer.startMiniGameTimer(miniGameSessionId);
+            gameTimerService.startMiniGameTimer(miniGameSessionId);
 
             Map<String, Object> gameStartMessage = new HashMap<>();
             gameStartMessage.put("type", "mini_game_start");
+
+            List<ObstacleData> obstacleData = obstacleGenerationService.generateObstacles();
+            gameStartMessage.put("obstacles", obstacleData);
+
+            // Record the server-side start time for potential future logic
+            gameStartMessage.put("startTime", System.currentTimeMillis());
+
             messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId, gameStartMessage);
 
         }
@@ -165,7 +178,7 @@ public class GameSessionWebSocketController {
             System.out.println("All players are ready! Starting the game...");
 
             // Start the game timer
-            gameTimer.startGameTimer(sessionId, session.getGameDuration());
+            gameTimerService.startGameTimer(sessionId, session.getGameDuration());
 
             Map<String, Object> gameStartMessage = new HashMap<>();
             gameStartMessage.put("type", "game_start");
@@ -262,7 +275,7 @@ public class GameSessionWebSocketController {
         MiniGameParticipants miniGameParticipants = miniGameParticipantsOpt.get();
         miniGameParticipants.setScore(pointsToAdd);
         miniGameParticipantRepository.save(miniGameParticipants);
-
+        System.out.println("[WebSocket] Stacker point sent to DB");
 
     }
 

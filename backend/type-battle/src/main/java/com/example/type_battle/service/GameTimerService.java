@@ -1,5 +1,5 @@
 // File: christopherarias-hash/type-battle/type-battle-f3f7c56cfb197d3f3293465c8f22cfe580bd9cae/backend/type-battle/src/main/java/com/example/type_battle/controller/GameTimer.java
-package com.example.type_battle.controller;
+package com.example.type_battle.service;
 
 import com.example.type_battle.model.*;
 import com.example.type_battle.repository.*;
@@ -7,14 +7,13 @@ import jakarta.annotation.PreDestroy;
 
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
-public class GameTimer {
+public class GameTimerService {
     @Autowired
     private GameSessionsRepository sessionRepository;
     @Autowired
