@@ -16,7 +16,8 @@ export function useGameSession(sessionId, userDisplayName) {
     () => JSON.parse(sessionStorage.getItem(`timer-${sessionId}`)) || 60
   );
   const [playerReady, setPlayerReady] = useState(
-    () => JSON.parse(sessionStorage.getItem(`playerReady-${sessionId}`)) || false
+    () =>
+      JSON.parse(sessionStorage.getItem(`playerReady-${sessionId}`)) || false
   );
   const [paragraphText, setParagraphText] = useState(null);
   const [players, setPlayers] = useState([]);
@@ -38,13 +39,14 @@ export function useGameSession(sessionId, userDisplayName) {
   });
   const miniGameIdRef = useRef(miniGameId);
   const [miniGamePlayers, setMiniGamePlayers] = useState([]);
-  const [miniGamePlayerPositions, setMiniGamePlayerPositions] = useState({});
+  const [lastMiniGameMessage, setLastMiniGameMessage] = useState(null);
   const [miniGameStartSignal, setMiniGameStartSignal] = useState(() => {
     const saved = sessionStorage.getItem(`miniGameStartSignal-${sessionId}`);
-    return saved ? JSON.parse(saved) : false;
+    return saved ? JSON.parse(saved) : null; // Changed from false to null for consistency
   });
   const [miniGameTimer, setMiniGameTimer] = useState(
-    () => JSON.parse(sessionStorage.getItem(`miniGameTimer-${sessionId}`)) || null
+    () =>
+      JSON.parse(sessionStorage.getItem(`miniGameTimer-${sessionId}`)) || null
   );
 
   // Restore miniGameId from sessionStorage if we were in a mini-game
@@ -68,11 +70,29 @@ export function useGameSession(sessionId, userDisplayName) {
     sessionStorage.setItem(`timer-${sessionId}`, JSON.stringify(timer));
     sessionStorage.setItem(`isPaused-${sessionId}`, JSON.stringify(isPaused));
     sessionStorage.setItem(`gameStart-${sessionId}`, JSON.stringify(gameStart));
-    sessionStorage.setItem(`playerReady-${sessionId}`, JSON.stringify(playerReady));
-    sessionStorage.setItem(`miniGameTimer-${sessionId}`, JSON.stringify(miniGameTimer));
-    sessionStorage.setItem(`miniGameStartSignal-${sessionId}`, JSON.stringify(miniGameStartSignal));
+    sessionStorage.setItem(
+      `playerReady-${sessionId}`,
+      JSON.stringify(playerReady)
+    );
+    sessionStorage.setItem(
+      `miniGameTimer-${sessionId}`,
+      JSON.stringify(miniGameTimer)
+    );
+    sessionStorage.setItem(
+      `miniGameStartSignal-${sessionId}`,
+      JSON.stringify(miniGameStartSignal)
+    );
     sessionStorage.setItem(`miniGame-${sessionId}`, JSON.stringify(miniGame));
-  }, [timer, isPaused, gameStart, playerReady, miniGameTimer, sessionId, miniGameStartSignal, miniGame]);
+  }, [
+    timer,
+    isPaused,
+    gameStart,
+    playerReady,
+    miniGameTimer,
+    sessionId,
+    miniGameStartSignal,
+    miniGame,
+  ]);
 
   /**
    * Handles all mini-game WebSocket messages and updates state accordingly
@@ -80,25 +100,18 @@ export function useGameSession(sessionId, userDisplayName) {
    */
   const handleMiniGameSubscription = useCallback((miniGameSessionId) => {
     subscribeToMiniGameLobby(miniGameSessionId, (miniGameData) => {
-      // Handle Crossy Road position updates
-      if (miniGameData.type === "crossy_road_position_update") {
-        setMiniGamePlayerPositions((prev) => ({
-          ...prev,
-          [miniGameData.data.uid]: {
-            x: miniGameData.data.x,
-            y: miniGameData.data.y,
-          },
-        }));
+      setLastMiniGameMessage(miniGameData);
+
+      //Handle mini-game start signal by capturing the entire object
+      if (miniGameData && miniGameData.type === "mini_game_start") {
+        console.log(
+          `🏁 Received mini-game start signal for ${miniGameSessionId}!`
+        );
+        setMiniGameStartSignal(miniGameData); // Store the full object with obstacles
         return;
       }
 
-      // Handle mini-game start signal (when all players are ready)
-      if (miniGameData && miniGameData.type === "mini_game_start") {
-        console.log(`🏁 Received mini-game start signal for ${miniGameSessionId}!`);
-        setMiniGameStartSignal(true);
-      }
-
-      // Handle player list updates
+      // Handle player list updates and timer
       if (Array.isArray(miniGameData)) {
         setMiniGamePlayers(miniGameData);
       } else if (miniGameData && miniGameData.players) {
@@ -110,110 +123,123 @@ export function useGameSession(sessionId, userDisplayName) {
     });
   }, []);
 
-  
   //Cleans up session storage for a completed mini-game
-  const cleanupMiniGameStorage = useCallback((completedMiniGameId) => {
-    console.log(`🧹 Cleaning up session storage for completed mini-game: ${completedMiniGameId}`);
-    sessionStorage.removeItem(`stackerGameState-${completedMiniGameId}`);
-    sessionStorage.removeItem(`stackerHighScore-${completedMiniGameId}`);
-    sessionStorage.removeItem(`miniGameTimer-${sessionId}`);
-    sessionStorage.removeItem(`miniGame-${sessionId}`);
-    sessionStorage.removeItem(`miniGameId-${sessionId}`);
-  }, [sessionId]);
+  const cleanupMiniGameStorage = useCallback(
+    (completedMiniGameId) => {
+      console.log(
+        `🧹 Cleaning up session storage for completed mini-game: ${completedMiniGameId}`
+      );
+      sessionStorage.removeItem(`stackerGameState-${completedMiniGameId}`);
+      sessionStorage.removeItem(`stackerHighScore-${completedMiniGameId}`);
+      sessionStorage.removeItem(`miniGameTimer-${sessionId}`);
+      sessionStorage.removeItem(`miniGame-${sessionId}`);
+      sessionStorage.removeItem(`miniGameId-${sessionId}`);
+    },
+    [sessionId]
+  );
 
-  
   //Handles the main game pause event when a mini-game starts
-  const handleGamePause = useCallback((data) => {
-    console.log("Game paused for mini-game:", data);
-    const newMiniGameId = data.miniGameSessionId;
-    const newMiniGameTimer = data.duration;
-    const newMiniGame = data.miniGameId;
-    
-    setMiniGameId(newMiniGameId);
-    setIsPaused(true);
-    setMiniGameTimer(newMiniGameTimer);
-    setMiniGame(newMiniGame);
+  const handleGamePause = useCallback(
+    (data) => {
+      console.log("Game paused for mini-game:", data);
+      const newMiniGameId = data.miniGameSessionId;
+      const newMiniGameTimer = data.duration;
+      const newMiniGame = data.miniGameId;
 
-    if (newMiniGameId) {
-      handleMiniGameSubscription(newMiniGameId);
-    }
-  }, [handleMiniGameSubscription]);
+      setMiniGameId(newMiniGameId);
+      setIsPaused(true);
+      setMiniGameTimer(newMiniGameTimer);
+      setMiniGame(newMiniGame);
 
-  
+      if (newMiniGameId) {
+        handleMiniGameSubscription(newMiniGameId);
+      }
+    },
+    [handleMiniGameSubscription]
+  );
+
   //Handles the main game resume event when a mini-game ends
   const handleGameResume = useCallback(() => {
     const completedMiniGameId = miniGameIdRef.current;
-    
+
     setIsPaused(false);
     setMiniGamePlayers([]);
     setMiniGameId(null);
-    setMiniGameStartSignal(false);
+    setMiniGameStartSignal(null); // Reset to null instead of false
 
     if (completedMiniGameId) {
       cleanupMiniGameStorage(completedMiniGameId);
     }
   }, [cleanupMiniGameStorage]);
 
-  
   //Handles the game end event and cleanup
-  const handleGameEnd = useCallback((data) => {
-    setGameEnded(true);
-    setGameStart(false);
-    setWinnerText(data.win_message);
-    
-    const currentUserWpm = data.wpm_data?.find(
-      (entry) => entry.displayName === userDisplayName
-    );
-    if (currentUserWpm) setWpm(currentUserWpm.wpm);
-    
-    // Clean up all session storage
-    sessionStorage.removeItem(`timer-${sessionId}`);
-    sessionStorage.removeItem(`isPaused-${sessionId}`);
-    sessionStorage.removeItem(`gameStart-${sessionId}`);
-    sessionStorage.removeItem(`playerReady-${sessionId}`);
-    sessionStorage.removeItem(`miniGameId-${sessionId}`);
-    sessionStorage.removeItem(`miniGameTimer-${sessionId}`);
-    
-    setTimeout(() => navigate("/"), 10000);
-  }, [userDisplayName, sessionId, navigate]);
+  const handleGameEnd = useCallback(
+    (data) => {
+      setGameEnded(true);
+      setGameStart(false);
+      setWinnerText(data.win_message);
 
-  
+      const currentUserWpm = data.wpm_data?.find(
+        (entry) => entry.displayName === userDisplayName
+      );
+      if (currentUserWpm) setWpm(currentUserWpm.wpm);
+
+      // Clean up all session storage
+      sessionStorage.removeItem(`timer-${sessionId}`);
+      sessionStorage.removeItem(`isPaused-${sessionId}`);
+      sessionStorage.removeItem(`gameStart-${sessionId}`);
+      sessionStorage.removeItem(`playerReady-${sessionId}`);
+      sessionStorage.removeItem(`miniGameId-${sessionId}`);
+      sessionStorage.removeItem(`miniGameTimer-${sessionId}`);
+
+      setTimeout(() => navigate("/"), 10000);
+    },
+    [userDisplayName, sessionId, navigate]
+  );
+
   //Routes incoming WebSocket game data to appropriate handlers
-  const handleGameDataReceived = useCallback((data) => {
-    switch (data.type) {
-      case "game_start":
-        setGameStart(true);
-        break;
-      case "game_pause":
-        handleGamePause(data);
-        break;
-      case "game_resume":
-        handleGameResume();
-        break;
-      case "timer_update":
-        setTimer(data.remainingTime);
-        break;
-      case "game_end":
-        handleGameEnd(data);
-        break;
-      default:
-        if (data.text) {
-          setParagraphText(data.text);
-        }
-    }
-  }, [handleGamePause, handleGameResume, handleGameEnd]);
+  const handleGameDataReceived = useCallback(
+    (data) => {
+      switch (data.type) {
+        case "game_start":
+          setGameStart(true);
+          break;
+        case "game_pause":
+          handleGamePause(data);
+          break;
+        case "game_resume":
+          handleGameResume();
+          break;
+        case "timer_update":
+          setTimer(data.remainingTime);
+          break;
+        case "game_end":
+          handleGameEnd(data);
+          break;
+        default:
+          if (data.text) {
+            setParagraphText(data.text);
+          }
+      }
+    },
+    [handleGamePause, handleGameResume, handleGameEnd]
+  );
 
   /**
    * Re-subscribes to an active mini-game session after WebSocket reconnection
-   * This is called when the WebSocket reconnects and detects the player was
-   * in a mini-game (e.g., after a page refresh during a mini-game)
    */
   const restoreMiniGameSession = useCallback(() => {
-    const restoredMiniGameId = sessionStorage.getItem(`miniGameId-${sessionId}`);
-    const isRestoredPaused = JSON.parse(sessionStorage.getItem(`isPaused-${sessionId}`));
+    const restoredMiniGameId = sessionStorage.getItem(
+      `miniGameId-${sessionId}`
+    );
+    const isRestoredPaused = JSON.parse(
+      sessionStorage.getItem(`isPaused-${sessionId}`)
+    );
 
     if (isRestoredPaused && restoredMiniGameId) {
-      console.log(`[Re-Subscribing] Found existing mini-game ${restoredMiniGameId} on reconnect.`);
+      console.log(
+        `[Re-Subscribing] Found existing mini-game ${restoredMiniGameId} on reconnect.`
+      );
       handleMiniGameSubscription(restoredMiniGameId);
     }
   }, [sessionId, handleMiniGameSubscription]);
@@ -231,7 +257,7 @@ export function useGameSession(sessionId, userDisplayName) {
       if (!user) return;
 
       const token = await user.getIdToken();
-      
+
       // Validate session exists and is joinable
       const response = await fetch(
         `http://localhost:8080/protected/game-session?lobbyCode=${sessionId}`,
@@ -270,13 +296,14 @@ export function useGameSession(sessionId, userDisplayName) {
     };
   }, [sessionId, navigate, handleGameDataReceived, restoreMiniGameSession]);
 
-
- //Validates lobby capacity and kicks player if full
+  //Validates lobby capacity and kicks player if full
   useEffect(() => {
     if (players.length > 0) {
       const currentUserId = auth.currentUser?.uid;
-      const isInLobby = players.some((p) => p.user?.firebaseUid === currentUserId);
-      
+      const isInLobby = players.some(
+        (p) => p.user?.firebaseUid === currentUserId
+      );
+
       if (!isInLobby && players.length >= 4) {
         alert("Cannot join: lobby is full.");
         navigate("/");
@@ -284,7 +311,6 @@ export function useGameSession(sessionId, userDisplayName) {
     }
   }, [players, navigate]);
 
-  
   //Cleans up session storage on component unmount (except during refresh)
   useEffect(() => {
     return () => {
@@ -316,7 +342,7 @@ export function useGameSession(sessionId, userDisplayName) {
     miniGameId,
     miniGame,
     miniGamePlayers,
-    miniGamePlayerPositions,
+    lastMiniGameMessage,
     miniGameStartSignal,
     miniGameTimer,
     // Functions
