@@ -39,7 +39,7 @@ public class GameTimerService {
     private final Map<String, Set<Integer>> triggeredPausePoints = new ConcurrentHashMap<>();
     private final Set<Integer> pausePoints = Set.of(45, 30, 15);
     private final List<Integer> miniGameBonusPoints = List.of(45, 30, 15, 5);
-    private final int PAUSE_DURATION = 6000; // Duration of the mini-game in seconds
+    private final int PAUSE_DURATION = 60; // Duration of the mini-game in seconds
 
     public void startGameTimer(String sessionId, int durationSeconds) {
         stopGameTimer(sessionId);

@@ -4,6 +4,7 @@ import com.example.type_battle.DTO.CrossyRoadPositionData;
 import com.example.type_battle.DTO.IslandGamePositionData;
 import com.example.type_battle.model.*;
 import com.example.type_battle.repository.*;
+import com.example.type_battle.service.CrossyRoadSetupService;
 import com.example.type_battle.service.GameTimerService;
 import com.example.type_battle.service.IslandGameSetupService;
 import com.example.type_battle.service.ObstacleGenerationService;
@@ -51,6 +52,9 @@ public class GameSessionWebSocketController {
 
     @Autowired
     private IslandGameSetupService islandGameSetupService;
+
+    @Autowired
+    private CrossyRoadSetupService crossyRoadSetupService;
 
     //Function to grab UID, to test if user is auth
     private String resolveUid(SimpMessageHeaderAccessor headerAccessor) {
@@ -107,16 +111,12 @@ public class GameSessionWebSocketController {
             gameStartMessage.put("type", "mini_game_start");
             gameStartMessage.put("startTime", System.currentTimeMillis());
 
-            // Get the specific mini-game to decide what data to send
-            MiniGames miniGame = miniGameSession.getMiniGames();
-            if (miniGame != null && (miniGame.getId() == 1 || miniGame.getId() == 2)) { // Island Game ID
-                gameStartMessage.put("cannons", islandGameSetupService.generateInitialCannons());
-            } else { // It's Crossy Road or another game
-                gameStartMessage.put("obstacles", obstacleGenerationService.generateObstacles());
-            }
+            // **FIX:** Always send setup data for ALL games to allow for flexible frontend testing.
+            gameStartMessage.put("cannons", islandGameSetupService.generateInitialCannons());
+            gameStartMessage.put("obstacles", obstacleGenerationService.generateObstacles());
+            gameStartMessage.put("initialPositions", crossyRoadSetupService.generateInitialPositions(allParticipants));
 
             messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId, gameStartMessage);
-
         }
     }
 
