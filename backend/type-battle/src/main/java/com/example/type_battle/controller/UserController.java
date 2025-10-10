@@ -1,5 +1,6 @@
 package com.example.type_battle.controller;
 
+import com.example.type_battle.DTO.LeaderBoardData;
 import com.example.type_battle.DTO.LobbyResponseData;
 import com.example.type_battle.model.GameParticipants;
 import com.example.type_battle.model.GameSessions;
@@ -146,7 +147,7 @@ public class UserController {
 
         GameSessions session = sessionOpt.get();
 
-        // Allow rejoin if user is already in this session
+        // Allow re join if user is already in this session
         List<GameParticipants> existingParticipants = participantsRepository.findAllByGameSessions(session);
         boolean isAlreadyParticipant = existingParticipants.stream()
                 .anyMatch(p -> p.getUser().getId().equals(user.getId()));
@@ -161,21 +162,22 @@ public class UserController {
 
     //Grabs list of all users, sorts by leaderboard wins.
     @GetMapping("leader-board")
-    public ResponseEntity<List<User>> leaderboard(HttpServletRequest request) {
+    public ResponseEntity<List<LeaderBoardData>> leaderboard(HttpServletRequest request) {
         String uid = (String) request.getAttribute("uid");
 
         if (uid == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        List<User> users = userRepository.findAll().stream()
+        List<LeaderBoardData> leaderboard = userRepository.findAll().stream()
                 .sorted(Comparator.comparingInt(User::getGamesWon).reversed())
                 .limit(10) //limits list size
+                .map(user -> new LeaderBoardData(user.getDisplayName(), user.getGamesWon()))
                 .collect(Collectors.toList());
 
-        if (users.isEmpty()) {
+        if (leaderboard.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        return ResponseEntity.ok(users);
+        return ResponseEntity.ok(leaderboard);
     }
 
 
