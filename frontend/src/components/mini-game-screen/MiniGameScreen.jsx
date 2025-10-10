@@ -37,6 +37,7 @@ function MiniGameScreen({
             lastMiniGameMessage={lastMiniGameMessage}
             miniGameId={miniGameId}
             miniGameStartSignal={miniGameStartSignal}
+            miniGameTimer={miniGameTimer} 
           />
         ) : (
           <div>Loading yo</div>
