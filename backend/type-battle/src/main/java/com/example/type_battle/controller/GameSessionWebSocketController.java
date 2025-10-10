@@ -1,10 +1,11 @@
 package com.example.type_battle.controller;
 
 import com.example.type_battle.DTO.CrossyRoadPositionData;
-import com.example.type_battle.DTO.ObstacleData;
+import com.example.type_battle.DTO.IslandGamePositionData;
 import com.example.type_battle.model.*;
 import com.example.type_battle.repository.*;
 import com.example.type_battle.service.GameTimerService;
+import com.example.type_battle.service.IslandGameSetupService;
 import com.example.type_battle.service.ObstacleGenerationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.example.type_battle.DTO.StrokeData;
@@ -47,6 +48,9 @@ public class GameSessionWebSocketController {
 
     @Autowired
     private ObstacleGenerationService obstacleGenerationService;
+
+    @Autowired
+    private IslandGameSetupService islandGameSetupService;
 
     //Function to grab UID, to test if user is auth
     private String resolveUid(SimpMessageHeaderAccessor headerAccessor) {
@@ -101,18 +105,21 @@ public class GameSessionWebSocketController {
 
             Map<String, Object> gameStartMessage = new HashMap<>();
             gameStartMessage.put("type", "mini_game_start");
-
-            List<ObstacleData> obstacleData = obstacleGenerationService.generateObstacles();
-            gameStartMessage.put("obstacles", obstacleData);
-
-            // Record the server-side start time for potential future logic
             gameStartMessage.put("startTime", System.currentTimeMillis());
+
+            // Get the specific mini-game to decide what data to send
+            MiniGames miniGame = miniGameSession.getMiniGames();
+            if (miniGame != null && (miniGame.getId() == 1 || miniGame.getId() == 2)) { // Island Game ID
+                gameStartMessage.put("cannons", islandGameSetupService.generateInitialCannons());
+            } else { // It's Crossy Road or another game
+                gameStartMessage.put("obstacles", obstacleGenerationService.generateObstacles());
+            }
 
             messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId, gameStartMessage);
 
         }
-
     }
+
 
     @MessageMapping("/mini_game/crossy_road/position/{miniGameSessionId}")
     public void handleCrossyRoadPosition(@DestinationVariable Long miniGameSessionId, @Payload CrossyRoadPositionData positionData, SimpMessageHeaderAccessor headerAccessor) {
@@ -123,6 +130,17 @@ public class GameSessionWebSocketController {
         positionData.setUid(uid);
         messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId,
                 Map.of("type", "crossy_road_position_update", "data", positionData));
+    }
+
+    @MessageMapping("/mini_game/island_game/position/{miniGameSessionId}")
+    public void handleIslandGamePosition(@DestinationVariable Long miniGameSessionId, @Payload IslandGamePositionData positionData, SimpMessageHeaderAccessor headerAccessor) {
+        String uid = resolveUid(headerAccessor);
+        if (uid == null) {
+            return;
+        }
+        positionData.setUid(uid);
+        messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId,
+                Map.of("type", "island_game_position_update", "data", positionData));
     }
 
     //Listener that handles ready up of all users.
