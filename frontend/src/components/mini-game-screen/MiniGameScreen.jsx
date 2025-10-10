@@ -1,16 +1,17 @@
 import "./MiniGameScreen.css";
 import Stacker from "../mini-games/stacker/Stacker";
 import CrossyRoad from "../mini-games/crossy-road/CrossyRoad";
+import IslandGame from "../mini-games/island-game/islandGame";
 
 //Mini Games
 const GAME_COMPONENTS = {
-  1: CrossyRoad,
-  2: CrossyRoad,
+  1: IslandGame,
+  2: IslandGame,
 };
 
 function MiniGameScreen({
   miniGamePlayers,
-  miniGamePlayerPositions,
+  lastMiniGameMessage,
   miniGameId,
   miniGameTimer,
   miniGame,
@@ -21,7 +22,7 @@ function MiniGameScreen({
     <div className="mini-game-overlay">
       <div className="mini-game-container">
         {/*List of players in lobby*/}
-        <p>test: {miniGameTimer}</p>
+        <p>timer: {miniGameTimer}</p>
         <ul>
           {miniGamePlayers.map((p, index) => (
             <li key={index}>
@@ -33,7 +34,7 @@ function MiniGameScreen({
         {CurrentGame ? (
           <CurrentGame
             miniGamePlayers={miniGamePlayers}
-            miniGamePlayerPositions={miniGamePlayerPositions}
+            lastMiniGameMessage={lastMiniGameMessage}
             miniGameId={miniGameId}
             miniGameStartSignal={miniGameStartSignal}
           />

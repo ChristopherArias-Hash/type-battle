@@ -19,7 +19,7 @@ function AboutUs() {
           party game out of the genre. He currently is a Senior at California
           State University Channel Islands Majoring in Computer Science. He’s
           Currently working at the schools IT department as <b className="highlighted">Web Developer</b>
-          (student job) and Interning and Linked2pay as  <b className="highlighted">QA Engineer</b>.
+          (student job) and Interning and Linked2pay as  <b className="highlighted">Software Engineer</b>.
         </p>
         <ul className="example-2">
   <li className="icon-content">

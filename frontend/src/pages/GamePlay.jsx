@@ -27,7 +27,7 @@ function GamePlay() {
     miniGameId,
     miniGame,
     miniGamePlayers,
-    miniGamePlayerPositions,
+    lastMiniGameMessage,
     miniGameStartSignal,
     miniGameTimer,
     readyUp,
@@ -145,7 +145,7 @@ function GamePlay() {
       {isPaused && (
         <MiniGameScreen
           miniGamePlayers={miniGamePlayers}
-          miniGamePlayerPositions={miniGamePlayerPositions}
+          lastMiniGameMessage={lastMiniGameMessage}
           miniGameId={miniGameId}
           miniGameTimer={miniGameTimer}
           miniGame={miniGame}
