@@ -170,3 +170,12 @@ export function sendCrossyRoadPosition(miniGameSessionId, positionData) {
         });
     }
 }
+
+export function sendIslandGamePosition(miniGameSessionId, positionData) {
+    if (stompClient && stompClient.connected) {
+        stompClient.publish({
+            destination: `/app/mini_game/island_game/position/${miniGameSessionId}`,
+            body: JSON.stringify(positionData),
+        });
+    }
+}

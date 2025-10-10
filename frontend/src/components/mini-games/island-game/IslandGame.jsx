@@ -1,192 +1,217 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import './IslandGame.css'; // Import the new CSS file
+import './IslandGame.css';
+import MiniGameReadyUp from "../../mini-game-ready-up/MiniGameReadyUp";
+import { sendIslandGamePosition } from '../../../websocket';
+import { auth } from '../../../firebase';
 
 // --- GAME CONFIGURATION ---
 const BOARD_SIZE = 30;
 const TILE_SIZE = 30;
-const GAME_DURATION = 60;
-const ROUNDS = 8;
-const ROUND_INTERVAL = GAME_DURATION / ROUNDS;
 const PLAYER_SPEED = 0.2;
 const CANNONBALL_SPEED = 0.15;
-const CANNON_FIRE_INTERVAL = 2500; // Fire every 2.5 seconds
-const ISLAND_RADIUS = 12; // Island radius in tiles
+const CANNON_FIRE_INTERVAL = 2500;
+const ISLAND_RADIUS = 12;
 
-// --- GAME COMPONENTS ---
+const BOARD_WIDTH = BOARD_SIZE * TILE_SIZE;
+const BOARD_HEIGHT = BOARD_SIZE * TILE_SIZE;
 
-const Player = ({ position }) => (
-  <div
-    className="player"
-    style={{
-      left: position.x * TILE_SIZE,
-      top: position.y * TILE_SIZE,
-    }}
-  />
-);
+// --- GAME COMPONENTS (Unchanged) ---
+const Player = ({ position, isLocalPlayer }) => ( <div className="player" style={{ left: position.x * TILE_SIZE, top: position.y * TILE_SIZE, backgroundColor: isLocalPlayer ? '#3b82f6' : '#f59e0b', borderColor: isLocalPlayer ? '#1d4ed8' : '#b45309' }} /> );
+const Cannon = ({ position, rotation }) => ( <div className="cannon" style={{ left: position.x * TILE_SIZE, top: position.y * TILE_SIZE, transform: `translate(-50%, -50%) rotate(${rotation}deg)` }} > <div className="cannon-base"></div> <div className="cannon-barrel"></div> </div> );
+const Cannonball = ({ position }) => ( <div className="cannonball" style={{ left: position.x * TILE_SIZE, top: position.y * TILE_SIZE }} /> );
+const Island = () => ( <div className="island-container"> <div className="water-background"></div> <div className="water-waves"></div> <div className="water-ripples"></div> <div className="island-shadow" style={{ width: `${ISLAND_RADIUS * 2 * TILE_SIZE + 60}px`, height: `${ISLAND_RADIUS * 2 * TILE_SIZE + 60}px` }}></div> <div className="shallow-water" style={{ width: `${ISLAND_RADIUS * 2 * TILE_SIZE + 30}px`, height: `${ISLAND_RADIUS * 2 * TILE_SIZE + 30}px` }}></div> <div className="island-sand" style={{ width: `${ISLAND_RADIUS * 2 * TILE_SIZE}px`, height: `${ISLAND_RADIUS * 2 * TILE_SIZE}px` }}></div> <div className="sand-texture" style={{ width: `${ISLAND_RADIUS * 2 * TILE_SIZE}px`, height: `${ISLAND_RADIUS * 2 * TILE_SIZE}px` }}></div> <div className="island-grass-outer" style={{ width: `${ISLAND_RADIUS * 2 * TILE_SIZE - 80}px`, height: `${ISLAND_RADIUS * 2 * TILE_SIZE - 80}px` }}></div> <div className="grass-texture" style={{ width: `${ISLAND_RADIUS * 2 * TILE_SIZE - 80}px`, height: `${ISLAND_RADIUS * 2 * TILE_SIZE - 80}px` }}></div> <div className="island-grass-inner" style={{ width: `${ISLAND_RADIUS * 2 * TILE_SIZE - 160}px`, height: `${ISLAND_RADIUS * 2 * TILE_SIZE - 160}px` }}></div> <div className="island-highlight" style={{ width: `${ISLAND_RADIUS * 2 * TILE_SIZE - 200}px`, height: `${ISLAND_RADIUS * 2 * TILE_SIZE - 200}px` }}></div> </div> );
 
-const Cannon = ({ position, rotation }) => (
-  <div
-    className="cannon"
-    style={{
-      left: position.x * TILE_SIZE,
-      top: position.y * TILE_SIZE,
-      transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
-    }}
-  >
-    <div className="cannon-base"></div>
-    <div className="cannon-barrel"></div>
-  </div>
-);
-
-const Cannonball = ({ position }) => (
-  <div
-    className="cannonball"
-    style={{
-      left: position.x * TILE_SIZE,
-      top: position.y * TILE_SIZE,
-    }}
-  />
-);
-
-const Island = () => (
-  <div className="island-container">
-    <div className="water-background"></div>
-    <div className="water-waves"></div>
-    <div className="water-ripples"></div>
-    <div className="island-shadow" style={{ width: `${ISLAND_RADIUS * 2 * TILE_SIZE + 60}px`, height: `${ISLAND_RADIUS * 2 * TILE_SIZE + 60}px` }}></div>
-    <div className="shallow-water" style={{ width: `${ISLAND_RADIUS * 2 * TILE_SIZE + 30}px`, height: `${ISLAND_RADIUS * 2 * TILE_SIZE + 30}px` }}></div>
-    <div className="island-sand" style={{ width: `${ISLAND_RADIUS * 2 * TILE_SIZE}px`, height: `${ISLAND_RADIUS * 2 * TILE_SIZE}px` }}></div>
-    <div className="sand-texture" style={{ width: `${ISLAND_RADIUS * 2 * TILE_SIZE}px`, height: `${ISLAND_RADIUS * 2 * TILE_SIZE}px` }}></div>
-    <div className="island-grass-outer" style={{ width: `${ISLAND_RADIUS * 2 * TILE_SIZE - 80}px`, height: `${ISLAND_RADIUS * 2 * TILE_SIZE - 80}px` }}></div>
-    <div className="grass-texture" style={{ width: `${ISLAND_RADIUS * 2 * TILE_SIZE - 80}px`, height: `${ISLAND_RADIUS * 2 * TILE_SIZE - 80}px` }}></div>
-    <div className="island-grass-inner" style={{ width: `${ISLAND_RADIUS * 2 * TILE_SIZE - 160}px`, height: `${ISLAND_RADIUS * 2 * TILE_SIZE - 160}px` }}></div>
-    <div className="island-highlight" style={{ width: `${ISLAND_RADIUS * 2 * TILE_SIZE - 200}px`, height: `${ISLAND_RADIUS * 2 * TILE_SIZE - 200}px` }}></div>
-  </div>
-);
 
 // --- MAIN GAME COMPONENT ---
-
-const IslandGame = () => {
+const IslandGame = ({ miniGamePlayers, miniGameId, miniGameStartSignal, miniGameTimer, lastMiniGameMessage }) => {
   const [gameState, setGameState] = useState('waiting');
-  const [timer, setTimer] = useState(GAME_DURATION);
   const [playerPos, setPlayerPos] = useState({ x: BOARD_SIZE / 2, y: BOARD_SIZE / 2 });
-  const [cannons, setCannons] = useState([]);
+  const [otherPlayers, setOtherPlayers] = useState({});
+  const [activeCannons, setActiveCannons] = useState([]);
   const [cannonballs, setCannonballs] = useState([]);
 
+  const allCannonsRef = useRef([]); 
   const keysDownRef = useRef({});
   const gameLoopRef = useRef();
   const lastTimeRef = useRef();
   const cannonballIdRef = useRef(0);
+  const stageRef = useRef(null);
+  const [scale, setScale] = useState(1);
+
+  // Use refs for values that change often inside the game loop to prevent re-renders
+  const playerPosRef = useRef(playerPos);
+  const otherPlayersRef = useRef(otherPlayers);
+  const activeCannonRef = useRef(activeCannons);
+  const cannonballsRef = useRef(cannonballs);
+
+  useEffect(() => { playerPosRef.current = playerPos; }, [playerPos]);
+  useEffect(() => { otherPlayersRef.current = otherPlayers; }, [otherPlayers]);
+  useEffect(() => { activeCannonRef.current = activeCannons; }, [activeCannons]);
+  useEffect(() => { cannonballsRef.current = cannonballs; }, [cannonballs]);
+  
+  // Handle incoming position updates for other players
+  useEffect(() => {
+    if (lastMiniGameMessage && lastMiniGameMessage.type === 'island_game_position_update') {
+      const { data } = lastMiniGameMessage;
+      const currentUid = auth.currentUser?.uid;
+      if (data.uid !== currentUid) {
+        setOtherPlayers(prev => ({ ...prev, [data.uid]: { x: data.x, y: data.y } }));
+      }
+    }
+  }, [lastMiniGameMessage]);
+
+  // Handle scaling of the game board
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+        const { width, height } = entries[0].contentRect;
+        const s = Math.min(width / BOARD_WIDTH, height / BOARD_HEIGHT);
+        setScale(Math.max(0.1, Math.min(s, 1)));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const resetGame = useCallback(() => {
-    setTimer(GAME_DURATION);
     setPlayerPos({ x: BOARD_SIZE / 2, y: BOARD_SIZE / 2 });
-    setCannons([]);
+    setActiveCannons([]);
     setCannonballs([]);
+    setOtherPlayers({});
     keysDownRef.current = {};
   }, []);
 
-  const gameStateRef = useRef(gameState);
-  useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
-  const playerPosRef = useRef(playerPos);
-  useEffect(() => { playerPosRef.current = playerPos; }, [playerPos]);
-  const cannonsRef = useRef(cannons);
-  useEffect(() => { cannonsRef.current = cannons; }, [cannons]);
+  const startGame = useCallback((initialCannonsFromServer) => {
+    resetGame();
+    allCannonsRef.current = initialCannonsFromServer.map(c => ({
+      id: c.id,
+      pos: { x: c.x, y: c.y },
+      angle: 0,
+      lastShot: performance.now() + (Math.random() * CANNON_FIRE_INTERVAL),
+      spawnTime: c.spawnTime
+    })).sort((a, b) => b.spawnTime - a.spawnTime);
+    
+    setActiveCannons([]);
+    setGameState('playing');
+  }, [resetGame]);
+
+  useEffect(() => {
+    if (miniGameStartSignal && gameState === 'waiting' && miniGameStartSignal.cannons) {
+      startGame(miniGameStartSignal.cannons);
+    }
+  }, [miniGameStartSignal, gameState, startGame]);
+  
+  // **DETERMINISTIC CANNON SPAWNING**
+  useEffect(() => {
+    if (gameState !== 'playing' || !allCannonsRef.current.length) return;
+
+    // Filter all potential cannons to see which ones *should* be active based on the server timer
+    const shouldBeActive = allCannonsRef.current.filter(c => miniGameTimer <= c.spawnTime);
+    
+    // Only update state if the number of active cannons has changed
+    if (shouldBeActive.length !== activeCannons.length) {
+      setActiveCannons(shouldBeActive);
+    }
+  }, [miniGameTimer, gameState, activeCannons.length]);
+
 
   const gameLoop = useCallback((timestamp) => {
     if (gameStateRef.current !== 'playing') {
       cancelAnimationFrame(gameLoopRef.current);
       return;
     }
-
+    
     if (!lastTimeRef.current) lastTimeRef.current = timestamp;
-    const deltaTime = (timestamp - lastTimeRef.current) / 1000;
     lastTimeRef.current = timestamp;
 
-    setPlayerPos(prevPos => {
-      let { x, y } = prevPos;
-      const speed = PLAYER_SPEED;
-      if (keysDownRef.current['ArrowUp'] || keysDownRef.current['w']) y -= speed;
-      if (keysDownRef.current['ArrowDown'] || keysDownRef.current['s']) y += speed;
-      if (keysDownRef.current['ArrowLeft'] || keysDownRef.current['a']) x -= speed;
-      if (keysDownRef.current['ArrowRight'] || keysDownRef.current['d']) x += speed;
+    // --- 1. Update Local Player ---
+    let newPos = { ...playerPosRef.current };
+    let moved = false;
+    const speed = PLAYER_SPEED;
+    if (keysDownRef.current['ArrowUp'] || keysDownRef.current['w']) { newPos.y -= speed; moved = true; }
+    if (keysDownRef.current['ArrowDown'] || keysDownRef.current['s']) { newPos.y += speed; moved = true; }
+    if (keysDownRef.current['ArrowLeft'] || keysDownRef.current['a']) { newPos.x -= speed; moved = true; }
+    if (keysDownRef.current['ArrowRight'] || keysDownRef.current['d']) { newPos.x += speed; moved = true; }
+    
+    const distFromCenter = Math.sqrt(Math.pow(newPos.x - BOARD_SIZE / 2, 2) + Math.pow(newPos.y - BOARD_SIZE / 2, 2));
+    if (distFromCenter > ISLAND_RADIUS - 0.5) {
+      const angle = Math.atan2(newPos.y - BOARD_SIZE / 2, newPos.x - BOARD_SIZE / 2);
+      newPos.x = BOARD_SIZE / 2 + (ISLAND_RADIUS - 0.5) * Math.cos(angle);
+      newPos.y = BOARD_SIZE / 2 + (ISLAND_RADIUS - 0.5) * Math.sin(angle);
+    }
+    
+    if (moved) {
+      setPlayerPos(newPos);
+      sendIslandGamePosition(miniGameId, newPos);
+    }
+    
+    // --- 2. Update Cannons (Aiming & Firing) - Work with refs to avoid setState in loop ---
+    const updatedCannons = activeCannonRef.current.map(c => {
+        const allPlayerPos = { ...otherPlayersRef.current, [auth.currentUser.uid]: playerPosRef.current };
+        let closestPlayer = null;
+        let minDistance = Infinity;
+        for (const uid in allPlayerPos) {
+            const pos = allPlayerPos[uid];
+            if (!pos) continue;
+            const distance = Math.sqrt(Math.pow(pos.x - c.pos.x, 2) + Math.pow(pos.y - c.pos.y, 2));
+            if (distance < minDistance) { minDistance = distance; closestPlayer = pos; }
+        }
+        
+        let newAngle = c.angle;
+        if (closestPlayer) {
+            newAngle = Math.atan2(closestPlayer.y - c.pos.y, closestPlayer.x - c.pos.x) * (180 / Math.PI);
+        }
 
-      const distFromCenter = Math.sqrt(Math.pow(x - BOARD_SIZE / 2, 2) + Math.pow(y - BOARD_SIZE / 2, 2));
-
-      if (distFromCenter > ISLAND_RADIUS - 0.5) {
-        const angle = Math.atan2(y - BOARD_SIZE / 2, x - BOARD_SIZE / 2);
-        x = BOARD_SIZE / 2 + (ISLAND_RADIUS - 0.5) * Math.cos(angle);
-        y = BOARD_SIZE / 2 + (ISLAND_RADIUS - 0.5) * Math.sin(angle);
-      }
-      return { x, y };
-    });
-
-    setTimer(prevTimer => {
-      const newTime = prevTimer - deltaTime;
-      if (newTime <= 0) {
-        setGameState('won');
-        return 0;
-      }
-
-      const currentRound = ROUNDS - Math.floor((newTime - 1) / ROUND_INTERVAL);
-      if (cannonsRef.current.length < currentRound && cannonsRef.current.length < ROUNDS) {
-        const angle = Math.random() * Math.PI * 2;
-        const x = BOARD_SIZE / 2 + ISLAND_RADIUS * Math.cos(angle);
-        const y = BOARD_SIZE / 2 + ISLAND_RADIUS * Math.sin(angle);
-        setCannons(prevCannons => [...prevCannons, { id: prevCannons.length, pos: { x, y }, angle: 0, lastShot: timestamp }]);
-      }
-
-      setCannons(prevCannons => prevCannons.map(c => {
-        const dx = playerPosRef.current.x - c.pos.x;
-        const dy = playerPosRef.current.y - c.pos.y;
-        c.angle = Math.atan2(dy, dx) * (180 / Math.PI);
         if (timestamp - c.lastShot > CANNON_FIRE_INTERVAL) {
-          c.lastShot = timestamp;
-          setCannonballs(prevBalls => {
-            const angleRad = c.angle * (Math.PI / 180);
-            const velocity = {
-              x: Math.cos(angleRad) * CANNONBALL_SPEED,
-              y: Math.sin(angleRad) * CANNONBALL_SPEED,
-            };
-            return [...prevBalls, { id: cannonballIdRef.current++, pos: { ...c.pos }, velocity }];
-          });
+            const angleRad = newAngle * (Math.PI / 180);
+            const velocity = { x: Math.cos(angleRad) * CANNONBALL_SPEED, y: Math.sin(angleRad) * CANNONBALL_SPEED };
+            const newBall = { id: cannonballIdRef.current++, pos: { ...c.pos }, velocity };
+            cannonballsRef.current = [...cannonballsRef.current, newBall];
+            setCannonballs(cannonballsRef.current);
+            return { ...c, angle: newAngle, lastShot: timestamp };
         }
-        return c;
-      }));
-
-      return newTime;
+        return { ...c, angle: newAngle };
     });
+    
+    // Only update cannons if something actually changed (angle or lastShot)
+    const cannonsChanged = updatedCannons.some((c, i) => 
+      c.angle !== activeCannonRef.current[i]?.angle || 
+      c.lastShot !== activeCannonRef.current[i]?.lastShot
+    );
+    if (cannonsChanged) {
+      setActiveCannons(updatedCannons);
+    }
+    
+    // --- 3. Update Cannonballs and Check Collisions ---
+    const updatedBalls = cannonballsRef.current.map(ball => ({ 
+      ...ball, 
+      pos: { x: ball.pos.x + ball.velocity.x, y: ball.pos.y + ball.velocity.y } 
+    })).filter(ball => 
+      ball.pos.x > 0 && ball.pos.x < BOARD_SIZE && 
+      ball.pos.y > 0 && ball.pos.y < BOARD_SIZE
+    );
 
-    setCannonballs(prevBalls => {
-      const updatedBalls = prevBalls.map(ball => ({
-        ...ball,
-        pos: {
-          x: ball.pos.x + ball.velocity.x,
-          y: ball.pos.y + ball.velocity.y
+    const localPlayerPos = playerPosRef.current;
+    if (localPlayerPos) {
+        for (const ball of updatedBalls) {
+            const dx = ball.pos.x - localPlayerPos.x;
+            const dy = ball.pos.y - localPlayerPos.y;
+            if (Math.sqrt(dx * dx + dy * dy) < 0.8) {
+                const respawnPos = { x: BOARD_SIZE / 2, y: BOARD_SIZE / 2 };
+                setPlayerPos(respawnPos);
+                sendIslandGamePosition(miniGameId, respawnPos);
+                break; 
+            }
         }
-      })).filter(ball =>
-        ball.pos.x > 0 && ball.pos.x < BOARD_SIZE &&
-        ball.pos.y > 0 && ball.pos.y < BOARD_SIZE
-      );
-
-      for (const ball of updatedBalls) {
-        const dx = ball.pos.x - playerPosRef.current.x;
-        const dy = ball.pos.y - playerPosRef.current.y;
-        if (Math.sqrt(dx * dx + dy * dy) < 0.8) {
-          setGameState('lost');
-        }
-      }
-      return updatedBalls;
-    });
+    }
+    
+    cannonballsRef.current = updatedBalls;
+    setCannonballs(updatedBalls);
 
     gameLoopRef.current = requestAnimationFrame(gameLoop);
-  }, []);
+  }, [miniGameId]);
 
-  const startGame = useCallback(() => {
-    resetGame();
-    setGameState('playing');
-  }, [resetGame]);
-
+  // Effect to start/stop the game loop
   useEffect(() => {
     const handleKeyDown = (e) => { keysDownRef.current[e.key] = true; };
     const handleKeyUp = (e) => { keysDownRef.current[e.key] = false; };
@@ -205,54 +230,42 @@ const IslandGame = () => {
     };
   }, [gameState, gameLoop]);
 
+  const gameStateRef = useRef(gameState);
+  useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
+
   return (
-    <div className="game-container">
-      <h1 className="game-title">Cannon Island Survival</h1>
-      <div
-        className="game-board"
-        style={{ width: BOARD_SIZE * TILE_SIZE, height: BOARD_SIZE * TILE_SIZE }}
-      >
-        {(gameState === 'waiting' || gameState === 'lost' || gameState === 'won') && (
-          <div className="game-overlay">
-            <div className="game-modal">
-              {gameState === 'waiting' && (
-                <>
-                  <h2 className="modal-title">Survive for {GAME_DURATION} seconds!</h2>
-                  <p className="modal-text">Use arrow keys or WASD to move</p>
-                  <button onClick={startGame} className="modal-button">
-                    Start Game
-                  </button>
-                </>
-              )}
-              {gameState === 'lost' && (
-                <>
-                  <h2 className="modal-title lost">Game Over!</h2>
-                  <p className="modal-text">You survived for {GAME_DURATION - Math.ceil(timer)} seconds.</p>
-                  <button onClick={startGame} className="modal-button">
-                    Play Again
-                  </button>
-                </>
-              )}
-              {gameState === 'won' && (
-                <>
-                  <h2 className="modal-title won">You Survived!</h2>
-                  <p className="modal-text">Congratulations, you won the game!</p>
-                  <button onClick={startGame} className="modal-button">
-                    Play Again
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
+    <div className="game-wrapper island-game">
+        <h1 className="game-title">Cannon Island Survival</h1>
+        {gameState === 'waiting' ? (
+            <MiniGameReadyUp miniGamePlayers={miniGamePlayers} miniGameId={miniGameId} />
+        ) : (
+            <>
+                <div className="stage" ref={stageRef}>
+                    <div className="board-scale" style={{ '--scale': scale }}>
+                        <div className="game-board" style={{ width: BOARD_WIDTH, height: BOARD_HEIGHT }}>
+                            { (gameState === 'playing' && miniGameTimer <= 0) && (
+                                <div className="game-overlay">
+                                    <div className="game-modal">
+                                        <h2 className="modal-title won">You Survived!</h2>
+                                        <p className="modal-text">Congratulations, you won the game!</p>
+                                    </div>
+                                </div>
+                            )}
+                            <Island />
+                            <Player position={playerPos} isLocalPlayer={true} />
+                            {Object.entries(otherPlayers).map(([uid, pos]) => (
+                                <Player key={uid} position={pos} isLocalPlayer={false} />
+                            ))}
+                            {activeCannons.map(c => <Cannon key={c.id} position={c.pos} rotation={c.angle} />)}
+                            {cannonballs.map(b => <Cannonball key={b.id} position={b.pos} />)}
+                        </div>
+                    </div>
+                </div>
+                <div className="game-timer">
+                    Time Remaining: {Math.ceil(miniGameTimer < 0 ? 0 : miniGameTimer)}s
+                </div>
+            </>
         )}
-        <Island />
-        <Player position={playerPos} />
-        {cannons.map(c => <Cannon key={c.id} position={c.pos} rotation={c.angle} />)}
-        {cannonballs.map(b => <Cannonball key={b.id} position={b.pos} />)}
-      </div>
-      <div className="game-timer">
-        Time Remaining: {Math.ceil(timer)}s
-      </div>
     </div>
   );
 };
