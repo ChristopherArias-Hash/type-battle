@@ -2,6 +2,7 @@ import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 
 let stompClient = null;
+
 export function connectWebSocket(
   sessionId,
   firebaseToken,
@@ -80,10 +81,8 @@ export function sendCorrectStrokesOptimized(sessionId, count) {
     );
     return;
   }
-
   const maxBatchSize = 50;
   let remaining = count;
-
   while (remaining > 0) {
     const batchSize = Math.min(remaining, maxBatchSize);
     stompClient.publish({
@@ -120,9 +119,7 @@ export function subscribeToMiniGameLobby(
     console.error(
       "[WebSocket] Cannot subscribe to mini-game, client not connected."
     );
-    return null;
   }
-
   console.log(
     `[WebSocket] Subscribing to mini-game lobby: /topic/mini-game-lobby/${miniGameSessionId}`
   );
@@ -132,7 +129,6 @@ export function subscribeToMiniGameLobby(
     (message) => {
       const miniGameData = JSON.parse(message.body);
       onMiniGamePlayerListUpdate(miniGameData);
-      console.log("[WebSocket] Mini-game data received:", miniGameData);
     }
   );
 }
@@ -163,19 +159,32 @@ export function sendStackerPoints(miniGameSessionId, scoreData) {
 }
 
 export function sendCrossyRoadPosition(miniGameSessionId, positionData) {
-    if (stompClient && stompClient.connected) {
-        stompClient.publish({
-            destination: `/app/mini_game/crossy_road/position/${miniGameSessionId}`,
-            body: JSON.stringify(positionData),
-        });
-    }
+  if (stompClient && stompClient.connected) {
+    stompClient.publish({
+      destination: `/app/mini_game/crossy_road/position/${miniGameSessionId}`,
+      body: JSON.stringify(positionData),
+    });
+  }
 }
 
 export function sendIslandGamePosition(miniGameSessionId, positionData) {
-    if (stompClient && stompClient.connected) {
-        stompClient.publish({
-            destination: `/app/mini_game/island_game/position/${miniGameSessionId}`,
-            body: JSON.stringify(positionData),
-        });
-    }
+  if (stompClient && stompClient.connected) {
+    stompClient.publish({
+      destination: `/app/mini_game/island_game/position/${miniGameSessionId}`,
+      body: JSON.stringify(positionData),
+    });
+  }
+}
+
+// NEW: send death + ghost position so all clients can render it
+export function sendIslandGameDeath(miniGameSessionId, positionData) {
+  if (stompClient && stompClient.connected) {
+    stompClient.publish({
+      destination: `/app/mini_game/island_game/death/${miniGameSessionId}`,
+      body: JSON.stringify(positionData || {}),
+    });
+    console.log(
+      `[WebSocket] Sent death event to /app/mini_game/island_game/death/${miniGameSessionId}`
+    );
+  }
 }

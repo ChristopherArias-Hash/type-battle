@@ -49,6 +49,9 @@ export function useGameSession(sessionId, userDisplayName) {
       JSON.parse(sessionStorage.getItem(`miniGameTimer-${sessionId}`)) || null
   );
 
+  // NEW: keep the active STOMP subscription so we can unsubscribe between rounds
+  const miniGameSubRef = useRef(null);
+
   // Restore miniGameId from sessionStorage if we were in a mini-game
   useEffect(() => {
     const savedMiniGameId = sessionStorage.getItem(`miniGameId-${sessionId}`);
@@ -61,7 +64,8 @@ export function useGameSession(sessionId, userDisplayName) {
   useEffect(() => {
     miniGameIdRef.current = miniGameId;
     if (miniGameId) {
-      sessionStorage.setItem(`miniGameId-${sessionId}`, miniGameId);
+      // ensure string storage
+      sessionStorage.setItem(`miniGameId-${sessionId}`, String(miniGameId));
     }
   }, [miniGameId, sessionId]);
 
@@ -99,14 +103,23 @@ export function useGameSession(sessionId, userDisplayName) {
    * Processes: position updates, start signals, and player list updates
    */
   const handleMiniGameSubscription = useCallback((miniGameSessionId) => {
-    subscribeToMiniGameLobby(miniGameSessionId, (miniGameData) => {
+    // NEW: drop any previous mini-game subscription to avoid stale events
+    if (miniGameSubRef.current) {
+      try {
+        miniGameSubRef.current.unsubscribe();
+      } catch (_) {}
+      miniGameSubRef.current = null;
+    }
+
+    // Reset last message so IslandGame doesn't "see" snapshots from a past round
+    setLastMiniGameMessage(null);
+
+    const sub = subscribeToMiniGameLobby(miniGameSessionId, (miniGameData) => {
       setLastMiniGameMessage(miniGameData);
 
       //Handle mini-game start signal by capturing the entire object
       if (miniGameData && miniGameData.type === "mini_game_start") {
-        console.log(
-          `🏁 Received mini-game start signal for ${miniGameSessionId}!`
-        );
+        console.log(`🏁 Received mini-game start signal for ${miniGameSessionId}!`);
         setMiniGameStartSignal(miniGameData); // Store the full object with obstacles
         return;
       }
@@ -121,6 +134,9 @@ export function useGameSession(sessionId, userDisplayName) {
         }
       }
     });
+
+    // NEW: keep handle to unsubscribe later
+    miniGameSubRef.current = sub;
   }, []);
 
   //Cleans up session storage for a completed mini-game
@@ -134,6 +150,13 @@ export function useGameSession(sessionId, userDisplayName) {
       sessionStorage.removeItem(`miniGameTimer-${sessionId}`);
       sessionStorage.removeItem(`miniGame-${sessionId}`);
       sessionStorage.removeItem(`miniGameId-${sessionId}`);
+
+      // NEW: also clear start signal and our death/ghost keys for that mini-game
+      sessionStorage.removeItem(`miniGameStartSignal-${sessionId}`);
+      if (completedMiniGameId) {
+        sessionStorage.removeItem(`miniGameDead-${completedMiniGameId}`);
+        sessionStorage.removeItem(`miniGameGhostPos-${completedMiniGameId}`);
+      }
     },
     [sessionId]
   );
@@ -151,6 +174,9 @@ export function useGameSession(sessionId, userDisplayName) {
       setMiniGameTimer(newMiniGameTimer);
       setMiniGame(newMiniGame);
 
+      // NEW: clear last message before the new subscription to avoid stale state
+      setLastMiniGameMessage(null);
+
       if (newMiniGameId) {
         handleMiniGameSubscription(newMiniGameId);
       }
@@ -162,10 +188,19 @@ export function useGameSession(sessionId, userDisplayName) {
   const handleGameResume = useCallback(() => {
     const completedMiniGameId = miniGameIdRef.current;
 
+    // NEW: unsubscribe from the mini-game topic so old events don't leak into next round
+    if (miniGameSubRef.current) {
+      try {
+        miniGameSubRef.current.unsubscribe();
+      } catch (_) {}
+      miniGameSubRef.current = null;
+    }
+
     setIsPaused(false);
     setMiniGamePlayers([]);
     setMiniGameId(null);
     setMiniGameStartSignal(null); // Reset to null instead of false
+    setLastMiniGameMessage(null); // NEW: drop any lingering snapshot
 
     if (completedMiniGameId) {
       cleanupMiniGameStorage(completedMiniGameId);
@@ -184,6 +219,14 @@ export function useGameSession(sessionId, userDisplayName) {
       );
       if (currentUserWpm) setWpm(currentUserWpm.wpm);
 
+      // NEW: unsubscribe if a mini-game was active at end
+      if (miniGameSubRef.current) {
+        try {
+          miniGameSubRef.current.unsubscribe();
+        } catch (_) {}
+        miniGameSubRef.current = null;
+      }
+
       // Clean up all session storage
       sessionStorage.removeItem(`timer-${sessionId}`);
       sessionStorage.removeItem(`isPaused-${sessionId}`);
@@ -191,6 +234,15 @@ export function useGameSession(sessionId, userDisplayName) {
       sessionStorage.removeItem(`playerReady-${sessionId}`);
       sessionStorage.removeItem(`miniGameId-${sessionId}`);
       sessionStorage.removeItem(`miniGameTimer-${sessionId}`);
+      sessionStorage.removeItem(`miniGame-${sessionId}`);
+      sessionStorage.removeItem(`miniGameStartSignal-${sessionId}`);
+
+      // Also try to clear last known death/ghost keys for the final mini-game
+      const completedMiniGameId = miniGameIdRef.current;
+      if (completedMiniGameId) {
+        sessionStorage.removeItem(`miniGameDead-${completedMiniGameId}`);
+        sessionStorage.removeItem(`miniGameGhostPos-${completedMiniGameId}`);
+      }
 
       setTimeout(() => navigate("/"), 10000);
     },
@@ -240,6 +292,14 @@ export function useGameSession(sessionId, userDisplayName) {
       console.log(
         `[Re-Subscribing] Found existing mini-game ${restoredMiniGameId} on reconnect.`
       );
+
+      // NEW: ensure we don't keep stacking multiple subs
+      if (miniGameSubRef.current) {
+        try {
+          miniGameSubRef.current.unsubscribe();
+        } catch (_) {}
+        miniGameSubRef.current = null;
+      }
       handleMiniGameSubscription(restoredMiniGameId);
     }
   }, [sessionId, handleMiniGameSubscription]);
@@ -292,6 +352,13 @@ export function useGameSession(sessionId, userDisplayName) {
     validateAndConnect();
 
     return () => {
+      // NEW: be defensive and unsubscribe before disconnect
+      if (miniGameSubRef.current) {
+        try {
+          miniGameSubRef.current.unsubscribe();
+        } catch (_) {}
+        miniGameSubRef.current = null;
+      }
       disconnectWebSocket();
     };
   }, [sessionId, navigate, handleGameDataReceived, restoreMiniGameSession]);
@@ -323,6 +390,7 @@ export function useGameSession(sessionId, userDisplayName) {
         sessionStorage.removeItem(`miniGameId-${sessionId}`);
         sessionStorage.removeItem(`miniGameTimer-${sessionId}`);
         sessionStorage.removeItem(`miniGame-${sessionId}`);
+        sessionStorage.removeItem(`miniGameStartSignal-${sessionId}`);
       }
     };
   }, [sessionId]);
