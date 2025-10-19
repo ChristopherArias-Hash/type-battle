@@ -11,16 +11,15 @@ import { auth } from "../firebase";
 export function useGameSession(sessionId, userDisplayName) {
   const navigate = useNavigate();
 
-  // Main game variables
+  // --- Core State from Server ---
+  const [players, setPlayers] = useState([]);
+  const [isSendingReady, setIsSendingReady] = useState(false); // For disabling button temporarily
+
+  // ... (All other state variables remain the same)
   const [timer, setTimer] = useState(
     () => JSON.parse(sessionStorage.getItem(`timer-${sessionId}`)) || 60
   );
-  const [playerReady, setPlayerReady] = useState(
-    () =>
-      JSON.parse(sessionStorage.getItem(`playerReady-${sessionId}`)) || false
-  );
   const [paragraphText, setParagraphText] = useState(null);
-  const [players, setPlayers] = useState([]);
   const [gameStart, setGameStart] = useState(
     () => JSON.parse(sessionStorage.getItem(`gameStart-${sessionId}`)) || false
   );
@@ -30,8 +29,6 @@ export function useGameSession(sessionId, userDisplayName) {
   );
   const [wpm, setWpm] = useState(0);
   const [winnerText, setWinnerText] = useState("");
-
-  // Mini game variables
   const [miniGameId, setMiniGameId] = useState(null);
   const [miniGame, setMiniGame] = useState(() => {
     const saved = sessionStorage.getItem(`miniGame-${sessionId}`);
@@ -42,42 +39,36 @@ export function useGameSession(sessionId, userDisplayName) {
   const [lastMiniGameMessage, setLastMiniGameMessage] = useState(null);
   const [miniGameStartSignal, setMiniGameStartSignal] = useState(() => {
     const saved = sessionStorage.getItem(`miniGameStartSignal-${sessionId}`);
-    return saved ? JSON.parse(saved) : null; // Changed from false to null for consistency
+    return saved ? JSON.parse(saved) : null;
   });
   const [miniGameTimer, setMiniGameTimer] = useState(
     () =>
       JSON.parse(sessionStorage.getItem(`miniGameTimer-${sessionId}`)) || null
   );
-
-  // NEW: keep the active STOMP subscription so we can unsubscribe between rounds
   const miniGameSubRef = useRef(null);
 
-  // Restore miniGameId from sessionStorage if we were in a mini-game
-  useEffect(() => {
-    const savedMiniGameId = sessionStorage.getItem(`miniGameId-${sessionId}`);
-    if (savedMiniGameId && isPaused) {
-      setMiniGameId(savedMiniGameId);
-    }
-  }, [sessionId, isPaused]);
 
-  // Sets mini game in session storage
-  useEffect(() => {
-    miniGameIdRef.current = miniGameId;
-    if (miniGameId) {
-      // ensure string storage
-      sessionStorage.setItem(`miniGameId-${sessionId}`, String(miniGameId));
-    }
-  }, [miniGameId, sessionId]);
 
-  // Session Storage for timers, game state, and mini game state
+  const currentUser = auth.currentUser;
+  const currentPlayerFromServer = players.find(p => p.user?.firebaseUid === currentUser?.uid);
+  const playerReady = currentPlayerFromServer?.ready || false;
+
+  useEffect(() => {
+    if (playerReady) {
+      setIsSendingReady(false);
+    }
+  }, [playerReady]);
+  
+  const readyUp = useCallback(() => {
+    setIsSendingReady(true); // Disable button to prevent double clicks
+    sendReadyUp(sessionId); // Tell the server we are ready
+  }, [sessionId]);
+
+
   useEffect(() => {
     sessionStorage.setItem(`timer-${sessionId}`, JSON.stringify(timer));
     sessionStorage.setItem(`isPaused-${sessionId}`, JSON.stringify(isPaused));
     sessionStorage.setItem(`gameStart-${sessionId}`, JSON.stringify(gameStart));
-    sessionStorage.setItem(
-      `playerReady-${sessionId}`,
-      JSON.stringify(playerReady)
-    );
     sessionStorage.setItem(
       `miniGameTimer-${sessionId}`,
       JSON.stringify(miniGameTimer)
@@ -91,55 +82,12 @@ export function useGameSession(sessionId, userDisplayName) {
     timer,
     isPaused,
     gameStart,
-    playerReady,
     miniGameTimer,
     sessionId,
     miniGameStartSignal,
     miniGame,
   ]);
-
-  /**
-   * Handles all mini-game WebSocket messages and updates state accordingly
-   * Processes: position updates, start signals, and player list updates
-   */
-  const handleMiniGameSubscription = useCallback((miniGameSessionId) => {
-    // NEW: drop any previous mini-game subscription to avoid stale events
-    if (miniGameSubRef.current) {
-      try {
-        miniGameSubRef.current.unsubscribe();
-      } catch (_) {}
-      miniGameSubRef.current = null;
-    }
-
-    // Reset last message so IslandGame doesn't "see" snapshots from a past round
-    setLastMiniGameMessage(null);
-
-    const sub = subscribeToMiniGameLobby(miniGameSessionId, (miniGameData) => {
-      setLastMiniGameMessage(miniGameData);
-
-      //Handle mini-game start signal by capturing the entire object
-      if (miniGameData && miniGameData.type === "mini_game_start") {
-        console.log(`🏁 Received mini-game start signal for ${miniGameSessionId}!`);
-        setMiniGameStartSignal(miniGameData); // Store the full object with obstacles
-        return;
-      }
-
-      // Handle player list updates and timer
-      if (Array.isArray(miniGameData)) {
-        setMiniGamePlayers(miniGameData);
-      } else if (miniGameData && miniGameData.players) {
-        setMiniGamePlayers(miniGameData.players);
-        if (miniGameData.remainingTime !== undefined) {
-          setMiniGameTimer(miniGameData.remainingTime);
-        }
-      }
-    });
-
-    // NEW: keep handle to unsubscribe later
-    miniGameSubRef.current = sub;
-  }, []);
-
-  //Cleans up session storage for a completed mini-game
+  
   const cleanupMiniGameStorage = useCallback(
     (completedMiniGameId) => {
       console.log(
@@ -150,8 +98,6 @@ export function useGameSession(sessionId, userDisplayName) {
       sessionStorage.removeItem(`miniGameTimer-${sessionId}`);
       sessionStorage.removeItem(`miniGame-${sessionId}`);
       sessionStorage.removeItem(`miniGameId-${sessionId}`);
-
-      // NEW: also clear start signal and our death/ghost keys for that mini-game
       sessionStorage.removeItem(`miniGameStartSignal-${sessionId}`);
       if (completedMiniGameId) {
         sessionStorage.removeItem(`miniGameDead-${completedMiniGameId}`);
@@ -161,22 +107,44 @@ export function useGameSession(sessionId, userDisplayName) {
     [sessionId]
   );
 
-  //Handles the main game pause event when a mini-game starts
+  const handleMiniGameSubscription = useCallback((miniGameSessionId) => {
+    if (miniGameSubRef.current) {
+      try {
+        miniGameSubRef.current.unsubscribe();
+      } catch (_) {}
+      miniGameSubRef.current = null;
+    }
+    setLastMiniGameMessage(null);
+    const sub = subscribeToMiniGameLobby(miniGameSessionId, (miniGameData) => {
+      setLastMiniGameMessage(miniGameData);
+      if (miniGameData && miniGameData.type === "mini_game_start") {
+        console.log(`🏁 Received mini-game start signal for ${miniGameSessionId}!`);
+        setMiniGameStartSignal(miniGameData);
+        return;
+      }
+      if (Array.isArray(miniGameData)) {
+        setMiniGamePlayers(miniGameData);
+      } else if (miniGameData && miniGameData.players) {
+        setMiniGamePlayers(miniGameData.players);
+        if (miniGameData.remainingTime !== undefined) {
+          setMiniGameTimer(miniGameData.remainingTime);
+        }
+      }
+    });
+    miniGameSubRef.current = sub;
+  }, []);
+
   const handleGamePause = useCallback(
     (data) => {
       console.log("Game paused for mini-game:", data);
       const newMiniGameId = data.miniGameSessionId;
       const newMiniGameTimer = data.duration;
       const newMiniGame = data.miniGameId;
-
       setMiniGameId(newMiniGameId);
       setIsPaused(true);
       setMiniGameTimer(newMiniGameTimer);
       setMiniGame(newMiniGame);
-
-      // NEW: clear last message before the new subscription to avoid stale state
       setLastMiniGameMessage(null);
-
       if (newMiniGameId) {
         handleMiniGameSubscription(newMiniGameId);
       }
@@ -184,50 +152,39 @@ export function useGameSession(sessionId, userDisplayName) {
     [handleMiniGameSubscription]
   );
 
-  //Handles the main game resume event when a mini-game ends
   const handleGameResume = useCallback(() => {
     const completedMiniGameId = miniGameIdRef.current;
-
-    // NEW: unsubscribe from the mini-game topic so old events don't leak into next round
     if (miniGameSubRef.current) {
       try {
         miniGameSubRef.current.unsubscribe();
       } catch (_) {}
       miniGameSubRef.current = null;
     }
-
     setIsPaused(false);
     setMiniGamePlayers([]);
     setMiniGameId(null);
-    setMiniGameStartSignal(null); // Reset to null instead of false
-    setLastMiniGameMessage(null); // NEW: drop any lingering snapshot
-
+    setMiniGameStartSignal(null);
+    setLastMiniGameMessage(null);
     if (completedMiniGameId) {
       cleanupMiniGameStorage(completedMiniGameId);
     }
   }, [cleanupMiniGameStorage]);
 
-  //Handles the game end event and cleanup
   const handleGameEnd = useCallback(
     (data) => {
       setGameEnded(true);
       setGameStart(false);
       setWinnerText(data.win_message);
-
       const currentUserWpm = data.wpm_data?.find(
         (entry) => entry.displayName === userDisplayName
       );
       if (currentUserWpm) setWpm(currentUserWpm.wpm);
-
-      // NEW: unsubscribe if a mini-game was active at end
       if (miniGameSubRef.current) {
         try {
           miniGameSubRef.current.unsubscribe();
         } catch (_) {}
         miniGameSubRef.current = null;
       }
-
-      // Clean up all session storage
       sessionStorage.removeItem(`timer-${sessionId}`);
       sessionStorage.removeItem(`isPaused-${sessionId}`);
       sessionStorage.removeItem(`gameStart-${sessionId}`);
@@ -236,20 +193,16 @@ export function useGameSession(sessionId, userDisplayName) {
       sessionStorage.removeItem(`miniGameTimer-${sessionId}`);
       sessionStorage.removeItem(`miniGame-${sessionId}`);
       sessionStorage.removeItem(`miniGameStartSignal-${sessionId}`);
-
-      // Also try to clear last known death/ghost keys for the final mini-game
       const completedMiniGameId = miniGameIdRef.current;
       if (completedMiniGameId) {
         sessionStorage.removeItem(`miniGameDead-${completedMiniGameId}`);
         sessionStorage.removeItem(`miniGameGhostPos-${completedMiniGameId}`);
       }
-
       setTimeout(() => navigate("/"), 10000);
     },
     [userDisplayName, sessionId, navigate]
   );
-
-  //Routes incoming WebSocket game data to appropriate handlers
+  
   const handleGameDataReceived = useCallback(
     (data) => {
       switch (data.type) {
@@ -262,8 +215,14 @@ export function useGameSession(sessionId, userDisplayName) {
         case "game_resume":
           handleGameResume();
           break;
-        case "timer_update":
+        case "game_tick":
           setTimer(data.remainingTime);
+          if (data.isPaused === false && isPaused) {
+            console.warn(
+              "State mismatch detected: Forcing game resume to sync with server."
+            );
+            handleGameResume();
+          }
           break;
         case "game_end":
           handleGameEnd(data);
@@ -274,26 +233,14 @@ export function useGameSession(sessionId, userDisplayName) {
           }
       }
     },
-    [handleGamePause, handleGameResume, handleGameEnd]
+    [handleGamePause, handleGameResume, handleGameEnd, isPaused]
   );
-
-  /**
-   * Re-subscribes to an active mini-game session after WebSocket reconnection
-   */
+  
   const restoreMiniGameSession = useCallback(() => {
-    const restoredMiniGameId = sessionStorage.getItem(
-      `miniGameId-${sessionId}`
-    );
-    const isRestoredPaused = JSON.parse(
-      sessionStorage.getItem(`isPaused-${sessionId}`)
-    );
-
+    const restoredMiniGameId = sessionStorage.getItem(`miniGameId-${sessionId}`);
+    const isRestoredPaused = JSON.parse(sessionStorage.getItem(`isPaused-${sessionId}`));
     if (isRestoredPaused && restoredMiniGameId) {
-      console.log(
-        `[Re-Subscribing] Found existing mini-game ${restoredMiniGameId} on reconnect.`
-      );
-
-      // NEW: ensure we don't keep stacking multiple subs
+      console.log(`[Re-Subscribing] Found existing mini-game ${restoredMiniGameId} on reconnect.`);
       if (miniGameSubRef.current) {
         try {
           miniGameSubRef.current.unsubscribe();
@@ -303,43 +250,29 @@ export function useGameSession(sessionId, userDisplayName) {
       handleMiniGameSubscription(restoredMiniGameId);
     }
   }, [sessionId, handleMiniGameSubscription]);
-
-  //Ready up function for the main game
-  const readyUp = useCallback(() => {
-    setPlayerReady(true);
-    sendReadyUp(sessionId);
-  }, [sessionId]);
-
-  //Validates the game session and establishes WebSocket connection
+  
   useEffect(() => {
     const validateAndConnect = async () => {
       const user = auth.currentUser;
       if (!user) return;
-
       const token = await user.getIdToken();
-
-      // Validate session exists and is joinable
       const response = await fetch(
         `http://localhost:8080/protected/game-session?lobbyCode=${sessionId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-
       if (!response.ok) {
         console.error("Session not found or unauthorized.");
         navigate("/");
         return;
       }
-
       const session = await response.json();
       if (session.status === "finished") {
         alert("Cannot join a finished session.");
         navigate("/");
         return;
       }
-
-      // Establish WebSocket connection
       connectWebSocket(
         sessionId,
         token,
@@ -348,11 +281,8 @@ export function useGameSession(sessionId, userDisplayName) {
         restoreMiniGameSession
       );
     };
-
     validateAndConnect();
-
     return () => {
-      // NEW: be defensive and unsubscribe before disconnect
       if (miniGameSubRef.current) {
         try {
           miniGameSubRef.current.unsubscribe();
@@ -363,14 +293,12 @@ export function useGameSession(sessionId, userDisplayName) {
     };
   }, [sessionId, navigate, handleGameDataReceived, restoreMiniGameSession]);
 
-  //Validates lobby capacity and kicks player if full
   useEffect(() => {
     if (players.length > 0) {
       const currentUserId = auth.currentUser?.uid;
       const isInLobby = players.some(
         (p) => p.user?.firebaseUid === currentUserId
       );
-
       if (!isInLobby && players.length >= 4) {
         alert("Cannot join: lobby is full.");
         navigate("/");
@@ -378,7 +306,6 @@ export function useGameSession(sessionId, userDisplayName) {
     }
   }, [players, navigate]);
 
-  //Cleans up session storage on component unmount (except during refresh)
   useEffect(() => {
     return () => {
       const isRefreshing = sessionStorage.getItem("isRefreshing");
@@ -396,9 +323,9 @@ export function useGameSession(sessionId, userDisplayName) {
   }, [sessionId]);
 
   return {
-    // Main game state
     timer,
     playerReady,
+    isSendingReady,
     paragraphText,
     players,
     gameStart,
@@ -406,14 +333,12 @@ export function useGameSession(sessionId, userDisplayName) {
     isPaused,
     wpm,
     winnerText,
-    // Mini game state
     miniGameId,
     miniGame,
     miniGamePlayers,
     lastMiniGameMessage,
     miniGameStartSignal,
     miniGameTimer,
-    // Functions
     readyUp,
   };
 }

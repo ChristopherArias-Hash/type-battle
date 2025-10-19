@@ -4,7 +4,7 @@ import NavBar from "../components/navbar/NavBar";
 import TypingSentences from "../components/typing-sentences/TypingSentences";
 import useUserLeavingWarning from "../utils/useUserLeavingWarning";
 import { useAuth } from "../utils/authContext";
-import { useGameSession } from "../utils/useGameSession"
+import { useGameSession } from "../utils/useGameSession";
 import { useEffect } from "react";
 import { Navigate, useParams } from "react-router-dom";
 
@@ -13,10 +13,10 @@ function GamePlay() {
   const [enableWarning, disableWarning] = useUserLeavingWarning();
   const { isUserLoggedIn, userInfo, logOutFirebase, loading } = useAuth();
 
-  // Use the custom hook for all game session logic
   const {
     timer,
     playerReady,
+    isSendingReady, // <-- Get the temporary lock state
     paragraphText,
     players,
     gameStart,
@@ -35,7 +35,7 @@ function GamePlay() {
 
   const disableLogout = true;
 
-  // Enable warning on mount, disable on game end
+  // ... (all useEffects remain the same)
   useEffect(() => {
     enableWarning();
   }, [enableWarning]);
@@ -46,7 +46,6 @@ function GamePlay() {
     }
   }, [gameEnded, disableWarning]);
 
-  // Track refresh vs actual navigation
   useEffect(() => {
     const handleBeforeUnload = () => {
       sessionStorage.setItem("isRefreshing", "true");
@@ -120,13 +119,15 @@ function GamePlay() {
             </li>
           ))}
         </ul>
+        {/* The button is only shown if the server says you are NOT ready */}
         {!playerReady && (
           <button
             className="ready-up-button"
             onClick={readyUp}
-            disabled={playerReady}
+            // The button is disabled if you've just clicked it
+            disabled={isSendingReady}
           >
-            {playerReady ? "Ready!" : "Ready Up"}
+            {isSendingReady ? "Waiting..." : "Ready Up"}
           </button>
         )}
       </div>

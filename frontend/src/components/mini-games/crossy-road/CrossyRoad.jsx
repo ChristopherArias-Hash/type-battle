@@ -93,19 +93,35 @@ const CrossyRoad = ({
   miniGameStartSignal,
   lastMiniGameMessage,
 }) => {
-  // Player position starts as null until the server assigns a unique spawn point
   const [playerPos, setPlayerPos] = useState(null);
   const [obstacles, setObstacles] = useState([]);
-  const [crossings, setCrossings] = useState(0);
   const [gameState, setGameState] = useState("waiting");
-  const [crossingDirection, setCrossingDirection] = useState("up");
 
-  // This component now manages its own state for other players' positions
+  const [crossings, setCrossings] = useState(() => {
+    const saved = sessionStorage.getItem(`crossy-crossings-${miniGameId}`);
+    return saved ? parseInt(saved, 10) : 0;
+  });
+
+  const [crossingDirection, setCrossingDirection] = useState(() => {
+    const saved = sessionStorage.getItem(`crossy-direction-${miniGameId}`);
+    return saved || "up";
+  });
+
   const [otherPlayerPositions, setOtherPlayerPositions] = useState({});
   const [gameStartTime, setGameStartTime] = useState(null);
 
   const stageRef = useRef(null);
   const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    if (miniGameId) {
+      sessionStorage.setItem(`crossy-crossings-${miniGameId}`, crossings);
+      sessionStorage.setItem(
+        `crossy-direction-${miniGameId}`,
+        crossingDirection
+      );
+    }
+  }, [crossings, crossingDirection, miniGameId]);
 
   useEffect(() => {
     const el = stageRef.current;
@@ -127,7 +143,6 @@ const CrossyRoad = ({
     return lanes;
   }, []);
 
-  // Listens for the main game start signal and sets up the game board
   useEffect(() => {
     if (
       miniGameStartSignal &&
@@ -140,15 +155,15 @@ const CrossyRoad = ({
         miniGameStartSignal;
       const currentUid = auth.currentUser?.uid;
 
-      // Set this player's unique starting position from the server data
       if (currentUid && initialPositions && initialPositions[currentUid]) {
-        setPlayerPos(initialPositions[currentUid]);
+        const initialX = initialPositions[currentUid].x;
+        const initialY =
+          crossingDirection === "up" ? GRID_SIZE_V - 1 : 0;
+        setPlayerPos({ x: initialX, y: initialY });
       } else {
-        // Fallback just in case, though it should not be needed
         setPlayerPos({ x: Math.floor(GRID_SIZE_H / 2), y: GRID_SIZE_V - 1 });
       }
 
-      // Initialize obstacles with their starting X position for time-based animation
       const processedObstacles = serverObstacles.map((obs) => ({
         ...obs,
         initialX: obs.x,
@@ -158,15 +173,14 @@ const CrossyRoad = ({
       setGameStartTime(Date.now());
       setGameState("playing");
     }
-  }, [miniGameStartSignal, gameState]);
+  }, [miniGameStartSignal, gameState, crossingDirection]);
 
-  // Listens for and processes position updates from other players
   useEffect(() => {
     if (
       !lastMiniGameMessage ||
       lastMiniGameMessage.type !== "crossy_road_position_update"
     ) {
-      return; // Ignore messages that aren't for this game
+      return;
     }
 
     const { data } = lastMiniGameMessage;
@@ -182,7 +196,7 @@ const CrossyRoad = ({
 
   const handleKeyDown = useCallback(
     (e) => {
-      if (gameState !== "playing" || !playerPos) return; // Don't move if not playing or spawned yet
+      if (gameState !== "playing" || !playerPos) return;
       setPlayerPos((prev) => {
         const np = { ...prev };
         switch (e.key) {
@@ -217,7 +231,6 @@ const CrossyRoad = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
-  // Time-based animation loop for synchronized obstacle movement
   useEffect(() => {
     if (gameState !== "playing" || !gameStartTime) return;
 
@@ -245,7 +258,6 @@ const CrossyRoad = ({
     return () => cancelAnimationFrame(animationFrameId);
   }, [gameState, gameStartTime]);
 
-  // Handles scoring, collision, and respawning
   useEffect(() => {
     if (gameState !== "playing" || !playerPos) return;
 
@@ -279,7 +291,6 @@ const CrossyRoad = ({
     }
   }, [playerPos, obstacles, gameState, crossingDirection, miniGameId]);
 
-  // Sends score to the backend
   useEffect(() => {
     if (crossings > 0) {
       sendStackerPoints(miniGameId, { highScore: crossings });
@@ -326,11 +337,7 @@ const CrossyRoad = ({
               }`}
             />
             {roadLanes}
-
-            {/* Conditionally render the local player only after their position is set */}
             {playerPos && <Player pos={playerPos} />}
-
-            {/* Render all other players */}
             {Object.entries(otherPlayerPositions).map(([uid, pos]) => (
               <Player key={uid} pos={pos} />
             ))}
