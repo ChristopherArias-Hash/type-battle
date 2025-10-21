@@ -1,7 +1,7 @@
 import "./MiniGameScreen.css";
 import Stacker from "../mini-games/stacker/Stacker";
 import CrossyRoad from "../mini-games/crossy-road/CrossyRoad";
-import IslandGame from "../mini-games/island-game/islandGame";
+import IslandGame from "../mini-games/island-game/IslandGame";
 
 //Mini Games
 const GAME_COMPONENTS = {
@@ -38,7 +38,7 @@ function MiniGameScreen({
             lastMiniGameMessage={lastMiniGameMessage}
             miniGameId={miniGameId}
             miniGameStartSignal={miniGameStartSignal}
-            miniGameTimer={miniGameTimer} 
+            miniGameTimer={miniGameTimer}
           />
         ) : (
           <div>Loading yo</div>

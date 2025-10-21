@@ -129,6 +129,7 @@ export function subscribeToMiniGameLobby(
     (message) => {
       const miniGameData = JSON.parse(message.body);
       onMiniGamePlayerListUpdate(miniGameData);
+      console.log(miniGameData)
     }
   );
 }
