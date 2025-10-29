@@ -7,7 +7,7 @@ import IslandGame from "../mini-games/island-game/IslandGame";
 const GAME_COMPONENTS = {
   1: Stacker,
   2: Stacker,
-  3: IslandGame,
+  3: Stacker,
 };
 
 function MiniGameScreen({

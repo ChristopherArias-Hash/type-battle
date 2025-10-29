@@ -9,18 +9,18 @@
     padding: 10px;
 }
 
-.mini-game-stacker h3 {
+.mini-game-stacker > h3 {
     margin: 0 0 10px 0;
     font-size: 1.2em;
 }
 
-.mini-game-stacker ul {
+.mini-game-stacker > ul {
     margin: 10px 0;
     padding: 0;
     list-style: none;
 }
 
-.mini-game-stacker li {
+.mini-game-stacker > li {
     margin: 5px 0;
     padding: 5px;
     background: rgba(255, 255, 255, 0.1);
