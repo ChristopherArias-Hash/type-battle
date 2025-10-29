@@ -20,9 +20,6 @@ public class GameParticipants {
     @Column(name = "score")
     private int score;
 
-    @Column(name = "in_game")
-    private boolean inGame;
-
     @Column(name = "is_ready")
     private boolean isReady;
 
@@ -33,15 +30,6 @@ public class GameParticipants {
 
     public void setReady(boolean ready) {
         isReady = ready;
-    }
-
-
-    public boolean isInGame() {
-        return inGame;
-    }
-
-    public void setInGame(boolean inGame) {
-        this.inGame = inGame;
     }
 
 
