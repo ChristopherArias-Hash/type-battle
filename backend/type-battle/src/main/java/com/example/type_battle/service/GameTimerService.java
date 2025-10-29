@@ -38,7 +38,7 @@ public class GameTimerService {
 
     private final Set<Integer> pausePoints = Set.of(45, 30, 15);
     private final List<Integer> miniGameBonusPoints = List.of(45, 30, 15, 5);
-    private final int PAUSE_DURATION = 60; // Duration of the mini-game in seconds
+    private final int PAUSE_DURATION = 1; // Duration of the mini-game in seconds
 
     // NEW: Track dead participants per mini-game (MiniGameParticipants.id)
     private final Map<Long, Set<Long>> miniGameDeadParticipantIds = new ConcurrentHashMap<>();
@@ -79,7 +79,8 @@ public class GameTimerService {
             } else {
                 Map<String, Object> timerUpdate = new HashMap<>();
                 timerUpdate.put("remainingTime", remainingTime);
-                timerUpdate.put("type", "timer_update");
+                timerUpdate.put("type", "game_tick");
+                timerUpdate.put("isPaused", false);
                 messagingTemplate.convertAndSend("/topic/game/" + sessionId, timerUpdate);
             }
         }, 0, 1, TimeUnit.SECONDS);
@@ -153,7 +154,9 @@ public class GameTimerService {
         pauseMessage.put("miniGameId", randomId);
         pauseMessage.put("miniGameSessionId", newMiniGameSession.getId());
         pauseMessage.put ("miniGameId", randomId);
+
         messagingTemplate.convertAndSend("/topic/game/" + sessionId, pauseMessage);
+
     }
 
     public void startMiniGameTimer(Long miniGameSessionId) {
@@ -196,7 +199,6 @@ public class GameTimerService {
 
             // Fetch current participants
             List<MiniGameParticipants> participants = miniGameParticipantRepository.findAllByMiniGameSession(sessionOpt.get());
-
             if (isIslandGame) {
                 // NEW (island only): compute alive, award survival points, and compile dead lists incl. ghost positions
                 Set<Long> deadSet = miniGameDeadParticipantIds.getOrDefault(miniGameSessionId, Collections.emptySet());

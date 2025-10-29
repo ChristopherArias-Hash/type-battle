@@ -83,7 +83,6 @@ public class GameSessionWebSocketController {
         miniGameParticipantRepository.save(miniGameParticipant);
 
         List<MiniGameParticipants> allParticipants = miniGameParticipantRepository.findAllByMiniGameSession(miniGameSession);
-        messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId, allParticipants);
 
         boolean everyoneReady = allParticipants.stream().allMatch(MiniGameParticipants::isIs_ready);
         if (everyoneReady) {
@@ -95,14 +94,23 @@ public class GameSessionWebSocketController {
             Map<String, Object> gameStartMessage = new HashMap<>();
             gameStartMessage.put("type", "mini_game_start");
             gameStartMessage.put("startTime", System.currentTimeMillis());
-            // **FIX:** Always send setup data for ALL games to allow for flexible frontend testing.
-            gameStartMessage.put("cannons", islandGameSetupService.generateInitialCannons());
-            gameStartMessage.put("obstacles", obstacleGenerationService.generateObstacles());
-            gameStartMessage.put("initialPositions", crossyRoadSetupService.generateInitialPositions(allParticipants));
+
+            // FIX: Only generate setup data for the specific mini-game type
+            Long miniGameTypeId = miniGameSession.getMiniGames().getId();
+
+            if (miniGameTypeId == 3L) {
+                // Island Game
+                gameStartMessage.put("cannons", islandGameSetupService.generateInitialCannons());
+            } else if (miniGameTypeId == 2L) {
+                // Crossy Road
+                gameStartMessage.put("obstacles", obstacleGenerationService.generateObstacles());
+                gameStartMessage.put("initialPositions", crossyRoadSetupService.generateInitialPositions(allParticipants));
+            }
+            // Stacker (id == 1) doesn't need any setup data
+
             messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId, gameStartMessage);
         }
     }
-
     @MessageMapping("/mini_game/crossy_road/position/{miniGameSessionId}")
     public void handleCrossyRoadPosition(@DestinationVariable Long miniGameSessionId, @Payload CrossyRoadPositionData positionData, SimpMessageHeaderAccessor headerAccessor) {
         String uid = resolveUid(headerAccessor);
@@ -378,8 +386,23 @@ public class GameSessionWebSocketController {
         }
     }
 
-    @MessageMapping("/join-mini-game/{sessionId}")
-    public void joinMiniGame(@DestinationVariable String sessionId, SimpMessageHeaderAccessor headerAccessor) {
-        String uid = resolveUid(headerAccessor);
+    @MessageMapping("/mini-game/request-state/{miniGameSessionId}")
+    public void handleMiniGameStateRequest(@DestinationVariable Long miniGameSessionId, SimpMessageHeaderAccessor headerAccessor) {
+        String uid = resolveUid(headerAccessor); // Optional: log who requested
+        System.out.println("[WebSocket] Received state request for mini-game " + miniGameSessionId + " from UID: " + (uid != null ? uid : "unknown"));
+
+        Optional<MiniGameSession> sessionOpt = miniGameSessionRepository.findById(miniGameSessionId);
+        if (sessionOpt.isEmpty()) {
+            System.out.println("[WebSocket] Mini-game session not found for ID: " + miniGameSessionId);
+            return;
+        }
+
+        // Fetch the current list of participants
+        List<MiniGameParticipants> currentParticipants = miniGameParticipantRepository.findAllByMiniGameSession(sessionOpt.get());
+
+
+        messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId, currentParticipants);
+        System.out.println("[WebSocket] Sent current participant list ("+ currentParticipants.size() +") for mini-game " + miniGameSessionId);
+
     }
 }
