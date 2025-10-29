@@ -27,7 +27,7 @@ const Player = ({ position, isLocalPlayer }) => (
   />
 );
 
-// NEW: ghost variant (grayed out, semi-transparent)
+// ghost variant (during death/spectate)
 const PlayerGhost = ({ position }) => (
   <div
     className="player"
@@ -186,7 +186,7 @@ const IslandGame = ({
     isDeadRef.current = isDead;
   }, [isDead]);
 
-  // NEW: restore death state after refresh for this mini-game
+  // Restore death state after refresh for this mini-game
   useEffect(() => {
     if (!miniGameId) return;
     const deadKey = `miniGameDead-${miniGameId}`;
@@ -210,7 +210,7 @@ const IslandGame = ({
     }
   }, [miniGameId]);
 
-  // Handle incoming position updates for other players - NO setState here!
+  // Handle incoming position updates for other players !
   useEffect(() => {
     if (
       lastMiniGameMessage &&
@@ -285,13 +285,12 @@ const IslandGame = ({
     keysDownRef.current = {};
     cannonballIdRef.current = 0;
 
-    // NEW: reset elimination lists and state
-    // NOTE: Do NOT reset death if spectating restore is active
+ 
     deadUidsRef.current = new Set();
     ghostsRef.current = {};
   }, []);
 
-  // NEW: start in play OR spectate-only mode
+  // Start in play OR spectate-only mode
   const startGame = useCallback(
     (initialCannonsFromServer, options = { spectateOnly: false }) => {
       console.log(
@@ -478,7 +477,6 @@ const IslandGame = ({
         }
       }
 
-      // --- 2. Update Cannons (Aiming & Firing) ---
       const updatedCannons = activeCannonRef.current.map((c) => {
         // Build target set = all alive players (others alive + maybe local)
         const allPlayerPos = { ...otherPlayersRef.current };

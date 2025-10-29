@@ -3,6 +3,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import * as Tone from "tone"; // 🎵 Import Tone.js
 import { sendStackerPoints } from "../../../websocket";
 import MiniGameReadyUp from "../../mini-game-ready-up/MiniGameReadyUp";
+import StackerTutorial from "../../mini-game-tutorials/StackerTutorial";
 
 // Helper functions (draw3DBlock, drawGhostBlock, drawGroundPlane) remain the same...
 function draw3DBlock(ctx, x, y, width, height, depth, baseColor) {
@@ -557,13 +558,16 @@ function Stacker({ miniGamePlayers, miniGameId, miniGameStartSignal }) {
 
   return (
     <div className="mini-game-stacker" ref={containerRef}>
-      <h3>Stacker - {gameState.toUpperCase()}</h3>
+      <h1>STACKER - {gameState.toUpperCase()}</h1>
       {gameState === "waiting" ? (
+        <>
         <MiniGameReadyUp
           miniGamePlayers={miniGamePlayers}
           miniGameId={miniGameId}
           onReady={handleReadyUp}
         />
+        <StackerTutorial/>
+        </>
       ) : (
         <div className="game-wrapper">
           <div id="game-container">

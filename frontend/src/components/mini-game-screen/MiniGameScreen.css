@@ -8,7 +8,6 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 4; /* on top of game canvas */
 }
 
 .mini-game-container {

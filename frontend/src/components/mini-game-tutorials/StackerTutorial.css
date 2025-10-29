@@ -1,0 +1,31 @@
+.stacker-tutorial-container {
+  margin-top: 30px;
+  width: 100%;
+  height: auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 50px;
+}
+
+.left-bar {
+  text-align: left;
+   border:2px solid red;
+}
+
+.right-bar {
+    border:2px solid red;
+}
+.play-heading {
+  flex: 1;
+  text-align: center;
+}
+.tutorial-image {
+  border: 2px solid red;
+  flex: 2;
+  width: 350px;
+  min-width: 10px;
+
+  border: 2px solid black;
+  border-radius: 10px;
+}

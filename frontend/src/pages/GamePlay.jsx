@@ -11,7 +11,7 @@ import { Navigate, useParams } from "react-router-dom";
 function GamePlay() {
   const { id: sessionId } = useParams();
   const [enableWarning, disableWarning] = useUserLeavingWarning();
-  const { isUserLoggedIn, userInfo, logOutFirebase, loading } = useAuth();
+  const { isUserLoggedIn, userInfo, logOutFirebase, loading, loadUserInfo} = useAuth();
 
   const {
     timer,
@@ -43,8 +43,11 @@ function GamePlay() {
   useEffect(() => {
     if (gameEnded) {
       disableWarning();
+      loadUserInfo();
     }
-  }, [gameEnded, disableWarning]);
+  }, [gameEnded, disableWarning, loadUserInfo]);
+
+  
 
   useEffect(() => {
     const handleBeforeUnload = () => {

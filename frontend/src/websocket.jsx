@@ -111,28 +111,43 @@ export function sendReadyUp(sessionId) {
   }
 }
 
-export function subscribeToMiniGameLobby(
-  miniGameSessionId,
-  onMiniGamePlayerListUpdate
-) {
+export function subscribeToMiniGameLobby(miniGameSessionId, onMiniGameDataUpdate) {
   if (!stompClient || !stompClient.connected) {
-    console.error(
-      "[WebSocket] Cannot subscribe to mini-game, client not connected."
-    );
+    console.error("[WebSocket] Cannot subscribe, client not connected.");
+    return null; // Return null or handle error
   }
-  console.log(
-    `[WebSocket] Subscribing to mini-game lobby: /topic/mini-game-lobby/${miniGameSessionId}`
-  );
+  console.log(`[WebSocket] Subscribing to /topic/mini-game-lobby/${miniGameSessionId}`);
 
-  return stompClient.subscribe(
+  const subscription = stompClient.subscribe(
     `/topic/mini-game-lobby/${miniGameSessionId}`,
     (message) => {
       const miniGameData = JSON.parse(message.body);
-      onMiniGamePlayerListUpdate(miniGameData);
-      console.log(miniGameData)
+      onMiniGameDataUpdate(miniGameData); // Pass data to the callback
     }
   );
+
+  //Immediately request the current list after subscribing
+  console.log(`[WebSocket] Requesting initial state for mini-game ${miniGameSessionId}`);
+  stompClient.publish({
+    destination: `/app/mini-game/request-state/${miniGameSessionId}`,
+    body: ""
+  });
+
+  return subscription; // Return the subscription object so it can be unsubscribed later
 }
+
+// Request the current mini-game state from the server
+export function requestMiniGameState(miniGameSessionId) {
+   if (stompClient && stompClient.connected) {
+     stompClient.publish({
+       destination: `/app/mini-game/request-state/${miniGameSessionId}`,
+       body: ""
+     });
+   } else {
+     console.error("[WebSocket] Cannot request state, client not connected.");
+   }
+}
+
 
 export function sendMiniGameReadyUp(miniGameSessionId) {
   if (stompClient && stompClient.connected) {
@@ -177,7 +192,7 @@ export function sendIslandGamePosition(miniGameSessionId, positionData) {
   }
 }
 
-// NEW: send death + ghost position so all clients can render it
+// Send death + ghost position so all clients can render it
 export function sendIslandGameDeath(miniGameSessionId, positionData) {
   if (stompClient && stompClient.connected) {
     stompClient.publish({

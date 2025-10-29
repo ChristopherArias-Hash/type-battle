@@ -8,6 +8,7 @@ import {
 } from "../websocket";
 import { auth } from "../firebase";
 
+
 export function useGameSession(sessionId, userDisplayName) {
   const navigate = useNavigate();
 
@@ -48,7 +49,6 @@ export function useGameSession(sessionId, userDisplayName) {
     return saved ? JSON.parse(saved) : null;
   });
 
-  // FIX: Don't initialize from session storage - let server be the source of truth
   const [miniGameTimer, setMiniGameTimer] = useState(null);
   const miniGameSubRef = useRef(null);
 
@@ -128,6 +128,7 @@ export function useGameSession(sessionId, userDisplayName) {
     }
     setLastMiniGameMessage(null);
     const sub = subscribeToMiniGameLobby(miniGameSessionId, (miniGameData) => {
+      console.log("Received mini-game data:", miniGameData);
       setLastMiniGameMessage(miniGameData);
       if (miniGameData && miniGameData.type === "mini_game_start") {
         console.log(`🏁 Received mini-game start signal for ${miniGameSessionId}!`);

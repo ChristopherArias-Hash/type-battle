@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { sendMiniGameReadyUp } from "../../websocket";
 import { auth } from "../../firebase";
+import "./MiniGameReadyUp.css";
 
 function MiniGameReadyUp({ miniGamePlayers = [], miniGameId, onReady }) {
+  console.log("test" + miniGamePlayers)
   const uid = auth.currentUser?.uid;
   const me = useMemo(
     () => miniGamePlayers.find((p) => p?.user?.firebaseUid === uid),
@@ -25,18 +27,16 @@ function MiniGameReadyUp({ miniGamePlayers = [], miniGameId, onReady }) {
 
   return (
     <div className="mini-game-ready-section">
-      <h3>Players</h3>
       <ul>
         {miniGamePlayers.map((p, index) => (
           <li key={index}>
-            {p.user?.displayName || p.user?.firebaseUid || "Unknown"} – Score:{" "}
-            {p.score} | Ready: {p.is_ready ? "✅" : "❌"}
+            {p.user?.displayName || p.user?.firebaseUid || "Unknown"} | Ready: {p.is_ready ? "✅" : "❌"}
           </li>
         ))}
       </ul>
       {!isReadyFromServer ? (
-        <button onClick={handleReadyUp} disabled={isSending}>
-          {isSending ? "Waiting..." : "Ready Up"}
+        <button className="mini-game-ready-up-button" onClick={handleReadyUp} disabled={isSending}>
+              <span className="letter-enter"> {isSending ? "Waiting..." : "Ready Up"}</span>
         </button>
       ) : (
         <div>You're ready. Waiting for others…</div>
