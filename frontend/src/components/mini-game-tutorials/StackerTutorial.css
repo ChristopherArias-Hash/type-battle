@@ -1,80 +1,99 @@
-
 .stacker-tutorial-container {
   margin-top: 30px;
   width: 100%;
   height: auto;
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 50px;
+  justify-content: center; /* center horizontally */
+  gap: 50px; /* optional spacing between wrapped items */
 }
 
 .left-bar {
-  padding: 10px;
-  text-align: left;
-   border:2px solid red;
+  min-width: 280px;
+  max-width: 350px;
+  flex: 1;
+  padding: 20px 25px;
+  border: 2px solid #14adffab;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #171717, #111);
+  box-shadow: 0 0 15px rgba(20, 173, 255, 0.2);
+  transition: box-shadow 0.3s ease-in-out;
+}
+
+.left-bar:hover {
+  box-shadow: 0 0 25px rgba(20, 173, 255, 0.4);
 }
 
 .right-bar {
-    border:2px solid red;
+  
+  border: 2px solid;
+  border-color: #14adffab;
+  border-radius: 10px;
+  background-color: rgb(22, 22, 22);
 }
 .play-heading {
-  flex: 1;
   text-align: center;
+  font-size: 35px;
+  font-weight: 600;
+  color: #14adff;
+  margin-bottom: 15px;
+  letter-spacing: 1px;
 }
 
-
-.setting-heading{
-  color:red;
-  font-size: 30px;
-  margin-bottom: 15px;
+.setting-heading {
+  font-size: 25px;
+  color: #14adff;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(20, 173, 255, 0.4);
+  padding-bottom: 4px;
 }
 
 .tutorial-image {
-  border: 2px solid red;
-  flex: 2;
-  width: 300px;
-  min-width: 10px;
-  border: 2px solid black;
+  width: 280px;
+  height: 450px;
   border-radius: 10px;
+  border: 2px solid rgba(0, 0, 0, 0.7);
+  box-shadow: 0 0 20px rgba(20, 173, 255, 0.25);
+  transition: transform 0.3s ease;
 }
 
+.tutorial-image:hover {
+  transform: scale(1.03);
+}
 
-.controls{
+.controls {
   display: flex;
   align-items: center;
   gap: 25px;
-  background-color: red;
-  justify-content: left; 
-  margin-bottom: 15px; 
-  
+  justify-content: left;
+  margin-bottom: 15px;
+        background-color: rgba(0, 0, 0, 0.5); /* 50% opaque black */
+
 }
 .control-description {
-  font-size: 16px;
-  margin: 0;                 
+  padding: 10px;
+  font-size: 20px;
+  margin: 0;
 }
 
 .control-button {
   position: relative;
-    display: inline-block;
+  display: inline-block;
   padding: 0;
-  width: 110px;   /* smaller than 160px */
-  height: 45px;   /* smaller than 60px */
+  width: 110px; /* smaller than 160px */
+  height: 45px; /* smaller than 60px */
   border-radius: 8px;
   border: none;
   cursor: pointer;
   background: linear-gradient(180deg, #282828, #202020);
-  box-shadow:
-    inset -4px 0 4px rgba(0, 0, 0, 0.15),
-    inset 0 -4px 4px rgba(0, 0, 0, 0.25),
-    0 0 0 2px rgba(0, 0, 0, 0.75),
+  box-shadow: inset -4px 0 4px rgba(0, 0, 0, 0.15),
+    inset 0 -4px 4px rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(0, 0, 0, 0.75),
     5px 10px 15px rgba(0, 0, 0, 0.4);
   overflow: hidden;
   transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-    
-
 }
 
 /* inner surface */
@@ -87,8 +106,7 @@
   right: 8px;
   background: linear-gradient(90deg, #232323, #4a4a4a);
   border-radius: 6px;
-  box-shadow:
-    -5px -5px 5px rgba(255, 255, 255, 0.25),
+  box-shadow: -5px -5px 5px rgba(255, 255, 255, 0.25),
     5px 3px 5px rgba(0, 0, 0, 0.15);
   border-left: 1px solid #0004;
   border-bottom: 1px solid #0004;
@@ -98,6 +116,7 @@
 
 /* the label (top-left aligned) */
 .control-button .letter-enter {
+  
   position: absolute;
   left: 10px;
   top: 10px;
@@ -110,5 +129,3 @@
   transition: transform 0.1s ease-in-out;
   z-index: 1;
 }
-
-

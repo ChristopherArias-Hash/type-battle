@@ -1,4 +1,5 @@
 import "./StackerTutorial.css";
+import stackerGif from "../../images/stacker-tutorial.gif";
 function StackerTutorial() {
   return (
     <div className="stacker-tutorial-container">
@@ -7,7 +8,7 @@ function StackerTutorial() {
 
         <h3 className="setting-heading">Controls:</h3>
         <div className ="controls">
-            <p className="control-description">Drop block</p>
+            <p className="control-description">DROP BLOCK</p>
            <button className="control-button">
               <span className="letter-enter">Spacebar</span>
         </button>
@@ -19,7 +20,7 @@ function StackerTutorial() {
       </div>
       <div className="right-bar">
         <img
-          src="https://placehold.co/250x300/png"
+          src={stackerGif}
           alt="Stacker Tutorial Image"
           className="tutorial-image"
         />

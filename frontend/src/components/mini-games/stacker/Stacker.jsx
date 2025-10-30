@@ -86,6 +86,7 @@ function drawGroundPlane(ctx, canvasWidth, canvasHeight, depth, yOffset = 0) {
 }
 
 function Stacker({ miniGamePlayers, miniGameId, miniGameStartSignal }) {
+  const CurrentGame = "STACKER";
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
   const animationFrameIdRef = useRef(null);
@@ -558,10 +559,10 @@ function Stacker({ miniGamePlayers, miniGameId, miniGameStartSignal }) {
 
   return (
     <div className="mini-game-stacker" ref={containerRef}>
-      <h1>STACKER - {gameState.toUpperCase()}</h1>
       {gameState === "waiting" ? (
         <>
         <MiniGameReadyUp
+          CurrentGame={CurrentGame}
           miniGamePlayers={miniGamePlayers}
           miniGameId={miniGameId}
           onReady={handleReadyUp}

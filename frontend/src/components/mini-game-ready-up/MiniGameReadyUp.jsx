@@ -3,7 +3,7 @@ import { sendMiniGameReadyUp } from "../../websocket";
 import { auth } from "../../firebase";
 import "./MiniGameReadyUp.css";
 
-function MiniGameReadyUp({ miniGamePlayers = [], miniGameId, onReady }) {
+function MiniGameReadyUp({ miniGamePlayers = [], miniGameId, onReady, CurrentGame }) {
   console.log("test" + miniGamePlayers)
   const uid = auth.currentUser?.uid;
   const me = useMemo(
@@ -24,9 +24,9 @@ function MiniGameReadyUp({ miniGamePlayers = [], miniGameId, onReady }) {
     sendMiniGameReadyUp(miniGameId);
     if (onReady) onReady();
   };
-
   return (
     <div className="mini-game-ready-section">
+       <h1>{CurrentGame} - TEST</h1>
       <ul>
         {miniGamePlayers.map((p, index) => (
           <li key={index}>

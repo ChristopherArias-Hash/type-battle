@@ -2,14 +2,13 @@
   position: fixed;
   top: 0;
   left: 0;
- width: 100%;
+  width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.898); /* backdrop */
   display: flex;
   justify-content: center;
   align-items: center;
-    z-index: 1000; /* Ensure it's above other content */
-  
+  z-index: 1000; /* Ensure it's above other content */
 
 }
 
@@ -28,5 +27,31 @@
   display: flex;
   flex-direction: column;
     overflow-y: auto; /* Enable vertical scrolling for the body */
-
+ --color: #161313;
+  background-color: #212121;
+  background-image: linear-gradient(
+      0deg,
+      transparent 24%,
+      var(--color) 25%,
+      var(--color) 26%,
+      transparent 27%,
+      transparent 74%,
+      var(--color) 75%,
+      var(--color) 76%,
+      transparent 77%,
+      transparent
+    ),
+    linear-gradient(
+      90deg,
+      transparent 24%,
+      var(--color) 25%,
+      var(--color) 26%,
+      transparent 27%,
+      transparent 74%,
+      var(--color) 75%,
+      var(--color) 76%,
+      transparent 77%,
+      transparent
+    );
+  background-size: 70px 70px;
 }

@@ -1,6 +1,16 @@
+.mini-game-ready-section{
+  width: 100%;
+  text-align: center;
+  padding: 10px;
+  border: 2px solid;
+   background-color: rgb(22, 22, 22);
+  border-color: #14adffab;
+  box-shadow: 0 0 8px rgba(14, 165, 233, 0.6); /* soft glow */
+}
 .mini-game-ready-up-button {
   position: relative;
-    display: inline-block;
+  display: inline-block;
+
   padding: 0;
   width: 110px;   /* smaller than 160px */
   height: 45px;   /* smaller than 60px */
@@ -17,7 +27,7 @@
   transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-    margin-top: 15px;
+  margin-top: 15px;
 
 }
 
