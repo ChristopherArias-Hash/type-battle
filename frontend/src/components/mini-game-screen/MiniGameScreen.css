@@ -14,16 +14,14 @@
 
 .mini-game-container {
   width: 90vw;         /* grow with screen width */
-  height: 90vh;        /* grow with screen height */
+  height: 85vh;        /* grow with screen height */
   max-width: 800px;   /* raise the ceiling */
   max-height: auto;  /* raise the ceiling */
   background: #212121;
   border-radius: 16px;
   padding: 20px;
-    border:3px solid;
-    border-color: #14adffab;
-      box-shadow: 0 0 8px rgba(14, 165, 233, 0.6); /* soft glow */
-
+  border:5px solid;
+  border-color: #161616;
   display: flex;
   flex-direction: column;
     overflow-y: auto; /* Enable vertical scrolling for the body */

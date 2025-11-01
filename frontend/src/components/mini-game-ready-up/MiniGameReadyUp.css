@@ -1,16 +1,75 @@
-.mini-game-ready-section{
-  width: 100%;
+.mini-game-ready-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
+  width: 100%;
   padding: 10px;
-  border: 2px solid;
-   background-color: rgb(22, 22, 22);
-  border-color: #14adffab;
-  box-shadow: 0 0 8px rgba(14, 165, 233, 0.6); /* soft glow */
+  border: 2px solid #14adffab;
+  background-color: rgb(22, 22, 22);
+  box-shadow: 0 0 8px rgba(14,165,233,0.6);
+
 }
+
+/* Reset ul defaults */
+.mini-game-ready-player-list {
+  list-style: none;  
+  padding: 0;        
+  margin: 0;        
+}
+
+.mini-game-user-section {
+  display: flex;
+  justify-content: space-around; 
+  align-items: center;
+  gap: 30px;                      /* Add space between username and status */
+  padding: 8px 15px;              
+  list-style: none;   
+  background: linear-gradient(135deg, #2a2a2a 0%, #40404032 100%);
+  border-radius: 20px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+
+}
+
+.mini-game-username {
+  font-size: 25px;
+  color: #e0e0e0;
+  text-align: left;
+  margin: 0px;
+  flex: 1;  
+  overflow: hidden; 
+  text-overflow: ellipsis;  
+
+}
+
+.mini-game-user-status {
+  font-size: 13px;
+  color: #14adff;
+  text-align: right;
+  padding: 5px 12px;
+  background: linear-gradient(180deg, #282828, #202020);
+  font-weight: 600;
+  border: 2px solid #14adffab;
+  border-radius: 20px;
+  margin: 0px;
+ flex-shrink: 0;
+}
+
+.status-waiting {
+  color: #ffcc02;
+  border-color: #ffcc02;
+}
+.status-ready {
+  color: #00ff00;
+  border-color: #00ff00;
+
+}
+
 .mini-game-ready-up-button {
   position: relative;
   display: inline-block;
-
   padding: 0;
   width: 110px;   /* smaller than 160px */
   height: 45px;   /* smaller than 60px */
@@ -27,7 +86,7 @@
   transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-  margin-top: 15px;
+  margin-top: 10px;
 
 }
 
