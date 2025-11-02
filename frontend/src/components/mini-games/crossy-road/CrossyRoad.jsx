@@ -73,11 +73,19 @@ const Obstacle = ({ obstacle }) => {
     >
       {obstacle.type === "truck" ? (
         <div className="truck-body">
-          <div className="truck-cab"></div>
+          <div className="truck-cab">
+            <div className="truck-window"></div>
+          </div>
           <div className="truck-trailer"></div>
         </div>
       ) : (
-        <div className="vehicle-body"></div>
+        <div className="vehicle-body">
+          <div className="car-top">
+            <div className="windshield"></div>
+          </div>
+          <div className="headlight headlight-left"></div>
+          <div className="headlight headlight-right"></div>
+        </div>
       )}
     </div>
   );
@@ -315,10 +323,6 @@ const CrossyRoad = ({
 
   return (
     <div className="game-wrapper">
-      <div className="header">
-        <h1>Crossy Road</h1>
-        <p>Cross the road... and then cross back!</p>
-      </div>
       <div className="stage" ref={stageRef}>
         <div className="board-scale" style={{ "--scale": scale }}>
           <div
@@ -346,7 +350,6 @@ const CrossyRoad = ({
           </div>
         </div>
       </div>
-      <div className="game-info">Crossings: {crossings}</div>
     </div>
   );
 };
