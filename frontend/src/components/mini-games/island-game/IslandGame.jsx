@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import "./IslandGame.css";
 import MiniGameReadyUp from "../../mini-game-ready-up/MiniGameReadyUp";
+import IslandGameTutorial  from "../../mini-game-tutorials/Island-game-tutorial/IslandGameTutorial";
 import { sendIslandGamePosition, sendIslandGameDeath } from "../../../websocket";
 import { auth } from "../../../firebase";
 
@@ -136,6 +137,8 @@ const IslandGame = ({
   miniGameTimer,
   lastMiniGameMessage,
 }) => {
+
+  const gameTitle = "Cannon Island Survival";
   const [gameState, setGameState] = useState("waiting");
   const [playerPos, setPlayerPos] = useState({
     x: BOARD_SIZE / 2,
@@ -628,10 +631,11 @@ const IslandGame = ({
 
   return (
     <div className="game-wrapper island-game">
-      <h1 className="game-title">Cannon Island Survival</h1>
-
       {gameState === "waiting" ? (
-        <MiniGameReadyUp miniGamePlayers={miniGamePlayers} miniGameId={miniGameId} />
+        <>
+        <MiniGameReadyUp gameTitle={gameTitle} miniGamePlayers={miniGamePlayers} miniGameId={miniGameId} />
+        <IslandGameTutorial  />
+        </>
       ) : (
         <>
           <div className="stage" ref={stageRef}>

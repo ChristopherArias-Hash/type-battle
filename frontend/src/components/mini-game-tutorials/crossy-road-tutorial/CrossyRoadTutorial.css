@@ -1,0 +1,153 @@
+.crossyroad-tutorial-container {
+  margin-top: 50px;
+  width: 100%;
+  height: auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center; /* center horizontally */
+  gap: 50px; /* optional spacing between wrapped items */
+}
+
+.left-bar {
+  min-width: 280px;
+  max-width: 350px;
+  flex: 1;
+  padding: 20px 25px;
+  border: 2px solid #14adffab;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #171717, #111);
+  transition: box-shadow 0.3s ease-in-out;
+}
+
+.right-bar {
+  border: 2px solid #14adffab;
+  border-radius: 12px;
+  background-color: rgb(22, 22, 22);
+}
+.play-heading {
+  text-align: center;
+  font-size: 35px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  letter-spacing: 1px;
+}
+
+.setting-heading {
+  font-size: 25px;
+  color: #14adff;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #14adffab;
+  padding-bottom: 4px;
+}
+
+.tutorial-image {
+  width: 280px;
+  height: 450px;
+  border-radius: 10px;
+  transition: transform 0.3s ease;
+}
+
+.tutorial-image:hover {
+  transform: scale(1.03);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  padding: 5px;
+  gap: 25px;
+  justify-content: left;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #2a2a2a 0%, #40404032 100%);
+}
+.control-description {
+  padding: 10px;
+  font-size: 20px;
+  margin: 0;
+  flex: 1;
+}
+
+.control-button {
+  position: relative;
+  display: inline-block;
+  padding: 0;
+  width: 45px; /* smaller than 160px */
+  height: 45px; /* smaller than 60px */
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(180deg, #282828, #202020);
+  box-shadow: inset -4px 0 4px rgba(0, 0, 0, 0.15),
+    inset 0 -4px 4px rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(0, 0, 0, 0.75),
+    5px 10px 15px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* inner surface */
+.control-button::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  bottom: 8px;
+  right: 8px;
+  background: linear-gradient(90deg, #232323, #4a4a4a);
+  border-radius: 6px;
+  box-shadow: -5px -5px 5px rgba(255, 255, 255, 0.25),
+    5px 3px 5px rgba(0, 0, 0, 0.15);
+  border-left: 1px solid #0004;
+  border-bottom: 1px solid #0004;
+  border-top: 1px solid #0009;
+  transition: all 0.1s ease-in-out;
+}
+
+/* the label (top-left aligned) */
+.control-button .letter-enter {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  color: #e9e9e9;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  pointer-events: none;
+  transition: transform 0.1s ease-in-out;
+  z-index: 1;
+}
+
+/* active press effect */
+.control-button:active,
+.control-button.active {
+  transform: translateY(1px);
+  box-shadow:
+    inset -2px 0 2px rgba(0, 0, 0, 0.1),
+    inset 0 -2px 2px rgba(0, 0, 0, 0.15),
+    0 0 0 2px rgba(0, 0, 0, 0.5),
+    3px 5px 6px rgba(0, 0, 0, 0.3);
+}
+.control-button:active::before,
+.control-button.active::before {
+  top: 5px;
+  left: 5px;
+  bottom: 6px;
+  right: 6px;
+  box-shadow:
+    -3px -3px 3px rgba(255, 255, 255, 0.15),
+    3px 2px 3px rgba(0, 0, 0, 0.1);
+}
+.control-button:active .letter-enter,
+.control-button.active .letter-enter {
+  transform: translateY(1px);
+}
+
+/* focus for accessibility */
+.control-button:focus-visible {
+  outline: 2px solid #7dd3fc;
+  outline-offset: 2px;
+}

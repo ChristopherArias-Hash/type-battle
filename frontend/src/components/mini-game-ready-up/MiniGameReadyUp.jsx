@@ -7,7 +7,7 @@ function MiniGameReadyUp({
   miniGamePlayers = [],
   miniGameId,
   onReady,
-  CurrentGame,
+  gameTitle,
 }) {
   console.log("test" + miniGamePlayers);
   const uid = auth.currentUser?.uid;
@@ -29,9 +29,11 @@ function MiniGameReadyUp({
     sendMiniGameReadyUp(miniGameId);
     if (onReady) onReady();
   };
+
+  console.log("Current Game: " + gameTitle);
   return (
     <div className="mini-game-ready-section">
-      <h1>{CurrentGame}</h1>
+      <h1>{gameTitle}</h1>
       <ul className="mini-game-ready-player-list">
         {miniGamePlayers.map((p, index) => (
           <li key={index} className="mini-game-user-section">

@@ -7,6 +7,7 @@ import React, {
   useRef,
 } from "react";
 import MiniGameReadyUp from "../../mini-game-ready-up/MiniGameReadyUp";
+import CrossyRoadTutorial from "../../mini-game-tutorials/crossy-road-tutorial/CrossyRoadTutorial.jsx";
 import { sendCrossyRoadPosition, sendStackerPoints } from "../../../websocket";
 import { auth } from "../../../firebase";
 
@@ -93,6 +94,8 @@ const CrossyRoad = ({
   miniGameStartSignal,
   lastMiniGameMessage,
 }) => {
+
+  const gameTitle = "CrossyRoad";
   const [playerPos, setPlayerPos] = useState(null);
   const [obstacles, setObstacles] = useState([]);
   const [gameState, setGameState] = useState("waiting");
@@ -299,17 +302,13 @@ const CrossyRoad = ({
 
   if (gameState === "waiting") {
     return (
-      <div className="game-wrapper">
-        <div className="header">
-          <h1>Crossy Road</h1>
-          <p>Waiting for players...</p>
-        </div>
-        <div className="stage" ref={stageRef}>
+      <div className="game-wrapper" ref={stageRef}>
           <MiniGameReadyUp
+            gameTitle={gameTitle}
             miniGamePlayers={miniGamePlayers}
             miniGameId={miniGameId}
           />
-        </div>
+        <CrossyRoadTutorial />
       </div>
     );
   }
