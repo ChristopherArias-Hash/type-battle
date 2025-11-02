@@ -62,9 +62,11 @@ const Player = ({ pos }) => (
 );
 
 const Obstacle = ({ obstacle }) => {
+  const directionClass = obstacle.speed > 0 ? "going-right" : "going-left";
+
   return (
     <div
-      className={`obstacle ${obstacle.style}`}
+      className={`obstacle ${obstacle.style} ${directionClass}`}
       style={{
         left: obstacle.x * TILE_SIZE,
         top: obstacle.y * TILE_SIZE + TILE_SIZE * 0.075,
@@ -90,7 +92,6 @@ const Obstacle = ({ obstacle }) => {
     </div>
   );
 };
-
 const RoadLane = ({ y }) => (
   <div className="road-lane" style={{ top: `${y * TILE_SIZE}px` }} />
 );
@@ -326,7 +327,7 @@ const CrossyRoad = ({
       <div className="stage" ref={stageRef}>
         <div className="board-scale" style={{ "--scale": scale }}>
           <div
-            className="game-board"
+            className="crossy-road-game-board" 
             style={{ width: BOARD_W, height: BOARD_H }}
           >
             <div

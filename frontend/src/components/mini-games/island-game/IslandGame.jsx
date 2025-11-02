@@ -640,7 +640,7 @@ const IslandGame = ({
         <>
           <div className="stage" ref={stageRef}>
             <div className="board-scale" style={{ "--scale": scale }}>
-              <div className="game-board" style={{ width: BOARD_WIDTH, height: BOARD_HEIGHT }}>
+              <div className="island-survival-game-board" style={{ width: BOARD_WIDTH, height: BOARD_HEIGHT }}>
                 {/* NOTE: Death overlay removed per request. Spectate silently. */}
 
                 <Island />

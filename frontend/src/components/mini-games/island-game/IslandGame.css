@@ -30,7 +30,7 @@
       }
 
       /* --- Original Game Styles --- */
-      .game-board {
+      .island-survival-game-board {
         position: relative;
         background-color: #93c5fd; /* bg-blue-300 */
         border-radius: 0.5rem; /* rounded-lg */
