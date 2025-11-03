@@ -1,7 +1,7 @@
 import "./GamePlay.css";
 import MiniGameScreen from "../components/mini-game-screen/MiniGameScreen";
 import NavBar from "../components/navbar/NavBar";
-import TypingSentences from "../components/typing-sentences/TypingSentences";
+import TypingSentences from "../components/gameplay/typing-sentences/TypingSentences";
 import useUserLeavingWarning from "../utils/useUserLeavingWarning";
 import { useAuth } from "../utils/authContext";
 import { useGameSession } from "../utils/useGameSession";

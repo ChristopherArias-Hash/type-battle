@@ -2,8 +2,8 @@ import "./Stacker.css";
 import { useEffect, useState, useRef, useCallback } from "react";
 import * as Tone from "tone"; // 🎵 Import Tone.js
 import { sendStackerPoints } from "../../../websocket";
-import MiniGameReadyUp from "../../mini-game-ready-up/MiniGameReadyUp";
-import StackerTutorial from "../../mini-game-tutorials/StackerTutorial";
+import MiniGameReadyUp from "../../mini-game-screen/mini-game-ready-up/MiniGameReadyUp";
+import StackerTutorial from "../../mini-game-screen/mini-game-tutorials/stacker-tutorial/StackerTutorial";
 
 // Helper functions (draw3DBlock, drawGhostBlock, drawGroundPlane) remain the same...
 function draw3DBlock(ctx, x, y, width, height, depth, baseColor) {

@@ -3,12 +3,12 @@ import { useState } from "react";
 
 import clickSound from '../sounds/keyboard-press.wav';
 import NavBar from "../components/navbar/NavBar.jsx";
-import JoinMatch from "../components/join-match/JoinMatch.jsx";
-import CreateMatch from "../components/create-match/CreateMatch.jsx";
-import LeaderBoard from "../components/leader-board/LeaderBoard.jsx";
-import AboutUs from "../components/about-us/AboutUs.jsx";
-import LoginModal from "../components/login/LoginModal.jsx";
-import RegisterModal from "../components/register/RegisterModal.jsx";
+import JoinMatch from "../components/main-page/join-match/JoinMatch.jsx";
+import CreateMatch from "../components/main-page/create-match/CreateMatch.jsx";
+import LeaderBoard from "../components/main-page/leader-board/LeaderBoard.jsx";
+import AboutUs from "../components/main-page/about-us/AboutUs.jsx";
+import LoginModal from "../components/main-page/login/LoginModal.jsx";
+import RegisterModal from "../components/main-page/register/RegisterModal.jsx";
 import { useAuth } from "../utils/authContext.jsx";
 import "./MainPage.css";
 

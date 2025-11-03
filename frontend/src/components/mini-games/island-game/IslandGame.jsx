@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import "./IslandGame.css";
-import MiniGameReadyUp from "../../mini-game-ready-up/MiniGameReadyUp";
-import IslandGameTutorial  from "../../mini-game-tutorials/Island-game-tutorial/IslandGameTutorial";
+import MiniGameReadyUp from "../../mini-game-screen/mini-game-ready-up/MiniGameReadyUp";
+import IslandGameTutorial  from "../../mini-game-screen/mini-game-tutorials/Island-game-tutorial/IslandGameTutorial";
 import { sendIslandGamePosition, sendIslandGameDeath } from "../../../websocket";
 import { auth } from "../../../firebase";
 
@@ -640,7 +640,7 @@ const IslandGame = ({
         <>
           <div className="stage" ref={stageRef}>
             <div className="board-scale" style={{ "--scale": scale }}>
-              <div className="island-survival-game-board" style={{ width: BOARD_WIDTH, height: BOARD_HEIGHT }}>
+              <div className="game-board" style={{ width: BOARD_WIDTH, height: BOARD_HEIGHT }}>
                 {/* NOTE: Death overlay removed per request. Spectate silently. */}
 
                 <Island />

@@ -1,5 +1,5 @@
 import "./StackerTutorial.css";
-import stackerGif from "../../images/stacker-tutorial.gif";
+import stackerGif from "../../../../images/stacker-tutorial.gif";
 import { useEffect, useRef} from "react";
 
 function StackerTutorial() {
@@ -37,7 +37,7 @@ function StackerTutorial() {
         <h3 className="setting-heading">Controls</h3>
         <div className ="controls">
             <p className="control-description">DROP BLOCK</p>
-           <button ref={spacebarButtonRef} onClick={() => console.log("test")} className="control-button">
+           <button ref={spacebarButtonRef} onClick={() => console.log("test")} className="stacker-control-button">
               <span className="letter-enter">Spacebar</span>
         </button>
         </div>

@@ -5,9 +5,9 @@ import IslandGame from "../mini-games/island-game/IslandGame";
 
 //Mini Games
 const GAME_COMPONENTS = {
-  1: CrossyRoad,
-  2: CrossyRoad,
-  3: CrossyRoad,
+  1: Stacker,
+  2: Stacker,
+  3: Stacker,
 };
 
 function MiniGameScreen({
@@ -19,18 +19,27 @@ function MiniGameScreen({
   miniGameStartSignal,
 }) {
   const CurrentGame = GAME_COMPONENTS[miniGame];
-  console.log("does this fire " + miniGameStartSignal);
   return (
     <div className="mini-game-overlay">
       <div className="mini-game-container">
         {/*List of players in lobby*/}
         {miniGameStartSignal && (
           <>
-            <p>timer: {miniGameTimer}</p>
+            <div className="mini-game-screen-timer-container">
+              <div className="mini-game-screen-timer">
+                <svg className="timer-circle" viewBox="0 0 70 70">
+                  <circle cx="35" cy="35" r="32"></circle>
+                </svg>
+                <span>{miniGameTimer}</span>
+              </div>
+            </div>
             <ul>
               {miniGamePlayers.map((p, index) => (
-                <li key={index}>
-                  {p.user.displayName} score: {p.score}
+                <li key={index} className="mini-game-screen-player-section">
+                  <p className="mini-game-screen-player-name">
+                    {p.user.displayName}
+                  </p>
+                  <p className="mini-game-screen-player-score">{p.score}</p>
                 </li>
               ))}
             </ul>

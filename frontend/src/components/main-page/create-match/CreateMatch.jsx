@@ -1,5 +1,5 @@
 import "./CreateMatch.css";
-import { createGame } from "../../utils/authHelpers";
+import { createGame } from "../../../utils/authHelpers";
 import { useNavigate } from "react-router-dom";
 
 function CreateMatch({playClickSound}) {

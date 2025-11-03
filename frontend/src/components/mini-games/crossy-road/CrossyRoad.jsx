@@ -6,8 +6,8 @@ import React, {
   useMemo,
   useRef,
 } from "react";
-import MiniGameReadyUp from "../../mini-game-ready-up/MiniGameReadyUp";
-import CrossyRoadTutorial from "../../mini-game-tutorials/crossy-road-tutorial/CrossyRoadTutorial.jsx";
+import MiniGameReadyUp from "../../mini-game-screen/mini-game-ready-up/MiniGameReadyUp";
+import CrossyRoadTutorial from "../../mini-game-screen/mini-game-tutorials/crossy-road-tutorial/CrossyRoadTutorial";
 import { sendCrossyRoadPosition, sendStackerPoints } from "../../../websocket";
 import { auth } from "../../../firebase";
 

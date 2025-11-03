@@ -1,5 +1,5 @@
 import "./TypingSentences.css";
-import { sendCorrectStrokesOptimized } from "../../websocket";
+import { sendCorrectStrokesOptimized } from "../../../websocket";
 import { useState, useEffect, useRef } from "react";
 
 function TypingSentences({ paragraphText, sessionId, timer, isPaused }) {

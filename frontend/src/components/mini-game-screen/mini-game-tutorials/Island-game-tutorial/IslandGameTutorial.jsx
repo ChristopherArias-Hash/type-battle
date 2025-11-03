@@ -1,5 +1,5 @@
 import "./IslandGameTutorial.css";
-import stackerGif from "../../../images/stacker-tutorial.gif";
+import stackerGif from "../../../../images/stacker-tutorial.gif";
 import { useEffect, useRef } from "react";
 
 function IslandGameTutorial() {
@@ -51,7 +51,7 @@ function IslandGameTutorial() {
             <button
               ref={(el) => (buttonRefs.current[control.id] = el)}
               onClick={() => console.log(`${control.description} pressed`)}
-              className="control-button"
+              className="island-game-control-button"
             >
               <span className="letter-enter">{control.key}</span>
             </button>

@@ -1,4 +1,4 @@
-.stacker-tutorial-container {
+.crossyroad-tutorial-container {
   margin-top: 50px;
   width: 100%;
   height: auto;
@@ -66,13 +66,14 @@
   padding: 10px;
   font-size: 20px;
   margin: 0;
+  flex: 1;
 }
 
-.control-button {
+.crossyroad-control-button {
   position: relative;
   display: inline-block;
   padding: 0;
-  width: 110px; /* smaller than 160px */
+  width: 45px; /* smaller than 160px */
   height: 45px; /* smaller than 60px */
   border-radius: 8px;
   border: none;
@@ -88,7 +89,7 @@
 }
 
 /* inner surface */
-.control-button::before {
+.crossyroad-control-button::before {
   content: "";
   position: absolute;
   top: 3px;
@@ -106,7 +107,7 @@
 }
 
 /* the label (top-left aligned) */
-.control-button .letter-enter {
+.crossyroad-control-button .letter-enter {
   position: absolute;
   left: 10px;
   top: 10px;
@@ -121,8 +122,8 @@
 }
 
 /* active press effect */
-.control-button:active,
-.control-button.active {
+.crossyroad-control-button:active,
+.crossyroad-control-button.active {
   transform: translateY(1px);
   box-shadow:
     inset -2px 0 2px rgba(0, 0, 0, 0.1),
@@ -130,8 +131,8 @@
     0 0 0 2px rgba(0, 0, 0, 0.5),
     3px 5px 6px rgba(0, 0, 0, 0.3);
 }
-.control-button:active::before,
-.control-button.active::before {
+.crossyroad-control-button:active::before,
+.crossyroad-control-button.active::before {
   top: 5px;
   left: 5px;
   bottom: 6px;
@@ -140,13 +141,13 @@
     -3px -3px 3px rgba(255, 255, 255, 0.15),
     3px 2px 3px rgba(0, 0, 0, 0.1);
 }
-.control-button:active .letter-enter,
-.control-button.active .letter-enter {
+.crossyroad-control-button:active .letter-enter,
+.crossyroad-control-button.active .letter-enter {
   transform: translateY(1px);
 }
 
 /* focus for accessibility */
-.control-button:focus-visible {
+.crossyroad-control-button:focus-visible {
   outline: 2px solid #7dd3fc;
   outline-offset: 2px;
 }

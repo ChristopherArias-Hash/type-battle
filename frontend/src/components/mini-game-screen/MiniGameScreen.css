@@ -55,3 +55,84 @@
     );
   background-size: 70px 70px;
 }
+
+.mini-game-screen-player-section {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.mini-game-screen-player-name {
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 1.4em;
+  margin: 0px;
+ 
+}
+.mini-game-screen-player-score {
+  color: #30b6ff;
+  font-weight: bold;
+  background: linear-gradient(180deg, #282828, #202020);
+  border: 2px solid #14adffab;
+  font-size: 15px;
+  text-align: right;
+  padding: 5px 15px;
+  border-radius: 15px;
+  margin: 0px;
+  
+
+}
+
+
+.mini-game-screen-timer {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 700;
+  font-size: 30px;
+  color: #ffffff;
+}
+
+.mini-game-screen-timer span {
+  position: relative;
+  z-index: 1;
+  max-width: 40px; /* Constrain the number width */
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.timer-circle {
+  
+  position: absolute;
+  top: 5;
+  left: 0;
+  width: 80px;
+  height: 80px;
+  transform: rotate(-90deg); /* start from top */
+}
+
+.timer-circle circle {
+  
+  fill: none;
+  stroke: #30b7ff;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 251.2; /* 2 * π * r, for r=40 */
+  stroke-dashoffset: 251.2;
+  animation: countdownCircle 1s linear infinite;
+}
+
+@keyframes countdownCircle {
+  0% {
+    stroke-dashoffset: 251.2;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}

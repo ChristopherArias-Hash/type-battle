@@ -1,5 +1,5 @@
 import "./CrossyRoadTutorial.css";
-import stackerGif from "../../../images/stacker-tutorial.gif";
+import stackerGif from "../../../../images/stacker-tutorial.gif";
 import { useEffect, useRef } from "react";
 
 function CrossyRoadTutorial() {
@@ -51,7 +51,7 @@ function CrossyRoadTutorial() {
             <button
               ref={(el) => (buttonRefs.current[control.id] = el)}
               onClick={() => console.log(`${control.description} pressed`)}
-              className="control-button"
+              className="crossyroad-control-button"
             >
               <span className="letter-enter">{control.key}</span>
             </button>

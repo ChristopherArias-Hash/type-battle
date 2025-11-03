@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { sendMiniGameReadyUp } from "../../websocket";
-import { auth } from "../../firebase";
+import { sendMiniGameReadyUp } from "../../../websocket";
+import { auth } from "../../../firebase";
 import "./MiniGameReadyUp.css";
 
 function MiniGameReadyUp({
