@@ -630,7 +630,7 @@ const IslandGame = ({
   const ghostEntries = Object.entries(ghostsRef.current);
 
   return (
-    <div className="game-wrapper island-game">
+    <div className="mini-game-island" ref={stageRef}>
       {gameState === "waiting" ? (
         <>
         <MiniGameReadyUp gameTitle={gameTitle} miniGamePlayers={miniGamePlayers} miniGameId={miniGameId} />

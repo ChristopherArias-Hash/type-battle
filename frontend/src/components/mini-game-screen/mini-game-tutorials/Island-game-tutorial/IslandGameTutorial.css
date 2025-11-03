@@ -6,6 +6,7 @@
   flex-wrap: wrap;
   justify-content: center; /* center horizontally */
   gap: 50px; /* optional spacing between wrapped items */
+  
 }
 
 .left-bar {
