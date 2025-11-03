@@ -83,6 +83,8 @@ public class GameSessionWebSocketController {
         miniGameParticipantRepository.save(miniGameParticipant);
 
         List<MiniGameParticipants> allParticipants = miniGameParticipantRepository.findAllByMiniGameSession(miniGameSession);
+        messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId, allParticipants);
+
 
         boolean everyoneReady = allParticipants.stream().allMatch(MiniGameParticipants::isIs_ready);
         if (everyoneReady) {
@@ -98,7 +100,7 @@ public class GameSessionWebSocketController {
             // FIX: Only generate setup data for the specific mini-game type
             Long miniGameTypeId = miniGameSession.getMiniGames().getId();
 
-            if (miniGameTypeId == 3L) {
+         /*   if (miniGameTypeId == 3L) {
                 // Island Game
                 gameStartMessage.put("cannons", islandGameSetupService.generateInitialCannons());
             } else if (miniGameTypeId == 2L) {
@@ -106,8 +108,11 @@ public class GameSessionWebSocketController {
                 gameStartMessage.put("obstacles", obstacleGenerationService.generateObstacles());
                 gameStartMessage.put("initialPositions", crossyRoadSetupService.generateInitialPositions(allParticipants));
             }
-            // Stacker (id == 1) doesn't need any setup data
+            // Stacker (id == 1) doesn't need any setup data*/
 
+            gameStartMessage.put("cannons", islandGameSetupService.generateInitialCannons());
+            gameStartMessage.put("obstacles", obstacleGenerationService.generateObstacles());
+            gameStartMessage.put("initialPositions", crossyRoadSetupService.generateInitialPositions(allParticipants));
             messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId, gameStartMessage);
         }
     }
