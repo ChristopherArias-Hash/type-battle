@@ -63,6 +63,8 @@ function IslandGameTutorial() {
         <p>no points gained if dead</p>
       </div>
       <div className="right-bar">
+                <h2 className="play-heading" >Gameplay</h2>
+
         <img
           src={stackerGif}
           alt="Crossy Road Tutorial"

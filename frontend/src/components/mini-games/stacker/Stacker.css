@@ -4,7 +4,6 @@
     align-items: center;
     width: 100%;
     height: 100%;
-    padding: 10px;
     
 }
 
@@ -38,7 +37,7 @@
 
 #game-container {
     position: relative;
-    border: 2px solid #555;
+    border: 4px solid #000000;
     border-radius: 10px;
     overflow: hidden;
     background: linear-gradient(to top, #7d8597, #caced3);
@@ -51,6 +50,7 @@
 }
 
 #game-container canvas {
+    width: 300px;
     display: block;
     cursor: pointer;
     /* Ensure canvas doesn't exceed container */

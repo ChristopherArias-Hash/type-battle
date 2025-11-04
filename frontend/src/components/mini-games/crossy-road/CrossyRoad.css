@@ -4,25 +4,23 @@
   --tile-size: 33px;
   --grid-size-v: 23;
   --grid-size-h: 14;
-  
   --board-width: calc(var(--tile-size) * var(--grid-size-h));
   --board-height: calc(var(--tile-size) * var(--grid-size-v));
   background-color: transparent;   /* don't fight parent bg */
-  padding: 10px;
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 100%;                    /* <— key change (was 100vh) */
+  height: 100%;                    
   align-items: center;
   justify-content: flex-start;
+  padding: 80px;  
+  
 }
 
 /* Area that the board is allowed to occupy */
 .stage {
   position: relative;
   width: 100%;
-  /* Leave some room for header and footer info inside the card */
-  height: 1200px;
   display: flex;
   align-items: start;
   justify-content: center;
@@ -32,7 +30,8 @@
 /* We scale the fixed-pixel board to fit the stage */
 .board-scale {
   transform: scale(var(--scale, 1));
-  transform-origin: top center;
+  transform-origin: center center;
+  
 }
 
 

@@ -1,11 +1,11 @@
 .island-tutorial-container {
-  margin-top: 50px;
+ margin-top: 40px;
   width: 100%;
-  height: auto;
   display: flex;
   flex-wrap: wrap;
   justify-content: center; /* center horizontally */
   gap: 50px; /* optional spacing between wrapped items */
+  padding-bottom: 20px;
   
 }
 
@@ -13,7 +13,7 @@
   min-width: 280px;
   max-width: 350px;
   flex: 1;
-  padding: 20px 25px;
+  padding: 20px 30px;
   border: 2px solid #14adffab;
   border-radius: 12px;
   background: linear-gradient(180deg, #171717, #111);
@@ -21,13 +21,17 @@
 }
 
 .right-bar {
+  text-align: center;
+  min-width: 280px;
+  max-width: 350px;
+  padding: 20px 30px;
   border: 2px solid #14adffab;
   border-radius: 12px;
   background-color: rgb(22, 22, 22);
 }
 .play-heading {
   text-align: center;
-  font-size: 35px;
+  font-size: 30px;
   font-weight: 600;
   margin-bottom: 15px;
   letter-spacing: 1px;

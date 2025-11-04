@@ -30,10 +30,9 @@ function MiniGameReadyUp({
     if (onReady) onReady();
   };
 
-  console.log("Current Game: " + gameTitle);
   return (
     <div className="mini-game-ready-section">
-      <h1>{gameTitle}</h1>
+      <h1 className="mini-game-title">{gameTitle}</h1>
       <ul className="mini-game-ready-player-list">
         {miniGamePlayers.map((p, index) => (
           <li key={index} className="mini-game-user-section">

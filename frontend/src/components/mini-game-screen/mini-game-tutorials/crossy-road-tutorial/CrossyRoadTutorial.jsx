@@ -41,13 +41,13 @@ function CrossyRoadTutorial() {
 
   return (
     <div className="crossyroad-tutorial-container">
-      <div className="left-bar">
-        <h2 className="play-heading">How to play</h2>
+      <div className="crossyroad-left-bar">
+        <h2 className="crossyroad-play-heading">How to play</h2>
 
-        <h3 className="setting-heading">Controls</h3>
+        <h3 className="crossyroad-setting-heading">Controls</h3>
         {controls.map((control) => (
-          <div key={control.id} className="controls">
-            <p className="control-description">{control.description}</p>
+          <div key={control.id} className="crossyroad-controls">
+            <p className="crossyroad-control-description">{control.description}</p>
             <button
               ref={(el) => (buttonRefs.current[control.id] = el)}
               onClick={() => console.log(`${control.description} pressed`)}
@@ -58,11 +58,12 @@ function CrossyRoadTutorial() {
           </div>
         ))}
 
-        <h3 className="setting-heading">Instructions</h3>
+        <h3 className="crossyroad-setting-heading">Instructions</h3>
         <p>1 point per cross</p>
         <p>-1 point per car hit</p>
       </div>
-      <div className="right-bar">
+      <div className="crossyroad-right-bar">
+        <h2 className="crossyroad-play-heading" >Gameplay</h2>
         <img
           src={stackerGif}
           alt="Crossy Road Tutorial"

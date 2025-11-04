@@ -103,7 +103,6 @@ const CrossyRoad = ({
   miniGameStartSignal,
   lastMiniGameMessage,
 }) => {
-
   const gameTitle = "CrossyRoad";
   const [playerPos, setPlayerPos] = useState(null);
   const [obstacles, setObstacles] = useState([]);
@@ -169,8 +168,7 @@ const CrossyRoad = ({
 
       if (currentUid && initialPositions && initialPositions[currentUid]) {
         const initialX = initialPositions[currentUid].x;
-        const initialY =
-          crossingDirection === "up" ? GRID_SIZE_V - 1 : 0;
+        const initialY = crossingDirection === "up" ? GRID_SIZE_V - 1 : 0;
         setPlayerPos({ x: initialX, y: initialY });
       } else {
         setPlayerPos({ x: Math.floor(GRID_SIZE_H / 2), y: GRID_SIZE_V - 1 });
@@ -311,12 +309,12 @@ const CrossyRoad = ({
 
   if (gameState === "waiting") {
     return (
-      <div className="game-wrapper" ref={stageRef}>
-          <MiniGameReadyUp
-            gameTitle={gameTitle}
-            miniGamePlayers={miniGamePlayers}
-            miniGameId={miniGameId}
-          />
+      <div className="game-mini-crossy-road" ref={stageRef}>
+        <MiniGameReadyUp
+          gameTitle={gameTitle}
+          miniGamePlayers={miniGamePlayers}
+          miniGameId={miniGameId}
+        />
         <CrossyRoadTutorial />
       </div>
     );
@@ -327,7 +325,7 @@ const CrossyRoad = ({
       <div className="stage" ref={stageRef}>
         <div className="board-scale" style={{ "--scale": scale }}>
           <div
-            className="crossy-road-game-board" 
+            className="crossy-road-game-board"
             style={{ width: BOARD_W, height: BOARD_H }}
           >
             <div
