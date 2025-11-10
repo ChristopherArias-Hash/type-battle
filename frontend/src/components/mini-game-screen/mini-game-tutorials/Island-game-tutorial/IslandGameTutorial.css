@@ -21,6 +21,7 @@
 }
 
 .right-bar {
+
   text-align: center;
   min-width: 280px;
   max-width: 350px;
@@ -28,6 +29,7 @@
   border: 2px solid #14adffab;
   border-radius: 12px;
   background-color: rgb(22, 22, 22);
+  
 }
 .play-heading {
   text-align: center;
@@ -51,6 +53,7 @@
   height: 450px;
   border-radius: 10px;
   transition: transform 0.3s ease;
+   object-fit: fill;
 }
 
 .tutorial-image:hover {

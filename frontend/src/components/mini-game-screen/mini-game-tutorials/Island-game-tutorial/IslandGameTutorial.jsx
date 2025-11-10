@@ -1,5 +1,5 @@
 import "./IslandGameTutorial.css";
-import stackerGif from "../../../../images/stacker-tutorial.gif";
+import islandGameGif from "../../../../images/islandgame-tutorial.gif";
 import { useEffect, useRef } from "react";
 
 function IslandGameTutorial() {
@@ -66,7 +66,7 @@ function IslandGameTutorial() {
                 <h2 className="play-heading" >Gameplay</h2>
 
         <img
-          src={stackerGif}
+          src={islandGameGif}
           alt="Crossy Road Tutorial"
           className="tutorial-image"
         />

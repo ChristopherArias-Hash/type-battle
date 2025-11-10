@@ -16,7 +16,7 @@
   flex-direction: column;
   justify-content: flex-start;
   align-items: stretch;
-  overflow: hidden;
+   overflow-y: auto;
   width: 95vw;
   height: 97vh;
   max-width: 900px;

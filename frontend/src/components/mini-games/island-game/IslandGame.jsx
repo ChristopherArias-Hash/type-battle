@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import "./IslandGame.css";
 import MiniGameReadyUp from "../../mini-game-screen/mini-game-ready-up/MiniGameReadyUp";
-import IslandGameTutorial  from "../../mini-game-screen/mini-game-tutorials/Island-game-tutorial/IslandGameTutorial";
+import IslandGameTutorial from "../../mini-game-screen/mini-game-tutorials/Island-game-tutorial/IslandGameTutorial";
 import { sendIslandGamePosition, sendIslandGameDeath } from "../../../websocket";
 import { auth } from "../../../firebase";
 
@@ -137,7 +137,6 @@ const IslandGame = ({
   miniGameTimer,
   lastMiniGameMessage,
 }) => {
-
   const gameTitle = "Cannon Island Survival";
   const [gameState, setGameState] = useState("waiting");
   const [playerPos, setPlayerPos] = useState({
@@ -288,7 +287,6 @@ const IslandGame = ({
     keysDownRef.current = {};
     cannonballIdRef.current = 0;
 
- 
     deadUidsRef.current = new Set();
     ghostsRef.current = {};
   }, []);
@@ -341,7 +339,8 @@ const IslandGame = ({
       if (miniGameStartSignal.cannons) {
         // NEW: if we were already marked dead (e.g., page refresh), start in spectateOnly
         const deadFlag =
-          miniGameId && sessionStorage.getItem(`miniGameDead-${miniGameId}`) === "true";
+          miniGameId &&
+          sessionStorage.getItem(`miniGameDead-${miniGameId}`) === "true";
         startGame(miniGameStartSignal.cannons, { spectateOnly: !!deadFlag });
       } else {
         console.error(
@@ -355,7 +354,8 @@ const IslandGame = ({
   useEffect(() => {
     if (
       (gameState !== "playing" && gameState !== "spectating") ||
-      !allCannonsRef.current.length
+      !allCannonsRef.current.length ||
+      miniGameTimer === null // <-- FIX 1: Keep this check
     )
       return;
 
@@ -364,10 +364,37 @@ const IslandGame = ({
       return miniGameTimer <= c.spawnTime;
     });
 
-    if (shouldBeActive.length !== activeCannons.length) {
-      setActiveCannons(shouldBeActive);
-    }
-  }, [miniGameTimer, gameState, activeCannons.length]);
+    // *** FIX 2 (SPAWNER): Use a functional update to add/remove cannons ***
+    // This logic correctly preserves the state of existing cannons (like their angle)
+    // while adding new ones or removing old ones.
+    setActiveCannons((prevCannons) => {
+      const prevMap = new Map(prevCannons.map((c) => [c.id, c]));
+      const targetIds = new Set(shouldBeActive.map((c) => c.id));
+
+      // Re-create the list, preserving existing cannons' properties
+      const newList = shouldBeActive.map((c) => {
+        const existing = prevMap.get(c.id);
+        // If it exists, use its current state. If not, add the clean copy.
+        return existing || { ...c };
+      });
+
+      // (This filter is technically redundant if shouldBeActive is correct, but is safe)
+      const finalFilteredList = newList.filter((c) => targetIds.has(c.id));
+
+      // Check if lists are different
+      if (finalFilteredList.length !== prevCannons.length) {
+        return finalFilteredList;
+      }
+      for (let i = 0; i < finalFilteredList.length; i++) {
+        // This handles if the list is the same length but different cannons
+        if (finalFilteredList[i].id !== prevCannons[i].id) {
+          return finalFilteredList;
+        }
+      }
+
+      return prevCannons; // No change
+    });
+  }, [miniGameTimer, gameState]); // <-- Dependency array is correct
 
   // NEW: consume periodic server snapshot to lock death after refresh and update ghosts for everyone
   useEffect(() => {
@@ -384,7 +411,9 @@ const IslandGame = ({
             isDeadRef.current = true;
             setGameState("spectating");
             // keep ghost at last known position (from storage if present)
-            const saved = sessionStorage.getItem(`miniGameGhostPos-${miniGameId}`);
+            const saved = sessionStorage.getItem(
+              `miniGameGhostPos-${miniGameId}`
+            );
             if (saved) {
               try {
                 const gp = JSON.parse(saved);
@@ -480,7 +509,12 @@ const IslandGame = ({
         }
       }
 
-      const updatedCannons = activeCannonRef.current.map((c) => {
+      // *** FIX 3 (AIMER): This logic is now inside a functional update ***
+      // We calculate the *changes* based on the ref, but apply them to the
+      // "previous state" from React to prevent the race condition.
+
+      // Calculate updates based on the *ref* (which is updated every render)
+      const updatedCannonsFromRef = activeCannonRef.current.map((c) => {
         // Build target set = all alive players (others alive + maybe local)
         const allPlayerPos = { ...otherPlayersRef.current };
 
@@ -528,6 +562,7 @@ const IslandGame = ({
             pos: { ...c.pos },
             velocity,
           };
+          // Update cannonballs state directly (this is fine, it's a separate state)
           cannonballsRef.current = [...cannonballsRef.current, newBall];
           setCannonballs(cannonballsRef.current);
           return { ...c, angle: newAngle, lastShot: timestamp };
@@ -536,14 +571,30 @@ const IslandGame = ({
         return { ...c, angle: newAngle };
       });
 
-      // Only update cannons if something actually changed
-      const cannonsChanged = updatedCannons.some(
+      // Check if any properties actually changed
+      const cannonsChanged = updatedCannonsFromRef.some(
         (c, i) =>
           c.angle !== activeCannonRef.current[i]?.angle ||
           c.lastShot !== activeCannonRef.current[i]?.lastShot
       );
+
+      // We MUST use a functional update here to prevent stomping the spawner
       if (cannonsChanged) {
-        setActiveCannons(updatedCannons);
+        setActiveCannons((prevCannons) => {
+          // 'prevCannons' is the "true" state from React (e.g., [C1, C2, C3, C4])
+          // 'updatedCannonsFromRef' is the list from *this* frame (e.g., [C1', C2', C3'])
+          
+          const updatedMap = new Map(
+            updatedCannonsFromRef.map((c) => [c.id, c])
+          );
+
+          // Create the new list by merging
+          // This applies updates to cannons that exist in both lists,
+          // and preserves new cannons (from spawner) that aren't in the update list.
+          return prevCannons.map((prevCannon) => {
+            return updatedMap.get(prevCannon.id) || prevCannon;
+          });
+        });
       }
 
       // --- 3. Update Cannonballs and Check Collisions ---
@@ -633,14 +684,21 @@ const IslandGame = ({
     <div className="mini-game-island" ref={stageRef}>
       {gameState === "waiting" ? (
         <>
-        <MiniGameReadyUp gameTitle={gameTitle} miniGamePlayers={miniGamePlayers} miniGameId={miniGameId} />
-        <IslandGameTutorial  />
+          <MiniGameReadyUp
+            gameTitle={gameTitle}
+            miniGamePlayers={miniGamePlayers}
+            miniGameId={miniGameId}
+          />
+          <IslandGameTutorial />
         </>
       ) : (
         <>
           <div className="stage" ref={stageRef}>
             <div className="board-scale" style={{ "--scale": scale }}>
-              <div className="game-board" style={{ width: BOARD_WIDTH, height: BOARD_HEIGHT }}>
+              <div
+                className="game-board"
+                style={{ width: BOARD_WIDTH, height: BOARD_HEIGHT }}
+              >
                 {/* NOTE: Death overlay removed per request. Spectate silently. */}
 
                 <Island />
