@@ -6,15 +6,14 @@
   --grid-size-h: 14;
   --board-width: calc(var(--tile-size) * var(--grid-size-h));
   --board-height: calc(var(--tile-size) * var(--grid-size-v));
-  background-color: transparent;   /* don't fight parent bg */
+  background-color: transparent; /* don't fight parent bg */
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 100%;                    
+  height: 100%;
   align-items: center;
   justify-content: flex-start;
-  padding: 80px;  
-  
+  padding: 80px;
 }
 
 /* Area that the board is allowed to occupy */
@@ -31,9 +30,7 @@
 .board-scale {
   transform: scale(var(--scale, 1));
   transform-origin: center center;
-  
 }
-
 
 /* Keep your existing .game-board styles, no width/height changes needed */
 .crossy-road-game-board {
@@ -46,71 +43,74 @@
   background-color: #d6d6d6; /* Sky blue background */
 }
 
-
 .safe-zone {
-    position: absolute;
-    width: 100%;
-    height: var(--tile-size);
-    background-color: #2ecc71; /* Emerald Green */
-    z-index: 1;
-    transition: background-color 0.3s ease;
+  position: absolute;
+  width: 100%;
+  height: var(--tile-size);
+  background-color: #2ecc71; /* Emerald Green */
+  z-index: 1;
+  transition: background-color 0.3s ease;
 }
 
 .goal-zone {
-    background-color: #f1c40f; /* Sunflower yellow for goal */
+  background-color: #f1c40f; /* Sunflower yellow for goal */
 }
 
 .start-zone {
-    bottom: 0;
-    
+  bottom: 0;
 }
 
 .end-zone {
-    top: 0;
+  top: 0;
 }
 
 .road-lane {
   position: absolute;
   width: 100%;
   height: var(--tile-size);
-  background-color: #2e2d2d; 
-
+  background-color: #2e2d2d;
 }
 
 @keyframes hop {
-    0% { transform: translateY(0) scale(1); }
-    50% { transform: translateY(-10px) scale(1.05, 0.95); }
-    100% { transform: translateY(0) scale(1); }
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-10px) scale(1.05, 0.95);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
 }
 
 .player-container {
-    position: absolute;
-    width: var(--tile-size);
-    height: var(--tile-size);
-    z-index: 10;
-    transition: top 0.1s linear, left 0.1s linear;
-    animation: hop 0.2s ease-in-out;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  position: absolute;
+  width: var(--tile-size);
+  height: var(--tile-size);
+  z-index: 10;
+  transition: top 0.1s linear, left 0.1s linear;
+  animation: hop 0.2s ease-in-out;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .player-svg {
-    width: 85%;
-    height: 85%;
-    filter: drop-shadow(0 4px 3px rgba(0,0,0,0.4));
+  width: 85%;
+  height: 85%;
+  filter: drop-shadow(0 4px 3px rgba(0, 0, 0, 0.4));
 }
 
 .obstacle {
-    position: absolute;
-    height: calc(var(--tile-size) * 0.85);
-    border-radius: 6px;
-    z-index: 5;
-    box-shadow: 0 3px 5px rgba(0,0,0,0.2);
-    border-bottom: 3px solid rgba(0,0,0,0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  position: absolute;
+  height: calc(var(--tile-size) * 0.85);
+  border-radius: 6px;
+  z-index: 5;
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+  border-bottom: 3px solid rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .vehicle-body {
@@ -118,7 +118,7 @@
   height: 100%;
   border-radius: 8px 8px 6px 6px;
   position: relative;
-  box-shadow: inset 0 -2px 0 rgba(0,0,0,0.3);
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.3);
 }
 
 .car-top {
@@ -140,67 +140,74 @@
   height: 90%;
   background: rgba(135, 206, 235, 0.6);
   border-radius: 3px 3px 0 0;
-  border: 1px solid rgba(0,0,0,0.2);
+  border: 1px solid rgba(0, 0, 0, 0.2);
 }
 
-.headlight {
+.wheel {
   position: absolute;
   width: 8px;
   height: 5px;
   background: #fff;
   border-radius: 2px;
   bottom: 0px;
-  box-shadow: 0 0 4px rgba(255,255,255,0.8);
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
 }
 
-.headlight-left {
+.wheel-left {
   left: 8%;
 }
 
-.headlight-right {
+.wheel-right {
   right: 8%;
 }
 
 /* Vehicle type styles */
-.car-red { background-color: #e74c3c; }
-.car-blue { background-color: #3498db; }
-.car-purple { background-color: #9b59b6; }
-.truck-green { background-color: transparent; } /* Container is transparent */
+.car-red {
+  background-color: #e74c3c;
+}
+.car-blue {
+  background-color: #3498db;
+}
+.car-purple {
+  background-color: #9b59b6;
+}
+.truck-green {
+  background-color: transparent;
+} /* Container is transparent */
 
 .truck-body {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: row;
-    position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  position: relative;
 }
 
 .truck-cab {
-    width: 30%;
-    height: 100%;
-    background-color: #27ae60; /* Nebula Green */
-    border-radius: 6px 0 0 6px;
-    position: relative;
-    box-shadow: inset 0 -2px 0 rgba(0,0,0,0.3);
+  width: 30%;
+  height: 100%;
+  background-color: #27ae60; /* Nebula Green */
+  border-radius: 6px 0 0 6px;
+  position: relative;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.3);
 }
 
 .truck-window {
-    position: absolute;
-    
-    right: 50%;
-    width: 50%;
-    height: 100%;
-    background: rgba(135, 206, 235, 0.5);
-    border-radius: 5px;
-    border: 1px solid rgba(0,0,0,0.2);
+  position: absolute;
+  right: 50%;
+  width: 50%;
+  height: 50%;
+  background: rgba(135, 206, 235, 0.5);
+  border-radius: 2px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
 }
 
 .truck-trailer {
-    width: 70%;
-    height: 100%;
-    background-color: #bdc3c7; /* Silver */
-    border-radius: 0 6px 6px 0;
-    box-shadow: inset 0 -2px 0 rgba(0,0,0,0.2);
+  width: 70%;
+  height: 100%;
+  background-color: #bdc3c7; /* Silver */
+  border-radius: 0 6px 6px 0;
+  box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.3);
 }
 
 .going-right .car-top {
@@ -213,25 +220,63 @@
   right: 0%;
 }
 
+.wheel-truck {
+  position: absolute;
+  width: 8px;
+  height: 5px;
+  background: rgb(254, 254, 254) 000;
+  border-radius: 2px;
+  bottom: 0px;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+}
+
+.wheel-truck-left {
+  left: 32%;
+}
+
+.wheel-truck-left-2 {
+  left: 50%;
+  border: 3px solid rgb(255, 255, 255);
+}
+
+.wheel-truck-right {
+  right: 5%;
+}
+
+.wheel-truck-right-2 {
+  right: 25%;
+}
+
 /* --- Flip Trucks --- */
 .going-right .truck-body {
-  /* This flips the order of the cab and trailer */
   flex-direction: row-reverse;
 }
 
 .going-right .truck-cab {
-  /* Flip border radius from left to right */
   border-radius: 0 6px 6px 0;
 }
 
 .going-right .truck-window {
-  /* Move window from right side of cab to left */
   right: auto;
   left: 50%;
 }
 
 .going-right .truck-trailer {
-  /* Flip border radius from right to left */
   border-radius: 6px 0 0 6px;
 }
 
+.going-right .wheel-truck-left {
+  left: 5%;
+}
+
+.going-right .wheel-truck-left-2 {
+  left: 25%;
+}
+
+.going-right .wheel-truck-right {
+  right: 50%;
+}
+
+.going-right .wheel-truck-right-2 {
+  right: 32%;
+}

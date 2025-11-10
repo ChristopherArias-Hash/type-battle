@@ -79,14 +79,18 @@ const Obstacle = ({ obstacle }) => {
             <div className="truck-window"></div>
           </div>
           <div className="truck-trailer"></div>
+          <div className="wheel-truck wheel-truck-left"></div>
+          <div className="wheel-truck wheel-truck-left-2"></div>
+          <div className="wheel-truck wheel-truck-right"></div>
+          <div className="wheel-truck wheel-truck-right-2"></div>
         </div>
       ) : (
         <div className="vehicle-body">
           <div className="car-top">
             <div className="windshield"></div>
           </div>
-          <div className="headlight headlight-left"></div>
-          <div className="headlight headlight-right"></div>
+          <div className="wheel wheel-left"></div>
+          <div className="wheel wheel-right"></div>
         </div>
       )}
     </div>
