@@ -1,5 +1,5 @@
 import "./CrossyRoadTutorial.css";
-import stackerGif from "../../../../images/stacker-tutorial.gif";
+import crossyRoadGif from "../../../../images/crossyroad-tutorial.gif";
 import { useEffect, useRef } from "react";
 
 function CrossyRoadTutorial() {
@@ -65,7 +65,7 @@ function CrossyRoadTutorial() {
       <div className="crossyroad-right-bar">
         <h2 className="crossyroad-play-heading" >Gameplay</h2>
         <img
-          src={stackerGif}
+          src={crossyRoadGif}
           alt="Crossy Road Tutorial"
           className="tutorial-image"
         />
