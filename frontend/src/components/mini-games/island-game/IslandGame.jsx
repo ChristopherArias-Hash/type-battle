@@ -7,9 +7,9 @@ import { auth } from "../../../firebase";
 
 // --- GAME CONFIGURATION ---
 const BOARD_SIZE = 30;
-const TILE_SIZE = 30;
+const TILE_SIZE = 35;
 const PLAYER_SPEED = 0.2;
-const CANNONBALL_SPEED = 0.15;
+const CANNONBALL_SPEED = 0.10;
 const CANNON_FIRE_INTERVAL = 2500;
 const ISLAND_RADIUS = 12;
 const BOARD_WIDTH = BOARD_SIZE * TILE_SIZE;

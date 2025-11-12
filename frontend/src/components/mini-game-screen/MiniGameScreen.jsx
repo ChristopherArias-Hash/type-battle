@@ -5,9 +5,9 @@ import IslandGame from "../mini-games/island-game/IslandGame";
 
 //Mini Games
 const GAME_COMPONENTS = {
-  1: CrossyRoad,
-  2: CrossyRoad,
-  3: CrossyRoad,
+  1: IslandGame,
+  2: IslandGame,
+  3: IslandGame,
 };
 
 function MiniGameScreen({

@@ -376,227 +376,114 @@ const PigDown = () => (
   </svg>
 );
 const MantisUp = () => (
-  <svg viewBox="0 0 100 100" style={{ width: "100%", height: "100%" }}>
+   <svg viewBox="0 0 100 100" style={{ width: "100%", height: "100%" }}>
     <g>
+      {/* Abdomen - slightly wider than original */}
       <ellipse
         cx="50"
         cy="70"
-        rx="14"
-        ry="22"
+        rx="16"
+        ry="23"
         fill="#7cb342"
         stroke="#558b2f"
         strokeWidth="2"
       />
-      <line
-        x1="42"
-        y1="62"
-        x2="58"
-        y2="62"
-        stroke="#558b2f"
-        strokeWidth="1.5"
-        opacity="0.4"
-      />
-      <line
-        x1="42"
-        y1="70"
-        x2="58"
-        y2="70"
-        stroke="#558b2f"
-        strokeWidth="1.5"
-        opacity="0.4"
-      />
-      <line
-        x1="42"
-        y1="78"
-        x2="58"
-        y2="78"
-        stroke="#558b2f"
-        strokeWidth="1.5"
-        opacity="0.4"
-      />
+      <line x1="40" y1="62" x2="60" y2="62" stroke="#558b2f" strokeWidth="1.5" opacity="0.4" />
+      <line x1="40" y1="70" x2="60" y2="70" stroke="#558b2f" strokeWidth="1.5" opacity="0.4" />
+      <line x1="40" y1="78" x2="60" y2="78" stroke="#558b2f" strokeWidth="1.5" opacity="0.4" />
+      
+      {/* Thorax - slightly wider */}
       <ellipse
         cx="50"
         cy="45"
-        rx="15"
-        ry="20"
+        rx="17"
+        ry="21"
         fill="#8bc34a"
         stroke="#558b2f"
         strokeWidth="2"
       />
+      
+      {/* Head - slightly wider */}
       <path
-        d="M 38 30 L 50 18 L 62 30 L 60 34 L 40 34 Z"
+        d="M 36 30 L 50 17 L 64 30 L 61 34 L 39 34 Z"
         fill="#9ccc65"
         stroke="#558b2f"
         strokeWidth="2"
       />
-      <path
-        d="M 44 26 Q 40 20, 36 14"
-        stroke="#558b2f"
-        strokeWidth="2"
-        fill="none"
-      />
-      <path
-        d="M 56 26 Q 60 20, 64 14"
-        stroke="#558b2f"
-        strokeWidth="2"
-        fill="none"
-      />
-      <path
-        d="M 38 38 L 28 36 L 24 42 L 20 40"
-        stroke="#558b2f"
-        strokeWidth="3"
-        fill="none"
-        strokeLinecap="round"
-      />
-      <path
-        d="M 62 38 L 72 36 L 76 42 L 80 40"
-        stroke="#558b2f"
-        strokeWidth="3"
-        fill="none"
-        strokeLinecap="round"
-      />
-      <line x1="24" y1="40" x2="22" y2="38" stroke="#558b2f" strokeWidth="2" />
-      <line x1="24" y1="42" x2="22" y2="43" stroke="#558b2f" strokeWidth="2" />
-      <line x1="76" y1="40" x2="78" y2="38" stroke="#558b2f" strokeWidth="2" />
-      <line x1="76" y1="42" x2="78" y2="43" stroke="#558b2f" strokeWidth="2" />
-      <path
-        d="M 42 54 L 34 60 L 30 66"
-        stroke="#558b2f"
-        strokeWidth="2.5"
-        fill="none"
-      />
-      <path
-        d="M 58 54 L 66 60 L 70 66"
-        stroke="#558b2f"
-        strokeWidth="2.5"
-        fill="none"
-      />
-      <path
-        d="M 44 80 L 36 86 L 32 92"
-        stroke="#558b2f"
-        strokeWidth="2.5"
-        fill="none"
-      />
-      <path
-        d="M 56 80 L 64 86 L 68 92"
-        stroke="#558b2f"
-        strokeWidth="2.5"
-        fill="none"
-      />
+      
+      {/* Antennae */}
+      <path d="M 43 26 Q 39 20, 35 13" stroke="#558b2f" strokeWidth="2" fill="none" />
+      <path d="M 57 26 Q 61 20, 65 13" stroke="#558b2f" strokeWidth="2" fill="none" />
+      
+      {/* Raptorial arms */}
+      <path d="M 37 38 L 27 36 L 23 42 L 19 40" stroke="#558b2f" strokeWidth="3.2" fill="none" strokeLinecap="round" />
+      <path d="M 63 38 L 73 36 L 77 42 L 81 40" stroke="#558b2f" strokeWidth="3.2" fill="none" strokeLinecap="round" />
+      <line x1="23" y1="40" x2="21" y2="38" stroke="#558b2f" strokeWidth="2" />
+      <line x1="23" y1="42" x2="21" y2="43" stroke="#558b2f" strokeWidth="2" />
+      <line x1="77" y1="40" x2="79" y2="38" stroke="#558b2f" strokeWidth="2" />
+      <line x1="77" y1="42" x2="79" y2="43" stroke="#558b2f" strokeWidth="2" />
+      
+      {/* Walking legs */}
+      <path d="M 41 54 L 33 60 L 29 66" stroke="#558b2f" strokeWidth="2.5" fill="none" />
+      <path d="M 59 54 L 67 60 L 71 66" stroke="#558b2f" strokeWidth="2.5" fill="none" />
+      <path d="M 43 80 L 35 86 L 31 92" stroke="#558b2f" strokeWidth="2.5" fill="none" />
+      <path d="M 57 80 L 65 86 L 69 92" stroke="#558b2f" strokeWidth="2.5" fill="none" />
     </g>
   </svg>
 );
 const MantisDown = () => (
-  <svg
-    viewBox="0 0 100 100"
-    style={{ width: "100%", height: "100%", transform: "rotate(180deg)" }}
-  >
+ <svg viewBox="0 0 100 100" style={{ width: "100%", height: "100%" }}>
     <g>
+      {/* Abdomen - moderately wider */}
       <ellipse
         cx="50"
         cy="70"
-        rx="14"
-        ry="22"
+        rx="18"
+        ry="24"
         fill="#7cb342"
         stroke="#558b2f"
         strokeWidth="2"
       />
-      <line
-        x1="42"
-        y1="62"
-        x2="58"
-        y2="62"
-        stroke="#558b2f"
-        strokeWidth="1.5"
-        opacity="0.4"
-      />
-      <line
-        x1="42"
-        y1="70"
-        x2="58"
-        y2="70"
-        stroke="#558b2f"
-        strokeWidth="1.5"
-        opacity="0.4"
-      />
-      <line
-        x1="42"
-        y1="78"
-        x2="58"
-        y2="78"
-        stroke="#558b2f"
-        strokeWidth="1.5"
-        opacity="0.4"
-      />
+      <line x1="38" y1="62" x2="62" y2="62" stroke="#558b2f" strokeWidth="1.5" opacity="0.4" />
+      <line x1="38" y1="70" x2="62" y2="70" stroke="#558b2f" strokeWidth="1.5" opacity="0.4" />
+      <line x1="38" y1="78" x2="62" y2="78" stroke="#558b2f" strokeWidth="1.5" opacity="0.4" />
+      
+      {/* Thorax - moderately wider */}
       <ellipse
         cx="50"
         cy="45"
-        rx="15"
-        ry="20"
+        rx="20"
+        ry="22"
         fill="#8bc34a"
         stroke="#558b2f"
         strokeWidth="2"
       />
+      
+      {/* Head - moderately wider */}
       <path
-        d="M 38 30 L 50 18 L 62 30 L 60 34 L 40 34 Z"
+        d="M 35 30 L 50 16 L 65 30 L 62 35 L 38 35 Z"
         fill="#9ccc65"
         stroke="#558b2f"
         strokeWidth="2"
       />
-      <path
-        d="M 44 26 Q 40 20, 36 14"
-        stroke="#558b2f"
-        strokeWidth="2"
-        fill="none"
-      />
-      <path
-        d="M 56 26 Q 60 20, 64 14"
-        stroke="#558b2f"
-        strokeWidth="2"
-        fill="none"
-      />
-      <path
-        d="M 38 38 L 28 36 L 24 42 L 20 40"
-        stroke="#558b2f"
-        strokeWidth="3"
-        fill="none"
-        strokeLinecap="round"
-      />
-      <path
-        d="M 62 38 L 72 36 L 76 42 L 80 40"
-        stroke="#558b2f"
-        strokeWidth="3"
-        fill="none"
-        strokeLinecap="round"
-      />
-      <line x1="24" y1="40" x2="22" y2="38" stroke="#558b2f" strokeWidth="2" />
-      <line x1="24" y1="42" x2="22" y2="43" stroke="#558b2f" strokeWidth="2" />
-      <line x1="76" y1="40" x2="78" y2="38" stroke="#558b2f" strokeWidth="2" />
-      <line x1="76" y1="42" x2="78" y2="43" stroke="#558b2f" strokeWidth="2" />
-      <path
-        d="M 42 54 L 34 60 L 30 66"
-        stroke="#558b2f"
-        strokeWidth="2.5"
-        fill="none"
-      />
-      <path
-        d="M 58 54 L 66 60 L 70 66"
-        stroke="#558b2f"
-        strokeWidth="2.5"
-        fill="none"
-      />
-      <path
-        d="M 44 80 L 36 86 L 32 92"
-        stroke="#558b2f"
-        strokeWidth="2.5"
-        fill="none"
-      />
-      <path
-        d="M 56 80 L 64 86 L 68 92"
-        stroke="#558b2f"
-        strokeWidth="2.5"
-        fill="none"
-      />
+      
+      {/* Antennae */}
+      <path d="M 42 26 Q 38 20, 34 12" stroke="#558b2f" strokeWidth="2" fill="none" />
+      <path d="M 58 26 Q 62 20, 66 12" stroke="#558b2f" strokeWidth="2" fill="none" />
+      
+      {/* Raptorial arms */}
+      <path d="M 36 38 L 26 36 L 22 42 L 18 40" stroke="#558b2f" strokeWidth="3.5" fill="none" strokeLinecap="round" />
+      <path d="M 64 38 L 74 36 L 78 42 L 82 40" stroke="#558b2f" strokeWidth="3.5" fill="none" strokeLinecap="round" />
+      <line x1="22" y1="40" x2="20" y2="38" stroke="#558b2f" strokeWidth="2" />
+      <line x1="22" y1="42" x2="20" y2="43" stroke="#558b2f" strokeWidth="2" />
+      <line x1="78" y1="40" x2="80" y2="38" stroke="#558b2f" strokeWidth="2" />
+      <line x1="78" y1="42" x2="80" y2="43" stroke="#558b2f" strokeWidth="2" />
+      
+      {/* Walking legs */}
+      <path d="M 40 54 L 32 60 L 28 66" stroke="#558b2f" strokeWidth="2.5" fill="none" />
+      <path d="M 60 54 L 68 60 L 72 66" stroke="#558b2f" strokeWidth="2.5" fill="none" />
+      <path d="M 42 80 L 34 86 L 30 92" stroke="#558b2f" strokeWidth="2.5" fill="none" />
+      <path d="M 58 80 L 66 86 L 70 92" stroke="#558b2f" strokeWidth="2.5" fill="none" />
     </g>
   </svg>
 );
@@ -608,13 +495,13 @@ const SKIN_MAP = [
   { up: <CowUp />, down: <CowDown /> },       // Player 3 (index 2)
   { up: <PigUp />, down: <PigDown /> },       // Player 4 (index 3)
 ];
-const DEFAULT_SKIN = SKIN_MAP[0]; // Default to Chicken
+const DEFAULT_SKIN = SKIN_MAP[1]; // Default to Chicken
 
 // --- React Components ---
 
 const Player = ({ pos, playerIndex, direction }) => {
   // Get the skin set (up/down) based on the player's index
-  const skin = SKIN_MAP[playerIndex] || DEFAULT_SKIN;
+  const skin = SKIN_MAP[1] || DEFAULT_SKIN;
   // Select the correct sprite based on the direction
   const sprite = direction === "down" ? skin.down : skin.up;
 
