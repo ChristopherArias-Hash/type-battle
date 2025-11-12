@@ -1,34 +1,73 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
 import "./IslandGame.css";
 import MiniGameReadyUp from "../../mini-game-screen/mini-game-ready-up/MiniGameReadyUp";
 import IslandGameTutorial from "../../mini-game-screen/mini-game-tutorials/Island-game-tutorial/IslandGameTutorial";
-import { sendIslandGamePosition, sendIslandGameDeath } from "../../../websocket";
+import {
+  sendIslandGamePosition,
+  sendIslandGameDeath,
+} from "../../../websocket";
+import { Castaway, Pirate, Viking, Explorer } from "./skins/PlayerSkins";
 import { auth } from "../../../firebase";
 
 // --- GAME CONFIGURATION ---
 const BOARD_SIZE = 30;
 const TILE_SIZE = 35;
 const PLAYER_SPEED = 0.2;
-const CANNONBALL_SPEED = 0.10;
+const CANNONBALL_SPEED = 0.1;
 const CANNON_FIRE_INTERVAL = 2500;
 const ISLAND_RADIUS = 12;
+// [FIX REVERTED] Playable radius removed.
 const BOARD_WIDTH = BOARD_SIZE * TILE_SIZE;
 const BOARD_HEIGHT = BOARD_SIZE * TILE_SIZE;
 
-// --- GAME COMPONENTS (Unchanged) ---
-const Player = ({ position, isLocalPlayer }) => (
-  <div
-    className="player"
-    style={{
-      left: position.x * TILE_SIZE,
-      top: position.y * TILE_SIZE,
-      backgroundColor: isLocalPlayer ? "#3b82f6" : "#f59e0b",
-      borderColor: isLocalPlayer ? "#1d4ed8" : "#b45309",
-    }}
-  />
-);
+// --- [NEW] Skin Selection Logic ---
+const SKINS = [
+  Castaway, // Player 1 (index 0)
+  Explorer, // Player 2 (index 1)
+  Pirate, // Player 3 (index 2)
+  Viking, // Player 4 (index 3)
+];
+const DEFAULT_SKIN = Castaway;
 
-// ghost variant (during death/spectate)
+// --- [FIXED] Player Component ---
+// Renders a scaled SVG inside the base .player div
+const Player = ({ position, playerIndex, direction, walkFrame }) => {
+  const SkinComponent = SKINS[playerIndex] || DEFAULT_SKIN;
+  const scale = 2; // Set desired scale
+  return (
+    <div
+      className="player" // This class defines base size (32x32) and transform
+      style={{
+        left: position.x * TILE_SIZE,
+        top: position.y * TILE_SIZE,
+        // Override CSS to make container transparent
+        backgroundColor: "red",
+        transform: "translate(-50%, -50%)", // center hitbox visually
+        border: "none",
+        borderRadius: "100px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        overflow: "visible",
+      }}
+    >
+      <SkinComponent
+        scale={scale}
+        direction={direction}
+        walkFrame={walkFrame}
+      />
+    </div>
+  );
+};
+
+// --- [FIXED] PlayerGhost Component ---
+// Reverted to original implementation.
 const PlayerGhost = ({ position }) => (
   <div
     className="player"
@@ -68,8 +107,7 @@ const Island = () => (
   <div className="island-container">
     {" "}
     <div className="water-background"></div>
-    <div className="water-waves"></div>{" "}
-    <div className="water-ripples"></div>{" "}
+    <div className="water-waves"></div> <div className="water-ripples"></div>{" "}
     <div
       className="island-shadow"
       style={{
@@ -154,6 +192,13 @@ const IslandGame = ({
   const stageRef = useRef(null);
   const [scale, setScale] = useState(1);
 
+  // --- [NEW] Skin/Animation State ---
+  const [playerDirection, setPlayerDirection] = useState("front");
+  const playerDirectionRef = useRef("front"); // Ref for game loop
+  const [walkFrame, setWalkFrame] = useState(false);
+  const walkIntervalRef = useRef(null);
+  const [remoteWalkFrame, setRemoteWalkFrame] = useState(false);
+
   // NEW: elimination & ghost state
   const [isDead, setIsDead] = useState(false);
   const isDeadRef = useRef(false);
@@ -171,6 +216,32 @@ const IslandGame = ({
     x: BOARD_SIZE / 2,
     y: BOARD_SIZE / 2,
   });
+
+  // --- [NEW] Player Index Mapping ---
+  const playerIndexMap = useMemo(() => {
+    const map = new Map();
+    miniGamePlayers.forEach((player, index) => {
+      if (player.user?.firebaseUid) {
+        map.set(player.user.firebaseUid, index % 4); // Modulo 4 for safety
+      }
+    });
+    return map;
+  }, [miniGamePlayers]);
+
+  const localPlayerIndex = playerIndexMap.get(auth.currentUser?.uid) ?? 0;
+
+  // --- [NEW] Remote walk frame animation ---
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRemoteWalkFrame((wf) => !wf);
+    }, 200); // Toggle every 200ms
+    return () => clearInterval(interval);
+  }, []);
+
+  // --- [NEW] Sync direction state to ref ---
+  useEffect(() => {
+    playerDirectionRef.current = playerDirection;
+  }, [playerDirection]);
 
   useEffect(() => {
     playerPosRef.current = playerPos;
@@ -225,10 +296,22 @@ const IslandGame = ({
       if (deadUidsRef.current.has(data.uid)) return;
 
       if (data.uid !== currentUid) {
-        // Update ref directly, no setState
+        // --- [MODIFIED] Calculate and store direction ---
+        let newDirection = "front";
+        const oldPos = otherPlayersRef.current[data.uid];
+        if (oldPos) {
+          // Prioritize vertical direction
+          if (data.y < oldPos.y) newDirection = "back";
+          else if (data.y > oldPos.y) newDirection = "front";
+          // Only use horizontal if no vertical change
+          else if (data.x < oldPos.x) newDirection = "left";
+          else if (data.x > oldPos.x) newDirection = "right";
+          else newDirection = oldPos.direction || "front"; // Keep old direction if no move
+        }
+
         otherPlayersRef.current = {
           ...otherPlayersRef.current,
-          [data.uid]: { x: data.x, y: data.y },
+          [data.uid]: { x: data.x, y: data.y, direction: newDirection },
         };
       }
     }
@@ -286,6 +369,14 @@ const IslandGame = ({
     otherPlayersRef.current = {};
     keysDownRef.current = {};
     cannonballIdRef.current = 0;
+
+    // [NEW] Reset animation/direction state
+    setPlayerDirection("front");
+    setWalkFrame(false);
+    if (walkIntervalRef.current) {
+      clearInterval(walkIntervalRef.current);
+      walkIntervalRef.current = null;
+    }
 
     deadUidsRef.current = new Set();
     ghostsRef.current = {};
@@ -457,47 +548,82 @@ const IslandGame = ({
       // --- 1. Update Local Player (only if alive) ---
       if (!isDeadRef.current) {
         let newPos = { ...playerPosRef.current };
+        // --- [MODIFIED] Add direction and animation logic ---
+        let newDirection = playerDirectionRef.current; // Start with current direction
         let moved = false;
         const speed = PLAYER_SPEED;
 
-        if (keysDownRef.current["ArrowUp"] || keysDownRef.current["w"]) {
-          newPos.y -= speed;
-          moved = true;
-        }
-        if (keysDownRef.current["ArrowDown"] || keysDownRef.current["s"]) {
-          newPos.y += speed;
-          moved = true;
-        }
+        let horizontalMove = 0;
+        let verticalMove = 0;
+
+        // --- [FIX 2: DIRECTION LOGIC] ---
         if (keysDownRef.current["ArrowLeft"] || keysDownRef.current["a"]) {
-          newPos.x -= speed;
-          moved = true;
-        }
-        if (keysDownRef.current["ArrowRight"] || keysDownRef.current["d"]) {
-          newPos.x += speed;
-          moved = true;
+          horizontalMove = -1;
+        } else if (
+          keysDownRef.current["ArrowRight"] ||
+          keysDownRef.current["d"]
+        ) {
+          horizontalMove = 1;
         }
 
-        // Clamp to island radius
+        if (keysDownRef.current["ArrowUp"] || keysDownRef.current["w"]) {
+          verticalMove = -1;
+        } else if (
+          keysDownRef.current["ArrowDown"] ||
+          keysDownRef.current["s"]
+        ) {
+          verticalMove = 1;
+        }
+
+        if (verticalMove !== 0) {
+          newPos.y += verticalMove * speed;
+          moved = true;
+          newDirection = verticalMove === -1 ? "back" : "front";
+        }
+        if (horizontalMove !== 0) {
+          newPos.x += horizontalMove * speed;
+          moved = true;
+          // Only set horizontal direction if vertical is not being set
+          if (verticalMove === 0) {
+            newDirection = horizontalMove === -1 ? "left" : "right";
+          }
+        }
+        // --- [END FIX 2] ---
+
+        // [FIX 1: REVERTED CLAMPING] Clamp to ISLAND_RADIUS
         const distFromCenter = Math.sqrt(
           Math.pow(newPos.x - BOARD_SIZE / 2, 2) +
             Math.pow(newPos.y - BOARD_SIZE / 2, 2)
         );
+        // We subtract 0.5 (half a tile) to account for the player's center
         if (distFromCenter > ISLAND_RADIUS - 0.5) {
           const angle = Math.atan2(
             newPos.y - BOARD_SIZE / 2,
             newPos.x - BOARD_SIZE / 2
           );
-          newPos.x =
-            BOARD_SIZE / 2 + (ISLAND_RADIUS - 0.5) * Math.cos(angle);
-          newPos.y =
-            BOARD_SIZE / 2 + (ISLAND_RADIUS - 0.5) * Math.sin(angle);
+          newPos.x = BOARD_SIZE / 2 + (ISLAND_RADIUS - 0.5) * Math.cos(angle);
+          newPos.y = BOARD_SIZE / 2 + (ISLAND_RADIUS - 0.5) * Math.sin(angle);
         }
 
-        // Only send position updates if moved significantly (throttle network traffic)
+        // --- [MODIFIED] Handle state updates for animation/direction ---
         if (moved) {
+          // Update direction state if it changed
+          if (newDirection !== playerDirectionRef.current) {
+            setPlayerDirection(newDirection);
+          }
+
+          // Handle walk animation
+          if (!walkIntervalRef.current) {
+            walkIntervalRef.current = setInterval(() => {
+              setWalkFrame((wf) => !wf);
+            }, 200); // 200ms animation toggle
+          }
+
+          // Only send position updates if moved significantly (throttle network traffic)
           const lastPos = lastPositionSentRef.current;
           const distMoved = Math.sqrt(
-            Math.pow(newPos.x - lastPos.x, 2) + Math.pow(newPos.y - lastPos.y, 2)
+            Math.pow(newPos.x - lastPos.x, 2) +
+              Math.pow(newPos.y - lastPos.y, 2)
           );
           if (distMoved > 0.3) {
             setPlayerPos(newPos);
@@ -506,14 +632,17 @@ const IslandGame = ({
           } else {
             setPlayerPos(newPos);
           }
+        } else {
+          // Not moving
+          if (walkIntervalRef.current) {
+            clearInterval(walkIntervalRef.current);
+            walkIntervalRef.current = null;
+            setWalkFrame(false); // Reset to non-walk frame
+          }
         }
       }
 
-      // *** FIX 3 (AIMER): This logic is now inside a functional update ***
-      // We calculate the *changes* based on the ref, but apply them to the
-      // "previous state" from React to prevent the race condition.
-
-      // Calculate updates based on the *ref* (which is updated every render)
+      // *** AIMER LOGIC ***
       const updatedCannonsFromRef = activeCannonRef.current.map((c) => {
         // Build target set = all alive players (others alive + maybe local)
         const allPlayerPos = { ...otherPlayersRef.current };
@@ -583,7 +712,7 @@ const IslandGame = ({
         setActiveCannons((prevCannons) => {
           // 'prevCannons' is the "true" state from React (e.g., [C1, C2, C3, C4])
           // 'updatedCannonsFromRef' is the list from *this* frame (e.g., [C1', C2', C3'])
-          
+
           const updatedMap = new Map(
             updatedCannonsFromRef.map((c) => [c.id, c])
           );
@@ -627,6 +756,13 @@ const IslandGame = ({
             setGameState("spectating");
             setGhostPos(localPlayerPos);
 
+            // [NEW] Stop walk animation on death
+            if (walkIntervalRef.current) {
+              clearInterval(walkIntervalRef.current);
+              walkIntervalRef.current = null;
+              setWalkFrame(false);
+            }
+
             // NEW: register my ghost locally and send to server so everyone sees it
             const myUid = auth.currentUser?.uid;
             if (myUid) {
@@ -656,13 +792,35 @@ const IslandGame = ({
   // Effect to start/stop the game loop
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // [NEW] Prevent arrow keys from scrolling the page
+      if (
+        e.key === "ArrowUp" ||
+        e.key === "ArrowDown" ||
+        e.key === "ArrowLeft" ||
+        e.key === "ArrowRight"
+      ) {
+        e.preventDefault();
+      }
       keysDownRef.current[e.key] = true;
     };
     const handleKeyUp = (e) => {
       keysDownRef.current[e.key] = false;
     };
+
+    // [FIX 2] Add blur event listener to stop movement
+    const handleBlur = () => {
+      keysDownRef.current = {};
+      // Also stop walk animation if it's running
+      if (walkIntervalRef.current) {
+        clearInterval(walkIntervalRef.current);
+        walkIntervalRef.current = null;
+        setWalkFrame(false); // Reset to non-walk frame
+      }
+    };
+
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("blur", handleBlur); // <-- ADDED
 
     if (gameState === "playing" || gameState === "spectating") {
       lastTimeRef.current = performance.now();
@@ -672,7 +830,12 @@ const IslandGame = ({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("blur", handleBlur); // <-- ADDED
       cancelAnimationFrame(gameLoopRef.current);
+      // [NEW] Clear walk interval on unmount
+      if (walkIntervalRef.current) {
+        clearInterval(walkIntervalRef.current);
+      }
     };
   }, [gameState, gameLoop]);
 
@@ -703,12 +866,25 @@ const IslandGame = ({
 
                 <Island />
 
-                {/* Local avatar only if alive */}
-                {!isDead && <Player position={playerPos} isLocalPlayer={true} />}
+                {/* --- [MODIFIED] Render local player skin --- */}
+                {!isDead && (
+                  <Player
+                    position={playerPos}
+                    playerIndex={localPlayerIndex}
+                    direction={playerDirection}
+                    walkFrame={walkFrame}
+                  />
+                )}
 
-                {/* Remote players */}
-                {otherPlayersArray.map(([uid, pos]) => (
-                  <Player key={uid} position={pos} isLocalPlayer={false} />
+                {/* --- [MODIFIED] Render remote player skins --- */}
+                {otherPlayersArray.map(([uid, posData]) => (
+                  <Player
+                    key={uid}
+                    position={posData}
+                    playerIndex={playerIndexMap.get(uid) ?? 0}
+                    direction={posData.direction || "front"}
+                    walkFrame={remoteWalkFrame}
+                  />
                 ))}
 
                 {/* Ghosts for everyone (including my own) */}
