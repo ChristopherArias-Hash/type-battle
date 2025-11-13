@@ -10,7 +10,7 @@ import MiniGameReadyUp from "../../mini-game-screen/mini-game-ready-up/MiniGameR
 import CrossyRoadTutorial from "../../mini-game-screen/mini-game-tutorials/crossy-road-tutorial/CrossyRoadTutorial";
 import { sendCrossyRoadPosition, sendStackerPoints } from "../../../websocket";
 import { auth } from "../../../firebase";
-import { Chicken, Mantis, Cow, Pig } from "./skins/PlayerSkins"; // ✅ import new skins
+import { Chicken, Mantis, Cow, Pig } from "./skins/PlayerSkins"; 
 
 const GRID_SIZE_V = 22;
 const GRID_SIZE_H = 14;
