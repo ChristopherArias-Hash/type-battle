@@ -1,5 +1,5 @@
 import "./CrossyRoadTutorial.css";
-import crossyRoadGif from "../../../../images/crossyroad-tutorial.gif";
+import crossyRoadGif from "../../../../images/tutorial-gameplay/crossyroad-tutorial.gif";
 import { useEffect, useRef } from "react";
 
 function CrossyRoadTutorial() {

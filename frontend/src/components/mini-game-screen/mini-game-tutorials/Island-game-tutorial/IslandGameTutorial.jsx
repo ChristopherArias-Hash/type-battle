@@ -1,5 +1,5 @@
 import "./IslandGameTutorial.css";
-import islandGameGif from "../../../../images/islandgame-tutorial.gif";
+import islandGameGif from "../../../../images/tutorial-gameplay/islandgame-tutorial.gif";
 import { useEffect, useRef } from "react";
 
 function IslandGameTutorial() {

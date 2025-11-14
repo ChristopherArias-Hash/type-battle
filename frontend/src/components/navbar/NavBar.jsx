@@ -1,5 +1,5 @@
 import "./NavBar.css"
-import defaultProfilePicture from "../../images/Default_pfp.svg";
+import defaultProfilePicture from "../../images/profile/Default_pfp.svg";
 function NavBar({onLoginClick, onRegisterClick, isUserLoggedIn, logOut, userInfo, serverStatus, disableLogout}) {
     return(
         <>

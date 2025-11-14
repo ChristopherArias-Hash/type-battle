@@ -1,5 +1,5 @@
 import "./StackerTutorial.css";
-import stackerGif from "../../../../images/stacker-tutorial.gif";
+import stackerGif from "../../../../images/tutorial-gameplay/stacker-tutorial.gif";
 import { useEffect, useRef } from "react";
 
 function StackerTutorial() {
