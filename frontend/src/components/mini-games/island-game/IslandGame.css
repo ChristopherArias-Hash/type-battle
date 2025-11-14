@@ -1,6 +1,6 @@
-/* --- IslandGame.css --- */
 
-/* --- Main Scaling & Layout --- */
+/* ─────────────── Wrapper and Gameboard ─────────────── */
+
 .mini-game-island {
   background-color: transparent;
   display: flex;
@@ -26,7 +26,7 @@
   transform-origin: center center;
 }
 
-/* --- Original Game Styles --- */
+
 .game-board {
   position: relative;
   background-color: #93c5fd; /* bg-blue-300 */
@@ -35,7 +35,6 @@
   overflow: hidden;
 }
 
-/* --- Game Over/Start Modal --- */
 .game-overlay {
   position: absolute;
   top: 0;
@@ -58,42 +57,9 @@
     0 10px 10px -5px rgba(0, 0, 0, 0.04); /* shadow-xl */
 }
 
-.modal-title {
-  font-size: 1.875rem; /* text-3xl */
-  font-weight: 700;
-  margin-bottom: 1rem;
-  color: #1f2937; /* text-gray-800 */
-}
 
-.modal-title.lost {
-  color: #dc2626; /* text-red-600 */
-}
+/* ─────────────── Game pieces ─────────────── */
 
-.modal-title.won {
-  color: #16a34a; /* text-green-600 */
-}
-
-.modal-text {
-  color: #4b5563; /* text-gray-600 / text-gray-700 */
-  margin-bottom: 1.5rem;
-}
-
-.modal-button {
-  background-color: #3b82f6; /* bg-blue-500 */
-  color: #fff;
-  font-weight: 700;
-  padding: 0.75rem 2rem;
-  border-radius: 0.5rem; /* rounded-lg */
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s ease-in-out;
-}
-
-.modal-button:hover {
-  background-color: #2563eb; /* hover:bg-blue-600 */
-}
-
-/* --- Game Pieces --- */
 .player {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -139,7 +105,7 @@
   z-index: 15;
 }
 
-/* --- Island & Water Styling --- */
+/* ─────────────── Island and water ─────────────── */
 .island-container {
   position: absolute;
   top: 0;

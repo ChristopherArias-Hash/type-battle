@@ -1,3 +1,4 @@
+import "./IslandGame.css";
 import React, {
   useState,
   useEffect,
@@ -5,15 +6,15 @@ import React, {
   useRef,
   useMemo,
 } from "react";
-import "./IslandGame.css";
+import { auth } from "../../../firebase";
+import { Castaway, Pirate, Viking, Explorer } from "./skins/PlayerSkins";
 import MiniGameReadyUp from "../../mini-game-screen/mini-game-ready-up/MiniGameReadyUp";
 import IslandGameTutorial from "../../mini-game-screen/mini-game-tutorials/Island-game-tutorial/IslandGameTutorial";
 import {
   sendIslandGamePosition,
   sendIslandGameDeath,
 } from "../../../websocket";
-import { Castaway, Pirate, Viking, Explorer } from "./skins/PlayerSkins";
-import { auth } from "../../../firebase";
+
 
 // --- GAME CONFIGURATION ---
 const BOARD_SIZE = 30;
@@ -24,18 +25,19 @@ const CANNON_FIRE_INTERVAL = 2500;
 const ISLAND_RADIUS = 12;
 const BOARD_WIDTH = BOARD_SIZE * TILE_SIZE;
 const BOARD_HEIGHT = BOARD_SIZE * TILE_SIZE;
+const CANNON_ANGLE_THRESHOLD = 2; // degrees - prevents micro-adjustments
+const POSITION_UPDATE_INTERVAL = 50; // ms - limits network traffic to ~20 updates/sec
 
-// --- Skin Selection Logic ---
-const SKINS = [
-  Castaway, // Player 1 (index 0)
-  Explorer, // Player 2 (index 1)
-  Pirate, // Player 3 (index 2)
-  Viking, // Player 4 (index 3)
-];
+/**
+ *
+ * Character Skins
+ *
+ * Skin you get depends on player list index [0, 1, 2, 3]
+ */
+const SKINS = [Castaway, Explorer, Pirate, Viking];
 const DEFAULT_SKIN = Castaway;
 
-// --- Player Component ---
-const Player = ({ position, playerIndex, direction, walkFrame }) => {
+const Player = React.memo(({ position, playerIndex, direction, walkFrame }) => {
   const SkinComponent = SKINS[playerIndex] || DEFAULT_SKIN;
   const scale = 2;
   return (
@@ -60,10 +62,15 @@ const Player = ({ position, playerIndex, direction, walkFrame }) => {
       />
     </div>
   );
-};
+});
 
-// --- PlayerGhost Component ---
-const PlayerGhost = ({ position, playerIndex }) => {
+/**
+ *
+ * Player ghost (when player is dead)
+ *
+ */
+
+const PlayerGhost = React.memo(({ position, playerIndex }) => {
   const SkinComponent = SKINS[playerIndex] || DEFAULT_SKIN;
   const scale = 2;
   return (
@@ -72,23 +79,25 @@ const PlayerGhost = ({ position, playerIndex }) => {
       style={{
         left: position.x * TILE_SIZE,
         top: position.y * TILE_SIZE,
-        opacity: 0.5, // Ghost transparency
-        filter: "grayscale(100%) drop-shadow(0 0 2px white)", // Ghost effect
+        opacity: 0.5,
+        filter: "grayscale(100%) drop-shadow(0 0 2px white)",
         transform: "translate(-50%, -50%)",
         pointerEvents: "none",
         zIndex: 19,
       }}
     >
-      <SkinComponent 
-        scale={scale} 
-        direction="front" 
-        walkFrame={false} 
-      />
+      <SkinComponent scale={scale} direction="front" walkFrame={false} />
     </div>
   );
-};
+});
 
-const Cannon = ({ position, rotation }) => (
+/**
+ *
+ * Cannons
+ *
+ */
+
+const Cannon = React.memo(({ position, rotation }) => (
   <div
     className="cannon"
     style={{
@@ -100,16 +109,21 @@ const Cannon = ({ position, rotation }) => (
     <div className="cannon-base"></div>
     <div className="cannon-barrel"></div>
   </div>
-);
+));
 
-const Cannonball = ({ position }) => (
+const Cannonball = React.memo(({ position }) => (
   <div
     className="cannonball"
     style={{ left: position.x * TILE_SIZE, top: position.y * TILE_SIZE }}
   />
-);
+));
 
-const Island = () => (
+/**
+ *
+ * Island
+ *
+ */
+const Island = React.memo(() => (
   <div className="island-container">
     <div className="water-background"></div>
     <div className="water-waves"></div> <div className="water-ripples"></div>
@@ -170,7 +184,7 @@ const Island = () => (
       }}
     ></div>
   </div>
-);
+));
 
 // --- MAIN GAME COMPONENT ---
 const IslandGame = ({
@@ -182,8 +196,8 @@ const IslandGame = ({
 }) => {
   const gameTitle = "Cannon Island Survival";
   const [gameState, setGameState] = useState("waiting");
-  
-  // Initialize position from storage if available (Anti-Refresh-Teleport Fix)
+
+  // Initialize position from storage if available
   const [playerPos, setPlayerPos] = useState(() => {
     if (!miniGameId) return { x: BOARD_SIZE / 2, y: BOARD_SIZE / 2 };
     const saved = sessionStorage.getItem(`islandPos-${miniGameId}`);
@@ -201,9 +215,9 @@ const IslandGame = ({
   const stageRef = useRef(null);
   const [scale, setScale] = useState(1);
 
-  // --- Skin/Animation State ---
+  // Skin/Animation State
   const [playerDirection, setPlayerDirection] = useState("front");
-  const playerDirectionRef = useRef("front"); 
+  const playerDirectionRef = useRef("front");
   const [walkFrame, setWalkFrame] = useState(false);
   const walkIntervalRef = useRef(null);
   const [remoteWalkFrame, setRemoteWalkFrame] = useState(false);
@@ -211,25 +225,27 @@ const IslandGame = ({
   // Elimination & Ghost State
   const [isDead, setIsDead] = useState(false);
   const isDeadRef = useRef(false);
-  const [ghostPos, setGhostPos] = useState(null); 
-  const deadUidsRef = useRef(new Set()); 
-  const ghostsRef = useRef({}); 
+  const [ghostPos, setGhostPos] = useState(null);
+  const deadUidsRef = useRef(new Set());
+  const ghostsRef = useRef({});
 
   // Refs for game loop
   const playerPosRef = useRef(playerPos);
-  const otherPlayersRef = useRef({}); 
+  const otherPlayersRef = useRef({});
   const activeCannonRef = useRef(activeCannons);
   const cannonballsRef = useRef(cannonballs);
   const gameStateRef = useRef(gameState);
-  
+
+  // Optimization Refs
   const lastPositionSentRef = useRef(playerPos);
+  const lastPositionUpdateTime = useRef(0);
 
   // --- Player Index Mapping ---
   const playerIndexMap = useMemo(() => {
     const map = new Map();
     miniGamePlayers.forEach((player, index) => {
       if (player.user?.firebaseUid) {
-        map.set(player.user.firebaseUid, index % 4); 
+        map.set(player.user.firebaseUid, index % 4);
       }
     });
     return map;
@@ -240,24 +256,25 @@ const IslandGame = ({
   // --- Persist Position continuously ---
   useEffect(() => {
     if (miniGameId && playerPos) {
-      sessionStorage.setItem(`islandPos-${miniGameId}`, JSON.stringify(playerPos));
+      sessionStorage.setItem(
+        `islandPos-${miniGameId}`,
+        JSON.stringify(playerPos)
+      );
     }
   }, [playerPos, miniGameId]);
 
   // --- Broadcast on Mount (Fix for "Invisible on Refresh") ---
   useEffect(() => {
-    // If we have a valid position and are effectively "playing" (even if waiting for start signal logic), broadcast.
-    // But specifically if we just restored from storage.
     if (miniGameId && playerPos && !isDead) {
       sendIslandGamePosition(miniGameId, playerPos);
     }
-  }, [miniGameId]); // Run once on mount
+  }, [miniGameId]);
 
   // --- Remote walk frame animation ---
   useEffect(() => {
     const interval = setInterval(() => {
       setRemoteWalkFrame((wf) => !wf);
-    }, 200); 
+    }, 200);
     return () => clearInterval(interval);
   }, []);
 
@@ -342,12 +359,12 @@ const IslandGame = ({
     ) {
       const { uid, x, y } = lastMiniGameMessage;
       deadUidsRef.current.add(uid);
-      
+
       // Add ghost
       if (typeof x === "number" && typeof y === "number") {
-        ghostsRef.current[uid] = { x, y }; 
+        ghostsRef.current[uid] = { x, y };
       }
-      
+
       // Remove live sprite immediately
       if (otherPlayersRef.current[uid]) {
         const clone = { ...otherPlayersRef.current };
@@ -385,27 +402,32 @@ const IslandGame = ({
     return () => ro.disconnect();
   }, []);
 
+  const resetGame = useCallback(() => {
+    setPlayerPos({ x: BOARD_SIZE / 2, y: BOARD_SIZE / 2 });
+    setActiveCannons([]);
+    setCannonballs([]);
+    otherPlayersRef.current = {};
+    keysDownRef.current = {};
+    cannonballIdRef.current = 0;
+
+    setPlayerDirection("front");
+    setWalkFrame(false);
+    if (walkIntervalRef.current) {
+      clearInterval(walkIntervalRef.current);
+      walkIntervalRef.current = null;
+    }
+
+    deadUidsRef.current = new Set();
+    ghostsRef.current = {};
+  }, []);
+
   const startGame = useCallback(
     (initialCannonsFromServer, options = { spectateOnly: false }) => {
       console.log(
         "[IslandGame] Starting game with cannons:",
         initialCannonsFromServer
       );
-      
-      // Reset game state logic
-      setActiveCannons([]);
-      setCannonballs([]);
-      otherPlayersRef.current = {};
-      keysDownRef.current = {};
-      cannonballIdRef.current = 0;
-      setPlayerDirection("front");
-      setWalkFrame(false);
-      if (walkIntervalRef.current) {
-        clearInterval(walkIntervalRef.current);
-        walkIntervalRef.current = null;
-      }
-      deadUidsRef.current = new Set();
-      ghostsRef.current = {};
+      resetGame();
 
       if (!initialCannonsFromServer || initialCannonsFromServer.length === 0) {
         console.error("[IslandGame] ERROR: No cannons received from server!");
@@ -413,24 +435,22 @@ const IslandGame = ({
       }
 
       if (options.spectateOnly) {
-         setGameState("spectating");
+        setGameState("spectating");
       } else {
-         // Alive start: Check if we have a saved position to restore (refresh scenario)
-         const savedPos = sessionStorage.getItem(`islandPos-${miniGameId}`);
-         if (savedPos) {
-             setPlayerPos(JSON.parse(savedPos));
-         } else {
-             // Fresh start
-             setPlayerPos({ x: BOARD_SIZE / 2, y: BOARD_SIZE / 2 });
-         }
-         
-         // Only clear death flags if we are truly starting alive
-         sessionStorage.removeItem(`miniGameDead-${miniGameId}`);
-         sessionStorage.removeItem(`miniGameGhostPos-${miniGameId}`);
-         setIsDead(false);
-         isDeadRef.current = false;
-         setGhostPos(null);
-         setGameState("playing");
+        // Alive start: Check if we have a saved position to restore (refresh scenario)
+        const savedPos = sessionStorage.getItem(`islandPos-${miniGameId}`);
+        if (savedPos) {
+          setPlayerPos(JSON.parse(savedPos));
+        } else {
+          setPlayerPos({ x: BOARD_SIZE / 2, y: BOARD_SIZE / 2 });
+        }
+
+        sessionStorage.removeItem(`miniGameDead-${miniGameId}`);
+        sessionStorage.removeItem(`miniGameGhostPos-${miniGameId}`);
+        setIsDead(false);
+        isDeadRef.current = false;
+        setGhostPos(null);
+        setGameState("playing");
       }
 
       allCannonsRef.current = initialCannonsFromServer.map((c) => ({
@@ -441,7 +461,7 @@ const IslandGame = ({
         spawnTime: c.spawnTime,
       }));
     },
-    [miniGameId]
+    [miniGameId, resetGame]
   );
 
   // Initialize game
@@ -464,12 +484,12 @@ const IslandGame = ({
     }
   }, [miniGameStartSignal, gameState, startGame, miniGameId]);
 
-  // Cannon Spawning
+  // Cannon Spawning Logic
   useEffect(() => {
     if (
       (gameState !== "playing" && gameState !== "spectating") ||
       !allCannonsRef.current.length ||
-      miniGameTimer === null 
+      miniGameTimer === null
     )
       return;
 
@@ -497,27 +517,26 @@ const IslandGame = ({
         }
       }
 
-      return prevCannons; 
+      return prevCannons;
     });
-  }, [miniGameTimer, gameState]); 
+  }, [miniGameTimer, gameState]);
 
-  // Server Snapshot Handling (Dead UIDs)
+  // Server Snapshot Handling
   useEffect(() => {
     if (lastMiniGameMessage && lastMiniGameMessage.players) {
       const deadUids = lastMiniGameMessage.deadUids || [];
       const deadPlayers = lastMiniGameMessage.deadPlayers || [];
-      
+
       if (Array.isArray(deadUids)) {
         for (const uid of deadUids) {
           deadUidsRef.current.add(uid);
-          // Ensure dead players are removed from the live sprite list
           if (otherPlayersRef.current[uid]) {
-             const clone = { ...otherPlayersRef.current };
-             delete clone[uid];
-             otherPlayersRef.current = clone;
+            const clone = { ...otherPlayersRef.current };
+            delete clone[uid];
+            otherPlayersRef.current = clone;
           }
         }
-        
+
         const myUid = auth.currentUser?.uid;
         if (myUid && deadUidsRef.current.has(myUid)) {
           if (!isDeadRef.current) {
@@ -542,7 +561,7 @@ const IslandGame = ({
           setGameState("playing");
         }
       }
-      
+
       if (Array.isArray(deadPlayers)) {
         for (const dp of deadPlayers) {
           if (dp && typeof dp.uid === "string" && typeof dp.x === "number") {
@@ -566,7 +585,6 @@ const IslandGame = ({
       if (!lastTimeRef.current) lastTimeRef.current = timestamp;
       lastTimeRef.current = timestamp;
 
-      // --- 1. Update Local Player (only if alive) ---
       if (!isDeadRef.current) {
         let newPos = { ...playerPosRef.current };
         let newDirection = playerDirectionRef.current;
@@ -628,7 +646,7 @@ const IslandGame = ({
           if (!walkIntervalRef.current) {
             walkIntervalRef.current = setInterval(() => {
               setWalkFrame((wf) => !wf);
-            }, 200); 
+            }, 200);
           }
 
           const lastPos = lastPositionSentRef.current;
@@ -636,23 +654,30 @@ const IslandGame = ({
             Math.pow(newPos.x - lastPos.x, 2) +
               Math.pow(newPos.y - lastPos.y, 2)
           );
-          if (distMoved > 0.3) {
-            setPlayerPos(newPos);
+
+          // [OPTIMIZATION] Throttle network updates
+          const timeSinceLastUpdate =
+            timestamp - lastPositionUpdateTime.current;
+          if (
+            distMoved > 0.3 &&
+            timeSinceLastUpdate > POSITION_UPDATE_INTERVAL
+          ) {
             sendIslandGamePosition(miniGameId, newPos);
             lastPositionSentRef.current = newPos;
-          } else {
-            setPlayerPos(newPos);
+            lastPositionUpdateTime.current = timestamp;
           }
+
+          setPlayerPos(newPos);
         } else {
           if (walkIntervalRef.current) {
             clearInterval(walkIntervalRef.current);
             walkIntervalRef.current = null;
-            setWalkFrame(false); 
+            setWalkFrame(false);
           }
         }
       }
 
-      // *** AIMER LOGIC ***
+      // Only update cannons if angle changes significantly or a shot is fired
       const updatedCannonsFromRef = activeCannonRef.current.map((c) => {
         const allPlayerPos = { ...otherPlayersRef.current };
 
@@ -681,10 +706,15 @@ const IslandGame = ({
 
         let newAngle = c.angle;
         if (closestPlayer) {
-          newAngle =
+          const targetAngle =
             (Math.atan2(closestPlayer.y - c.pos.y, closestPlayer.x - c.pos.x) *
               180) /
             Math.PI;
+
+          // [OPTIMIZATION] Threshold check
+          if (Math.abs(targetAngle - c.angle) > CANNON_ANGLE_THRESHOLD) {
+            newAngle = targetAngle;
+          }
         }
 
         if (timestamp - c.lastShot > CANNON_FIRE_INTERVAL) {
@@ -703,9 +733,14 @@ const IslandGame = ({
           return { ...c, angle: newAngle, lastShot: timestamp };
         }
 
-        return { ...c, angle: newAngle };
+        // Only return a new object if something actually changed
+        if (newAngle !== c.angle) {
+          return { ...c, angle: newAngle };
+        }
+        return c;
       });
 
+      // [OPTIMIZATION] Check for changes before setting state
       const cannonsChanged = updatedCannonsFromRef.some(
         (c, i) =>
           c.angle !== activeCannonRef.current[i]?.angle ||
@@ -775,7 +810,11 @@ const IslandGame = ({
       }
 
       cannonballsRef.current = updatedBalls;
-      setCannonballs(updatedBalls);
+
+      // Only update if balls actually moved/changed (they always move, but this structure allows future optimization)
+      if (updatedBalls.length !== 0 || cannonballsRef.current.length !== 0) {
+        setCannonballs(updatedBalls);
+      }
 
       gameLoopRef.current = requestAnimationFrame(gameLoop);
     },
@@ -804,7 +843,7 @@ const IslandGame = ({
       if (walkIntervalRef.current) {
         clearInterval(walkIntervalRef.current);
         walkIntervalRef.current = null;
-        setWalkFrame(false); 
+        setWalkFrame(false);
       }
     };
 
@@ -820,7 +859,7 @@ const IslandGame = ({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
-      window.removeEventListener("blur", handleBlur); 
+      window.removeEventListener("blur", handleBlur);
       cancelAnimationFrame(gameLoopRef.current);
       if (walkIntervalRef.current) {
         clearInterval(walkIntervalRef.current);
@@ -876,10 +915,10 @@ const IslandGame = ({
 
                 {/* Ghosts for everyone (including my own) */}
                 {ghostEntries.map(([uid, pos]) => (
-                  <PlayerGhost 
-                    key={`ghost-${uid}`} 
-                    position={pos} 
-                    playerIndex={playerIndexMap.get(uid) ?? 0} 
+                  <PlayerGhost
+                    key={`ghost-${uid}`}
+                    position={pos}
+                    playerIndex={playerIndexMap.get(uid) ?? 0}
                   />
                 ))}
 

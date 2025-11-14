@@ -1,25 +1,30 @@
 import "./CrossyRoad.css";
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-  useRef,
-} from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { auth } from "../../../firebase";
+import { Chicken, Mantis, Cow, Pig } from "./skins/PlayerSkins";
 import MiniGameReadyUp from "../../mini-game-screen/mini-game-ready-up/MiniGameReadyUp";
 import CrossyRoadTutorial from "../../mini-game-screen/mini-game-tutorials/crossy-road-tutorial/CrossyRoadTutorial";
 import { sendCrossyRoadPosition, sendStackerPoints } from "../../../websocket";
-import { auth } from "../../../firebase";
-import { Chicken, Mantis, Cow, Pig } from "./skins/PlayerSkins"; 
 
+/**
+ *
+ * Screen sizes
+ *
+ * GRID V & H depend on backend too
+ */
 const GRID_SIZE_V = 22;
 const GRID_SIZE_H = 14;
-const TILE_SIZE = 40; // px
+const TILE_SIZE = 40;
 
 const BOARD_W = GRID_SIZE_H * TILE_SIZE;
 const BOARD_H = GRID_SIZE_V * TILE_SIZE;
 
-
+/**
+ *
+ * Character Skins
+ *
+ * Skin you get depends on player list index [0, 1, 2, 3]
+ */
 const SKINS = [Chicken, Mantis, Cow, Pig];
 const DEFAULT_SKIN = Chicken;
 
@@ -38,6 +43,11 @@ const Player = ({ pos, playerIndex, direction }) => {
   );
 };
 
+/**
+ *
+ * Generated Cars
+ *
+ */
 const Obstacle = ({ obstacle }) => {
   const directionClass = obstacle.speed > 0 ? "going-right" : "going-left";
 
@@ -73,8 +83,18 @@ const Obstacle = ({ obstacle }) => {
     </div>
   );
 };
+
+/**
+ *
+ * Non goal lanes
+ *
+ */
 const RoadLane = ({ y }) => (
   <div className="road-lane" style={{ top: `${y * TILE_SIZE}px` }} />
+);
+
+const SafetyLane = ({ y }) => (
+  <div className="safety-lane" style={{ top: `${y * TILE_SIZE}px` }} />
 );
 
 // --- Main App Component ---
@@ -89,6 +109,7 @@ const CrossyRoad = ({
   const [playerDirection, setPlayerDirection] = useState("up"); // Track local direction
   const [obstacles, setObstacles] = useState([]);
   const [gameState, setGameState] = useState("waiting");
+  const [gameStartTime, setGameStartTime] = useState(null);
 
   const [crossings, setCrossings] = useState(() => {
     const saved = sessionStorage.getItem(`crossy-crossings-${miniGameId}`);
@@ -102,7 +123,6 @@ const CrossyRoad = ({
 
   // Store other players' direction along with position
   const [otherPlayerPositions, setOtherPlayerPositions] = useState({});
-  const [gameStartTime, setGameStartTime] = useState(null);
 
   const stageRef = useRef(null);
   const [scale, setScale] = useState(1);
@@ -123,6 +143,7 @@ const CrossyRoad = ({
   // Get the local player's index
   const localPlayerIndex = playerIndexMap.get(auth.currentUser?.uid) ?? 0;
 
+  // Keeps track of crossing in session storage 
   useEffect(() => {
     if (miniGameId) {
       sessionStorage.setItem(`crossy-crossings-${miniGameId}`, crossings);
@@ -146,13 +167,20 @@ const CrossyRoad = ({
     return () => ro.disconnect();
   }, []);
 
+  // Creates Road or Safety lanes 
   const roadLanes = useMemo(() => {
     const lanes = [];
-    for (let i = 1; i < GRID_SIZE_V - 1; i++)
-      lanes.push(<RoadLane key={`lane-${i}`} y={i} />);
+    for (let i = 1; i < GRID_SIZE_V - 1; i++) {
+      if (i % 5 === 1 && i != 1) {
+        lanes.push(<SafetyLane key={`lane-${i}`} y={i} />);
+      } else {
+        lanes.push(<RoadLane key={`lane-${i}`} y={i} />);
+      }
+    }
     return lanes;
   }, []);
 
+   
   useEffect(() => {
     if (
       miniGameStartSignal &&
@@ -252,12 +280,13 @@ const CrossyRoad = ({
     },
     [gameState, miniGameId, playerPos]
   );
-
+  
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
+  //Animation for cars, makes cars move
   useEffect(() => {
     if (gameState !== "playing" || !gameStartTime) return;
 
@@ -285,6 +314,7 @@ const CrossyRoad = ({
     return () => cancelAnimationFrame(animationFrameId);
   }, [gameState, gameStartTime]);
 
+  //Keeps track of crossing directions
   useEffect(() => {
     if (gameState !== "playing" || !playerPos) return;
 
@@ -321,12 +351,14 @@ const CrossyRoad = ({
     }
   }, [playerPos, obstacles, gameState, crossingDirection, miniGameId]);
 
+  //Tracks crossing, sends to backend
   useEffect(() => {
     if (crossings > 0) {
       sendStackerPoints(miniGameId, { highScore: crossings });
     }
   }, [crossings, miniGameId]);
 
+  //Ready up lobby
   if (gameState === "waiting") {
     return (
       <div className="game-mini-crossy-road" ref={stageRef}>
@@ -349,17 +381,17 @@ const CrossyRoad = ({
             style={{ width: BOARD_W, height: BOARD_H }}
           >
             <div
-              className={`safe-zone start-zone ${
+              className={`spawn-zone start-zone ${
                 crossingDirection === "down" ? "goal-zone" : ""
               }`}
             />
             <div
-              className={`safe-zone end-zone ${
+              className={`spawn-zone end-zone ${
                 crossingDirection === "up" ? "goal-zone" : ""
               }`}
             />
             {roadLanes}
-            
+
             {/* Render Local Player */}
             {playerPos && (
               <Player
@@ -368,7 +400,7 @@ const CrossyRoad = ({
                 direction={playerDirection}
               />
             )}
-            
+
             {/* Render Other Players */}
             {Object.entries(otherPlayerPositions).map(([uid, posData]) => (
               <Player
@@ -378,7 +410,7 @@ const CrossyRoad = ({
                 direction={posData.direction}
               />
             ))}
-            
+
             {obstacles.map((obs, i) => (
               <Obstacle key={`obs-${i}`} obstacle={obs} />
             ))}

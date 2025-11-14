@@ -1,6 +1,6 @@
-/* Make the wrapper fill its parent (the overlay card), not the viewport */
+/* ─────────────── Wrapper and Gameboard ─────────────── */
+
 .game-wrapper {
-  /* variables can stay if you want them elsewhere */
   --tile-size: 33px;
   --grid-size-v: 23;
   --grid-size-h: 14;
@@ -40,10 +40,13 @@
   border-radius: 12px;
   border: 4px solid #2e2d2d;
   overflow: hidden;
-  background-color: #d6d6d6; /* Sky blue background */
+  background-color: #d6d6d6;
 }
 
-.safe-zone {
+
+/* ─────────────── Zones/Lanes ─────────────── */
+
+.spawn-zone {
   position: absolute;
   width: 100%;
   height: var(--tile-size);
@@ -71,17 +74,15 @@
   background-color: #2e2d2d;
 }
 
-@keyframes hop {
-  0% {
-    transform: translateY(0) scale(1);
-  }
-  50% {
-    transform: translateY(-10px) scale(1.05, 0.95);
-  }
-  100% {
-    transform: translateY(0) scale(1);
-  }
+.safety-lane {
+  position: absolute;
+  width: 100%;
+  height: var(--tile-size);
+  background-color: #2e5472ab;
+  z-index: 1
 }
+
+/* ─────────────── Player ─────────────── */
 
 .player-container {
   position: absolute;
@@ -89,7 +90,6 @@
   height: var(--tile-size);
   z-index: 10;
   transition: top 0.1s linear, left 0.1s linear;
-  animation: hop 0.2s ease-in-out;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -99,8 +99,13 @@
   width: 85%;
   height: 85%;
   filter: drop-shadow(0 4px 3px rgba(0, 0, 0, 0.4));
+
 }
 
+
+/* ─────────────── Cars ─────────────── */
+
+/*obstacle == car (this should be renamed)*/
 .obstacle {
   position: absolute;
   height: calc(var(--tile-size) * 0.85);
@@ -166,7 +171,7 @@
   background-color: #e74c3c;
 }
 .car-blue {
-  background-color: #3498db;
+  background-color: #097dcb;
 }
 .car-purple {
   background-color: #9b59b6;

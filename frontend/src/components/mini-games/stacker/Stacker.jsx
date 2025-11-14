@@ -5,7 +5,12 @@ import { sendStackerPoints } from "../../../websocket";
 import MiniGameReadyUp from "../../mini-game-screen/mini-game-ready-up/MiniGameReadyUp";
 import StackerTutorial from "../../mini-game-screen/mini-game-tutorials/stacker-tutorial/StackerTutorial";
 
-// Helper functions (draw3DBlock, drawGhostBlock, drawGroundPlane) remain the same...
+/**
+ *
+ * Helper Block functions
+ *
+ */
+
 function draw3DBlock(ctx, x, y, width, height, depth, baseColor) {
   const parsedLightness = parseInt(baseColor.match(/(\d+)%\)/)[1]);
   if (isNaN(parsedLightness)) return;
@@ -85,6 +90,7 @@ function drawGroundPlane(ctx, canvasWidth, canvasHeight, depth, yOffset = 0) {
   ctx.stroke();
 }
 
+// --- Main App Component ---
 function Stacker({ miniGamePlayers, miniGameId, miniGameStartSignal }) {
   const gameTitle = "STACKER";
   const canvasRef = useRef(null);
@@ -97,7 +103,7 @@ function Stacker({ miniGamePlayers, miniGameId, miniGameStartSignal }) {
   const groundOffsetRef = useRef(0);
   const isResizingRef = useRef(false);
 
-  // 🎵 Refs for sound synthesizers and to track if audio is started
+  // Refs for sound synthesizers and to track if audio is started
   const synthsRef = useRef(null);
   const audioStartedRef = useRef(false);
 
@@ -107,7 +113,7 @@ function Stacker({ miniGamePlayers, miniGameId, miniGameStartSignal }) {
   const [highScore, setHighScore] = useState(0);
   const [isPerfectFlash, setIsPerfectFlash] = useState(false);
 
-  // 🎵 Effect to initialize synths once on component mount
+  //Effect to initialize synths once on component mount
   useEffect(() => {
     synthsRef.current = {
       synth: new Tone.Synth({
@@ -370,7 +376,7 @@ function Stacker({ miniGamePlayers, miniGameId, miniGameStartSignal }) {
     }
   }, [score, highScore, miniGameId]);
 
-  // 🎮 MODIFIED: Listen to gameStartSignal and set state to playing
+  //Listen to gameStartSignal and set state to playing
   useEffect(() => {
     console.log("🔍 Game start check:", {
       hasInitialized: hasInitializedRef.current,
@@ -558,16 +564,17 @@ function Stacker({ miniGamePlayers, miniGameId, miniGameStartSignal }) {
   }, [handleAction]);
 
   return (
+    //Ready up lobby
     <div className="mini-game-stacker" ref={containerRef}>
       {gameState === "waiting" ? (
         <>
-        <MiniGameReadyUp
-          gameTitle={gameTitle}
-          miniGamePlayers={miniGamePlayers}
-          miniGameId={miniGameId}
-          onReady={handleReadyUp}
-        />
-        <StackerTutorial/>
+          <MiniGameReadyUp
+            gameTitle={gameTitle}
+            miniGamePlayers={miniGamePlayers}
+            miniGameId={miniGameId}
+            onReady={handleReadyUp}
+          />
+          <StackerTutorial />
         </>
       ) : (
         <div className="game-wrapper">
