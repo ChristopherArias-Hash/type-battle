@@ -27,11 +27,22 @@ public class ObstacleGenerationService {
         List<ObstacleData> obstacleData = new ArrayList<>();
         Random random = ThreadLocalRandom.current();
 
-        // Loop through each road lane (excluding start and end zones)
+        /*
+         *  Loop through each road lane (excluding start and end zones)
+         *  Keep in mind array starts top to bottom
+         */
+
         for (int i = 1; i < GRID_SIZE_V - 1; i++) {
+
+            // Skip lanes 6, 11, 16 to create safe zones
+            if (i % 5 == 1 && i != 1) {
+                continue;
+            }
+
+
             int carsInLane = random.nextInt(2) + 1; // 1 or 2 cars
 
-            double originalSpeed = random.nextDouble() * 0.03 + 0.02;
+            double originalSpeed = random.nextDouble() * 0.02 + 0.015;
             double speedInTilesPerMs = originalSpeed / 5.0;
             double speed = speedInTilesPerMs * (random.nextBoolean() ? 1 : -1);
 

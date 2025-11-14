@@ -103,7 +103,7 @@ public class GameTimerService {
 
         long randomId = 0;
 
-        // NEW: pick a mini-game that hasn't been used yet for this main session
+        //Pick a mini-game that hasn't been used yet for this main session
         List<MiniGames> allGames = miniGamesRepository.findAll();
         if (allGames == null || allGames.isEmpty()) {
             System.out.println("[GameTimer] ERROR: No mini-games are available in the database to create a session.");
@@ -177,11 +177,11 @@ public class GameTimerService {
         miniGameSessionRepository.save(miniGameSession);
         System.out.println("[GameTimer] Mini-game " + miniGameSessionId + " started!");
 
-        // NEW: initialize dead sets for this mini-game session
+        //initialize dead sets for this mini-game session
         miniGameDeadParticipantIds.put(miniGameSessionId, ConcurrentHashMap.newKeySet());
         miniGameDeadGhostPositions.put(miniGameSessionId, new ConcurrentHashMap<>());
 
-        // NEW: Determine if this mini-game is the Island game (id == 3)
+        //Determine if this mini-game is the Island game (id == 3)
         final boolean isIslandGame = miniGameSession.getMiniGames() != null
                 && Objects.equals(miniGameSession.getMiniGames().getId(), 3L);
 
@@ -200,7 +200,7 @@ public class GameTimerService {
             // Fetch current participants
             List<MiniGameParticipants> participants = miniGameParticipantRepository.findAllByMiniGameSession(sessionOpt.get());
             if (isIslandGame) {
-                // NEW (island only): compute alive, award survival points, and compile dead lists incl. ghost positions
+                //(island only): compute alive, award survival points, and compile dead lists incl. ghost positions
                 Set<Long> deadSet = miniGameDeadParticipantIds.getOrDefault(miniGameSessionId, Collections.emptySet());
                 Map<String, double[]> ghostMap = miniGameDeadGhostPositions.getOrDefault(miniGameSessionId, Map.of());
 
@@ -289,7 +289,7 @@ public class GameTimerService {
         } finally {
             // IMPORTANT: Always remove the ID from the set when done, even if there's an error.
             processingMiniGames.remove(miniGameSessionId);
-            // NEW: cleanup death tracking
+            //cleanup death tracking
             miniGameDeadParticipantIds.remove(miniGameSessionId);
             miniGameDeadGhostPositions.remove(miniGameSessionId);
         }
