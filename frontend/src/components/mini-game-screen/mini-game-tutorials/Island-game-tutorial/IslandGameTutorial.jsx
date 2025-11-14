@@ -41,34 +41,34 @@ function IslandGameTutorial() {
 
   return (
     <div className="island-tutorial-container">
-      <div className="left-bar">
-        <h2 className="play-heading">How to play</h2>
+      <div className="island-game-left-bar">
+        <h2 className="island-game-play-heading">How to play</h2>
 
-        <h3 className="setting-heading">Controls</h3>
+        <h3 className="island-game-setting-heading">Controls</h3>
         {controls.map((control) => (
-          <div key={control.id} className="controls">
-            <p className="control-description">{control.description}</p>
+          <div key={control.id} className="island-game-controls">
+            <p className="island-game-control-description">{control.description}</p>
             <button
               ref={(el) => (buttonRefs.current[control.id] = el)}
               onClick={() => console.log(`${control.description} pressed`)}
               className="island-game-control-button"
             >
-              <span className="letter-enter">{control.key}</span>
+              <span className="island-game-letter-enter">{control.key}</span>
             </button>
           </div>
         ))}
 
-        <h3 className="setting-heading">Instructions</h3>
+        <h3 className="island-game-setting-heading">Instructions</h3>
         <p>1 point per second alive</p>
         <p>no points gained if dead</p>
       </div>
-      <div className="right-bar">
-                <h2 className="play-heading" >Gameplay</h2>
+      <div className="island-game-right-bar">
+                <h2 className="island-game-play-heading" >Gameplay</h2>
 
         <img
           src={islandGameGif}
           alt="Crossy Road Tutorial"
-          className="tutorial-image"
+          className="island-game-tutorial-image"
         />
       </div>
     </div>

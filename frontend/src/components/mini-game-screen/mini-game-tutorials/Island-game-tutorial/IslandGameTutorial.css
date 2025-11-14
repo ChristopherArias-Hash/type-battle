@@ -9,7 +9,7 @@
   
 }
 
-.left-bar {
+.island-game-left-bar {
   min-width: 280px;
   max-width: 350px;
   flex: 1;
@@ -20,8 +20,7 @@
   transition: box-shadow 0.3s ease-in-out;
 }
 
-.right-bar {
-
+.island-game-right-bar {
   text-align: center;
   min-width: 280px;
   max-width: 350px;
@@ -31,7 +30,7 @@
   background-color: rgb(22, 22, 22);
   
 }
-.play-heading {
+.island-game-play-heading {
   text-align: center;
   font-size: 30px;
   font-weight: 600;
@@ -39,7 +38,7 @@
   letter-spacing: 1px;
 }
 
-.setting-heading {
+.island-game-setting-heading {
   font-size: 25px;
   color: #14adff;
   margin-top: 20px;
@@ -48,7 +47,7 @@
   padding-bottom: 4px;
 }
 
-.tutorial-image {
+.island-game-tutorial-image {
   width: 280px;
   height: 450px;
   border-radius: 10px;
@@ -56,11 +55,11 @@
    object-fit: fill;
 }
 
-.tutorial-image:hover {
+.island-game-tutorial-image:hover {
   transform: scale(1.03);
 }
 
-.controls {
+.island-game-controls {
   display: flex;
   align-items: center;
   padding: 5px;
@@ -70,7 +69,7 @@
   border-radius: 10px;
   background: linear-gradient(135deg, #2a2a2a 0%, #40404032 100%);
 }
-.control-description {
+.island-game-control-description {
   padding: 10px;
   font-size: 20px;
   margin: 0;
@@ -115,7 +114,7 @@
 }
 
 /* the label (top-left aligned) */
-.island-game-control-button .letter-enter {
+.island-game-control-button .island-game-letter-enter {
   position: absolute;
   left: 10px;
   top: 10px;

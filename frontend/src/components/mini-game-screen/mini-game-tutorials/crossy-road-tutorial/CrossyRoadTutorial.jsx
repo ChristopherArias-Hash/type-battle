@@ -67,7 +67,7 @@ function CrossyRoadTutorial() {
         <img
           src={crossyRoadGif}
           alt="Crossy Road Tutorial"
-          className="tutorial-image"
+          className="crossyroad-tutorial-image"
         />
       </div>
     </div>

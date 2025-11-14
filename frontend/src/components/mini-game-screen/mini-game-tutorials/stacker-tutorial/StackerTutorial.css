@@ -8,7 +8,7 @@
   padding-bottom: 20px;
 }
 
-.left-bar {
+.stacker-left-bar {
   min-width: 280px;
   max-width: 350px;
   flex: 1;
@@ -19,7 +19,7 @@
   transition: box-shadow 0.3s ease-in-out;
 }
 
-.right-bar {
+.stacker-right-bar {
  text-align: center;
   min-width: 280px;
   max-width: 350px;
@@ -28,7 +28,7 @@
   border-radius: 12px;
   background-color: rgb(22, 22, 22);
 }
-.play-heading {
+.stacker-play-heading {
   text-align: center;
   font-size: 30px;
   font-weight: 600;
@@ -36,7 +36,7 @@
   letter-spacing: 1px;
 }
 
-.setting-heading {
+.stacker-setting-heading {
   font-size: 25px;
   color: #14adff;
   margin-top: 20px;
@@ -45,18 +45,18 @@
   padding-bottom: 4px;
 }
 
-.tutorial-image {
+.stacker-tutorial-image {
   width: 280px;
   height: 450px;
   border-radius: 10px;
   transition: transform 0.3s ease;
 }
 
-.tutorial-image:hover {
+.stacker-tutorial-image:hover {
   transform: scale(1.03);
 }
 
-.controls {
+.stacker-controls {
   display: flex;
   align-items: center;
   padding: 5px;
@@ -66,7 +66,7 @@
   border-radius: 10px;
   background: linear-gradient(135deg, #2a2a2a 0%, #40404032 100%);
 }
-.control-description  {
+.stacker-control-description  {
   padding: 10px;
   font-size: 20px;
   margin: 0;
@@ -110,7 +110,7 @@
 }
 
 /* the label (top-left aligned) */
-.stacker-control-button .letter-enter {
+.stacker-control-button .stacker-letter-enter {
   position: absolute;
   left: 10px;
   top: 10px;
