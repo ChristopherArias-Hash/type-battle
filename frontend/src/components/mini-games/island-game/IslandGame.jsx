@@ -15,7 +15,6 @@ import {
   sendIslandGameDeath,
 } from "../../../websocket";
 
-
 // --- GAME CONFIGURATION ---
 const BOARD_SIZE = 30;
 const TILE_SIZE = 35;
@@ -26,13 +25,10 @@ const ISLAND_RADIUS = 12;
 const BOARD_WIDTH = BOARD_SIZE * TILE_SIZE;
 const BOARD_HEIGHT = BOARD_SIZE * TILE_SIZE;
 const CANNON_ANGLE_THRESHOLD = 2; // degrees - prevents micro-adjustments
-const POSITION_UPDATE_INTERVAL = 50; // ms - limits network traffic to ~20 updates/sec
+const POSITION_UPDATE_INTERVAL = 50; // ms
 
 /**
- *
  * Character Skins
- *
- * Skin you get depends on player list index [0, 1, 2, 3]
  */
 const SKINS = [Castaway, Explorer, Pirate, Viking];
 const DEFAULT_SKIN = Castaway;
@@ -64,12 +60,6 @@ const Player = React.memo(({ position, playerIndex, direction, walkFrame }) => {
   );
 });
 
-/**
- *
- * Player ghost (when player is dead)
- *
- */
-
 const PlayerGhost = React.memo(({ position, playerIndex }) => {
   const SkinComponent = SKINS[playerIndex] || DEFAULT_SKIN;
   const scale = 2;
@@ -91,98 +81,40 @@ const PlayerGhost = React.memo(({ position, playerIndex }) => {
   );
 });
 
-/**
- *
- * Cannons
- *
- */
+// Cannon Component - uses ref for rotation to avoid re-renders
+const Cannon = React.memo(({ id, position, rotationRef }) => {
+  return (
+    <div
+      className="cannon"
+      ref={(el) => {
+        if (rotationRef) rotationRef.current[id] = el;
+      }}
+      style={{
+        left: position.x * TILE_SIZE,
+        top: position.y * TILE_SIZE,
+        // Initial transform, subsequent updates happen via direct DOM manipulation
+        transform: `translate(-50%, -50%) rotate(0deg)`, 
+      }}
+    >
+      <div className="cannon-base"></div>
+      <div className="cannon-barrel"></div>
+    </div>
+  );
+});
 
-const Cannon = React.memo(({ position, rotation }) => (
-  <div
-    className="cannon"
-    style={{
-      left: position.x * TILE_SIZE,
-      top: position.y * TILE_SIZE,
-      transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
-    }}
-  >
-    <div className="cannon-base"></div>
-    <div className="cannon-barrel"></div>
-  </div>
-));
-
-const Cannonball = React.memo(({ position }) => (
-  <div
-    className="cannonball"
-    style={{ left: position.x * TILE_SIZE, top: position.y * TILE_SIZE }}
-  />
-));
-
-/**
- *
- * Island
- *
- */
+// Island Background Component
 const Island = React.memo(() => (
   <div className="island-container">
     <div className="water-background"></div>
     <div className="water-waves"></div> <div className="water-ripples"></div>
-    <div
-      className="island-shadow"
-      style={{
-        width: `${ISLAND_RADIUS * 2 * TILE_SIZE + 60}px`,
-        height: `${ISLAND_RADIUS * 2 * TILE_SIZE + 60}px`,
-      }}
-    ></div>
-    <div
-      className="shallow-water"
-      style={{
-        width: `${ISLAND_RADIUS * 2 * TILE_SIZE + 30}px`,
-        height: `${ISLAND_RADIUS * 2 * TILE_SIZE + 30}px`,
-      }}
-    ></div>
-    <div
-      className="island-sand"
-      style={{
-        width: `${ISLAND_RADIUS * 2 * TILE_SIZE}px`,
-        height: `${ISLAND_RADIUS * 2 * TILE_SIZE}px`,
-      }}
-    ></div>
-    <div
-      className="sand-texture"
-      style={{
-        width: `${ISLAND_RADIUS * 2 * TILE_SIZE}px`,
-        height: `${ISLAND_RADIUS * 2 * TILE_SIZE}px`,
-      }}
-    ></div>
-    <div
-      className="island-grass-outer"
-      style={{
-        width: `${ISLAND_RADIUS * 2 * TILE_SIZE - 80}px`,
-        height: `${ISLAND_RADIUS * 2 * TILE_SIZE - 80}px`,
-      }}
-    ></div>
-    <div
-      className="grass-texture"
-      style={{
-        width: `${ISLAND_RADIUS * 2 * TILE_SIZE - 80}px`,
-        height: `${ISLAND_RADIUS * 2 * TILE_SIZE - 80}px`,
-      }}
-    ></div>
-    <div
-      className="island-grass-inner"
-      style={{
-        width: `${ISLAND_RADIUS * 2 * TILE_SIZE - 160}px`,
-        height: `${ISLAND_RADIUS * 2 * TILE_SIZE - 160}px`,
-      }}
-    ></div>
-    <div
-      className="island-highlight"
-      style={{
-        width: `${ISLAND_RADIUS * 2 * TILE_SIZE - 200}px`,
-        height: `${ISLAND_RADIUS * 2 * TILE_SIZE - 200}px`,
-      }}
-    ></div>
+    <div className="island-shadow" style={{ width: `${ISLAND_RADIUS * 2 * TILE_SIZE + 60}px`, height: `${ISLAND_RADIUS * 2 * TILE_SIZE + 60}px` }}></div>
+    <div className="shallow-water" style={{ width: `${ISLAND_RADIUS * 2 * TILE_SIZE + 30}px`, height: `${ISLAND_RADIUS * 2 * TILE_SIZE + 30}px` }}></div>
+    <div className="island-sand" style={{ width: `${ISLAND_RADIUS * 2 * TILE_SIZE}px`, height: `${ISLAND_RADIUS * 2 * TILE_SIZE}px` }}></div>
+    <div className="sand-texture" style={{ width: `${ISLAND_RADIUS * 2 * TILE_SIZE}px`, height: `${ISLAND_RADIUS * 2 * TILE_SIZE}px` }}></div>
+    <div className="island-grass-outer" style={{ width: `${ISLAND_RADIUS * 2 * TILE_SIZE - 80}px`, height: `${ISLAND_RADIUS * 2 * TILE_SIZE - 80}px` }}></div>
+    <div className="grass-texture" style={{ width: `${ISLAND_RADIUS * 2 * TILE_SIZE - 80}px`, height: `${ISLAND_RADIUS * 2 * TILE_SIZE - 80}px` }}></div>
+    <div className="island-grass-inner" style={{ width: `${ISLAND_RADIUS * 2 * TILE_SIZE - 160}px`, height: `${ISLAND_RADIUS * 2 * TILE_SIZE - 160}px` }}></div>
+    <div className="island-highlight" style={{ width: `${ISLAND_RADIUS * 2 * TILE_SIZE - 200}px`, height: `${ISLAND_RADIUS * 2 * TILE_SIZE - 200}px` }}></div>
   </div>
 ));
 
@@ -197,17 +129,22 @@ const IslandGame = ({
   const gameTitle = "Cannon Island Survival";
   const [gameState, setGameState] = useState("waiting");
 
-  // Initialize position from storage if available
+  // Position State
   const [playerPos, setPlayerPos] = useState(() => {
     if (!miniGameId) return { x: BOARD_SIZE / 2, y: BOARD_SIZE / 2 };
     const saved = sessionStorage.getItem(`islandPos-${miniGameId}`);
     return saved ? JSON.parse(saved) : { x: BOARD_SIZE / 2, y: BOARD_SIZE / 2 };
   });
 
+  // Only used for spawning/despawning - NOT for rotation updates
   const [activeCannons, setActiveCannons] = useState([]);
-  const [cannonballs, setCannonballs] = useState([]);
-
+  
+  // Refs for Optimization
+  const cannonRefs = useRef({}); 
+  const canvasRef = useRef(null); // For drawing projectiles
   const allCannonsRef = useRef([]);
+  const cannonballsRef = useRef([]); // Store balls in ref, not state
+  
   const keysDownRef = useRef({});
   const gameLoopRef = useRef();
   const lastTimeRef = useRef();
@@ -232,13 +169,14 @@ const IslandGame = ({
   // Refs for game loop
   const playerPosRef = useRef(playerPos);
   const otherPlayersRef = useRef({});
-  const activeCannonRef = useRef(activeCannons);
-  const cannonballsRef = useRef(cannonballs);
   const gameStateRef = useRef(gameState);
 
   // Optimization Refs
   const lastPositionSentRef = useRef(playerPos);
   const lastPositionUpdateTime = useRef(0);
+  
+  // Server Sync Ref
+  const serverStartTimeRef = useRef(null);
 
   // --- Player Index Mapping ---
   const playerIndexMap = useMemo(() => {
@@ -253,17 +191,26 @@ const IslandGame = ({
 
   const localPlayerIndex = playerIndexMap.get(auth.currentUser?.uid) ?? 0;
 
-  // --- Persist Position continuously ---
+  // --- Helpers ---
+  const getDeterministicFireTime = (serverStartTime) => {
+      if(!serverStartTime) return performance.now();
+      const now = Date.now();
+      const timeElapsed = now - serverStartTime;
+      // Calculate how far we are into the current interval
+      const progressInInterval = timeElapsed % CANNON_FIRE_INTERVAL;
+      // We want the "last shot" to be exactly one interval ago relative to the next beat
+      // effectively aligning the firing phase.
+      return performance.now() - progressInInterval;
+  };
+
+  // --- Persist Position ---
   useEffect(() => {
     if (miniGameId && playerPos) {
-      sessionStorage.setItem(
-        `islandPos-${miniGameId}`,
-        JSON.stringify(playerPos)
-      );
+      sessionStorage.setItem(`islandPos-${miniGameId}`, JSON.stringify(playerPos));
     }
   }, [playerPos, miniGameId]);
 
-  // --- Broadcast on Mount (Fix for "Invisible on Refresh") ---
+  // --- Broadcast on Mount ---
   useEffect(() => {
     if (miniGameId && playerPos && !isDead) {
       sendIslandGamePosition(miniGameId, playerPos);
@@ -272,69 +219,44 @@ const IslandGame = ({
 
   // --- Remote walk frame animation ---
   useEffect(() => {
-    const interval = setInterval(() => {
-      setRemoteWalkFrame((wf) => !wf);
-    }, 200);
+    const interval = setInterval(() => setRemoteWalkFrame((wf) => !wf), 200);
     return () => clearInterval(interval);
   }, []);
 
-  // --- Sync direction state to ref ---
-  useEffect(() => {
-    playerDirectionRef.current = playerDirection;
-  }, [playerDirection]);
+  // --- Sync refs ---
+  useEffect(() => { playerDirectionRef.current = playerDirection; }, [playerDirection]);
+  useEffect(() => { playerPosRef.current = playerPos; }, [playerPos]);
+  useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
+  useEffect(() => { isDeadRef.current = isDead; }, [isDead]);
 
-  useEffect(() => {
-    playerPosRef.current = playerPos;
-  }, [playerPos]);
-  useEffect(() => {
-    activeCannonRef.current = activeCannons;
-  }, [activeCannons]);
-  useEffect(() => {
-    cannonballsRef.current = cannonballs;
-  }, [cannonballs]);
-  useEffect(() => {
-    gameStateRef.current = gameState;
-  }, [gameState]);
-  useEffect(() => {
-    isDeadRef.current = isDead;
-  }, [isDead]);
-
-  // Restore death state after refresh
+  // --- Restore State ---
   useEffect(() => {
     if (!miniGameId) return;
     const deadKey = `miniGameDead-${miniGameId}`;
     const ghostKey = `miniGameGhostPos-${miniGameId}`;
-    const wasDead = sessionStorage.getItem(deadKey) === "true";
-    if (wasDead) {
+    if (sessionStorage.getItem(deadKey) === "true") {
       setIsDead(true);
       setGameState("spectating");
       const savedGhost = sessionStorage.getItem(ghostKey);
       if (savedGhost) {
         try {
           const gp = JSON.parse(savedGhost);
-          if (gp && typeof gp.x === "number" && typeof gp.y === "number") {
-            setGhostPos(gp);
-            const myUid = auth.currentUser?.uid;
-            if (myUid) ghostsRef.current[myUid] = gp;
+          if (gp?.x) {
+             setGhostPos(gp);
+             const myUid = auth.currentUser?.uid;
+             if(myUid) ghostsRef.current[myUid] = gp;
           }
         } catch {}
       }
     }
   }, [miniGameId]);
 
-  // Handle incoming position updates
+  // --- WebSocket Handling ---
   useEffect(() => {
-    if (
-      lastMiniGameMessage &&
-      lastMiniGameMessage.type === "island_game_position_update"
-    ) {
+    if (lastMiniGameMessage?.type === "island_game_position_update") {
       const { data } = lastMiniGameMessage;
-      const currentUid = auth.currentUser?.uid;
-
-      // Ignore updates for dead players
       if (deadUidsRef.current.has(data.uid)) return;
-
-      if (data.uid !== currentUid) {
+      if (data.uid !== auth.currentUser?.uid) {
         let newDirection = "front";
         const oldPos = otherPlayersRef.current[data.uid];
         if (oldPos) {
@@ -342,54 +264,59 @@ const IslandGame = ({
           else if (data.y > oldPos.y) newDirection = "front";
           else if (data.x < oldPos.x) newDirection = "left";
           else if (data.x > oldPos.x) newDirection = "right";
-          else newDirection = oldPos.direction || "front";
+          else newDirection = oldPos.direction;
         }
-
         otherPlayersRef.current = {
           ...otherPlayersRef.current,
           [data.uid]: { x: data.x, y: data.y, direction: newDirection },
         };
       }
     }
-
-    // Handle immediate death broadcasts
-    if (
-      lastMiniGameMessage &&
-      lastMiniGameMessage.type === "island_game_death"
-    ) {
+    if (lastMiniGameMessage?.type === "island_game_death") {
       const { uid, x, y } = lastMiniGameMessage;
       deadUidsRef.current.add(uid);
+      if (typeof x === "number") ghostsRef.current[uid] = { x, y };
+      
+      const clone = { ...otherPlayersRef.current };
+      delete clone[uid];
+      otherPlayersRef.current = clone;
 
-      // Add ghost
-      if (typeof x === "number" && typeof y === "number") {
-        ghostsRef.current[uid] = { x, y };
-      }
-
-      // Remove live sprite immediately
-      if (otherPlayersRef.current[uid]) {
-        const clone = { ...otherPlayersRef.current };
-        delete clone[uid];
-        otherPlayersRef.current = clone;
-      }
-
-      // Handle local player death
-      const myUid = auth.currentUser?.uid;
-      if (uid === myUid && !isDeadRef.current) {
+      if (uid === auth.currentUser?.uid && !isDeadRef.current) {
         setIsDead(true);
         setGameState("spectating");
-        if (typeof x === "number" && typeof y === "number") {
-          setGhostPos({ x, y });
-          sessionStorage.setItem(`miniGameDead-${miniGameId}`, "true");
-          sessionStorage.setItem(
-            `miniGameGhostPos-${miniGameId}`,
-            JSON.stringify({ x, y })
-          );
-        }
+        setGhostPos({ x, y });
+        sessionStorage.setItem(`miniGameDead-${miniGameId}`, "true");
+        sessionStorage.setItem(`miniGameGhostPos-${miniGameId}`, JSON.stringify({ x, y }));
       }
     }
-  }, [lastMiniGameMessage, miniGameId]);
+    // Bulk update from server interval
+    if (lastMiniGameMessage?.players) {
+       const deadUids = lastMiniGameMessage.deadUids || [];
+       const deadPlayers = lastMiniGameMessage.deadPlayers || [];
+       deadUids.forEach(uid => {
+           deadUidsRef.current.add(uid);
+           if(otherPlayersRef.current[uid]) {
+               const c = {...otherPlayersRef.current};
+               delete c[uid];
+               otherPlayersRef.current = c;
+           }
+       });
+       deadPlayers.forEach(dp => {
+           if(dp.uid) ghostsRef.current[dp.uid] = {x: dp.x, y: dp.y};
+       });
+       
+       // Auto-kill self if server says so (e.g. on refresh after death)
+       if(auth.currentUser?.uid && deadUidsRef.current.has(auth.currentUser.uid) && !isDeadRef.current) {
+          setIsDead(true);
+          setGameState("spectating");
+       } else if(gameState === "waiting" && !isDeadRef.current) {
+           // Auto-start if we missed the start event but getting updates
+           setGameState("playing");
+       }
+    }
+  }, [lastMiniGameMessage, miniGameId, gameState]);
 
-  // Handle scaling
+  // --- Resize Observer ---
   useEffect(() => {
     const el = stageRef.current;
     if (!el) return;
@@ -405,539 +332,251 @@ const IslandGame = ({
   const resetGame = useCallback(() => {
     setPlayerPos({ x: BOARD_SIZE / 2, y: BOARD_SIZE / 2 });
     setActiveCannons([]);
-    setCannonballs([]);
+    cannonballsRef.current = [];
     otherPlayersRef.current = {};
     keysDownRef.current = {};
     cannonballIdRef.current = 0;
-
     setPlayerDirection("front");
     setWalkFrame(false);
-    if (walkIntervalRef.current) {
-      clearInterval(walkIntervalRef.current);
-      walkIntervalRef.current = null;
-    }
-
     deadUidsRef.current = new Set();
     ghostsRef.current = {};
   }, []);
 
   const startGame = useCallback(
-    (initialCannonsFromServer, options = { spectateOnly: false }) => {
-      console.log(
-        "[IslandGame] Starting game with cannons:",
-        initialCannonsFromServer
-      );
+    (initialCannonsFromServer, serverStartTime, options = { spectateOnly: false }) => {
       resetGame();
-
-      if (!initialCannonsFromServer || initialCannonsFromServer.length === 0) {
-        console.error("[IslandGame] ERROR: No cannons received from server!");
-        return;
-      }
+      serverStartTimeRef.current = serverStartTime || Date.now();
+      
+      // Determine sync start time for cannons
+      const syncedLastShot = getDeterministicFireTime(serverStartTimeRef.current);
 
       if (options.spectateOnly) {
         setGameState("spectating");
       } else {
-        // Alive start: Check if we have a saved position to restore (refresh scenario)
         const savedPos = sessionStorage.getItem(`islandPos-${miniGameId}`);
-        if (savedPos) {
-          setPlayerPos(JSON.parse(savedPos));
-        } else {
-          setPlayerPos({ x: BOARD_SIZE / 2, y: BOARD_SIZE / 2 });
-        }
-
-        sessionStorage.removeItem(`miniGameDead-${miniGameId}`);
-        sessionStorage.removeItem(`miniGameGhostPos-${miniGameId}`);
-        setIsDead(false);
-        isDeadRef.current = false;
-        setGhostPos(null);
+        if (savedPos) setPlayerPos(JSON.parse(savedPos));
         setGameState("playing");
       }
 
+      // Initialize cannons with synced firing time
       allCannonsRef.current = initialCannonsFromServer.map((c) => ({
         id: c.id,
         pos: { x: c.x, y: c.y },
         angle: 0,
-        lastShot: performance.now() + CANNON_FIRE_INTERVAL,
+        lastShot: syncedLastShot, 
         spawnTime: c.spawnTime,
       }));
     },
     [miniGameId, resetGame]
   );
 
-  // Initialize game
+  // --- Init Game ---
   useEffect(() => {
-    if (miniGameStartSignal && gameState === "waiting") {
-      console.log(
-        "[IslandGame] Received miniGameStartSignal:",
-        miniGameStartSignal
-      );
+    if (miniGameStartSignal && (gameState === "waiting" || activeCannons.length === 0)) {
       if (miniGameStartSignal.cannons) {
-        const deadFlag =
-          miniGameId &&
-          sessionStorage.getItem(`miniGameDead-${miniGameId}`) === "true";
-        startGame(miniGameStartSignal.cannons, { spectateOnly: !!deadFlag });
-      } else {
-        console.error(
-          "[IslandGame] ERROR: miniGameStartSignal has no cannons property!"
-        );
+        const deadFlag = sessionStorage.getItem(`miniGameDead-${miniGameId}`) === "true";
+        startGame(miniGameStartSignal.cannons, miniGameStartSignal.startTime, { spectateOnly: !!deadFlag });
       }
     }
   }, [miniGameStartSignal, gameState, startGame, miniGameId]);
 
-  // Cannon Spawning Logic
+  // --- Cannon Spawning Logic (React State: Low Frequency) ---
   useEffect(() => {
-    if (
-      (gameState !== "playing" && gameState !== "spectating") ||
-      !allCannonsRef.current.length ||
-      miniGameTimer === null
-    )
-      return;
+    if ((gameState !== "playing" && gameState !== "spectating") || !allCannonsRef.current.length || miniGameTimer === null) return;
 
-    const shouldBeActive = allCannonsRef.current.filter((c) => {
-      return miniGameTimer <= c.spawnTime;
-    });
-
-    setActiveCannons((prevCannons) => {
-      const prevMap = new Map(prevCannons.map((c) => [c.id, c]));
-      const targetIds = new Set(shouldBeActive.map((c) => c.id));
-
-      const newList = shouldBeActive.map((c) => {
-        const existing = prevMap.get(c.id);
-        return existing || { ...c };
-      });
-
-      const finalFilteredList = newList.filter((c) => targetIds.has(c.id));
-
-      if (finalFilteredList.length !== prevCannons.length) {
-        return finalFilteredList;
+    const shouldBeActive = allCannonsRef.current.filter(c => miniGameTimer <= c.spawnTime);
+    
+    setActiveCannons(prev => {
+      const prevIds = new Set(prev.map(c => c.id));
+      const newIds = new Set(shouldBeActive.map(c => c.id));
+      if (prev.length === shouldBeActive.length && [...newIds].every(id => prevIds.has(id))) {
+          return prev;
       }
-      for (let i = 0; i < finalFilteredList.length; i++) {
-        if (finalFilteredList[i].id !== prevCannons[i].id) {
-          return finalFilteredList;
-        }
-      }
-
-      return prevCannons;
+      return shouldBeActive; // Only update state if the LIST of cannons changes
     });
   }, [miniGameTimer, gameState]);
 
-  // Server Snapshot Handling
-  useEffect(() => {
-    if (lastMiniGameMessage && lastMiniGameMessage.players) {
-      const deadUids = lastMiniGameMessage.deadUids || [];
-      const deadPlayers = lastMiniGameMessage.deadPlayers || [];
-
-      if (Array.isArray(deadUids)) {
-        for (const uid of deadUids) {
-          deadUidsRef.current.add(uid);
-          if (otherPlayersRef.current[uid]) {
-            const clone = { ...otherPlayersRef.current };
-            delete clone[uid];
-            otherPlayersRef.current = clone;
-          }
-        }
-
-        const myUid = auth.currentUser?.uid;
-        if (myUid && deadUidsRef.current.has(myUid)) {
-          if (!isDeadRef.current) {
-            setIsDead(true);
-            isDeadRef.current = true;
-            setGameState("spectating");
-            const saved = sessionStorage.getItem(
-              `miniGameGhostPos-${miniGameId}`
-            );
-            if (saved) {
-              try {
-                const gp = JSON.parse(saved);
-                if (gp && typeof gp.x === "number") {
-                  setGhostPos(gp);
-                  ghostsRef.current[myUid] = gp;
-                }
-              } catch {}
-            }
-            sessionStorage.setItem(`miniGameDead-${miniGameId}`, "true");
-          }
-        } else if (gameState === "waiting") {
-          setGameState("playing");
-        }
-      }
-
-      if (Array.isArray(deadPlayers)) {
-        for (const dp of deadPlayers) {
-          if (dp && typeof dp.uid === "string" && typeof dp.x === "number") {
-            ghostsRef.current[dp.uid] = { x: dp.x, y: dp.y };
-          }
-        }
-      }
-    }
-  }, [lastMiniGameMessage, miniGameId, gameState]);
-
-  const gameLoop = useCallback(
-    (timestamp) => {
-      if (
-        gameStateRef.current !== "playing" &&
-        gameStateRef.current !== "spectating"
-      ) {
+  // --- GAME LOOP (High Frequency) ---
+  const gameLoop = useCallback((timestamp) => {
+      if (gameStateRef.current !== "playing" && gameStateRef.current !== "spectating") {
         cancelAnimationFrame(gameLoopRef.current);
         return;
       }
-
       if (!lastTimeRef.current) lastTimeRef.current = timestamp;
-      lastTimeRef.current = timestamp;
-
+      
+      // 1. Player Movement
       if (!isDeadRef.current) {
         let newPos = { ...playerPosRef.current };
         let newDirection = playerDirectionRef.current;
         let moved = false;
-        const speed = PLAYER_SPEED;
+        let hMove = 0, vMove = 0;
 
-        let horizontalMove = 0;
-        let verticalMove = 0;
+        if (keysDownRef.current["ArrowLeft"] || keysDownRef.current["a"]) hMove = -1;
+        else if (keysDownRef.current["ArrowRight"] || keysDownRef.current["d"]) hMove = 1;
+        if (keysDownRef.current["ArrowUp"] || keysDownRef.current["w"]) vMove = -1;
+        else if (keysDownRef.current["ArrowDown"] || keysDownRef.current["s"]) vMove = 1;
 
-        if (keysDownRef.current["ArrowLeft"] || keysDownRef.current["a"]) {
-          horizontalMove = -1;
-        } else if (
-          keysDownRef.current["ArrowRight"] ||
-          keysDownRef.current["d"]
-        ) {
-          horizontalMove = 1;
-        }
+        if (vMove !== 0) { newPos.y += vMove * PLAYER_SPEED; moved = true; newDirection = vMove === -1 ? "back" : "front"; }
+        if (hMove !== 0) { newPos.x += hMove * PLAYER_SPEED; moved = true; if (vMove === 0) newDirection = hMove === -1 ? "left" : "right"; }
 
-        if (keysDownRef.current["ArrowUp"] || keysDownRef.current["w"]) {
-          verticalMove = -1;
-        } else if (
-          keysDownRef.current["ArrowDown"] ||
-          keysDownRef.current["s"]
-        ) {
-          verticalMove = 1;
-        }
-
-        if (verticalMove !== 0) {
-          newPos.y += verticalMove * speed;
-          moved = true;
-          newDirection = verticalMove === -1 ? "back" : "front";
-        }
-        if (horizontalMove !== 0) {
-          newPos.x += horizontalMove * speed;
-          moved = true;
-          if (verticalMove === 0) {
-            newDirection = horizontalMove === -1 ? "left" : "right";
-          }
-        }
-
-        const distFromCenter = Math.sqrt(
-          Math.pow(newPos.x - BOARD_SIZE / 2, 2) +
-            Math.pow(newPos.y - BOARD_SIZE / 2, 2)
-        );
-        if (distFromCenter > ISLAND_RADIUS - 0.5) {
-          const angle = Math.atan2(
-            newPos.y - BOARD_SIZE / 2,
-            newPos.x - BOARD_SIZE / 2
-          );
+        // Boundary check (circle)
+        const dist = Math.sqrt(Math.pow(newPos.x - BOARD_SIZE / 2, 2) + Math.pow(newPos.y - BOARD_SIZE / 2, 2));
+        if (dist > ISLAND_RADIUS - 0.5) {
+          const angle = Math.atan2(newPos.y - BOARD_SIZE / 2, newPos.x - BOARD_SIZE / 2);
           newPos.x = BOARD_SIZE / 2 + (ISLAND_RADIUS - 0.5) * Math.cos(angle);
           newPos.y = BOARD_SIZE / 2 + (ISLAND_RADIUS - 0.5) * Math.sin(angle);
         }
 
         if (moved) {
-          if (newDirection !== playerDirectionRef.current) {
-            setPlayerDirection(newDirection);
+          if (newDirection !== playerDirectionRef.current) setPlayerDirection(newDirection);
+          if (!walkIntervalRef.current) walkIntervalRef.current = setInterval(() => setWalkFrame(w => !w), 200);
+          
+          if (timestamp - lastPositionUpdateTime.current > POSITION_UPDATE_INTERVAL) {
+             sendIslandGamePosition(miniGameId, newPos);
+             lastPositionUpdateTime.current = timestamp;
           }
-
-          if (!walkIntervalRef.current) {
-            walkIntervalRef.current = setInterval(() => {
-              setWalkFrame((wf) => !wf);
-            }, 200);
-          }
-
-          const lastPos = lastPositionSentRef.current;
-          const distMoved = Math.sqrt(
-            Math.pow(newPos.x - lastPos.x, 2) +
-              Math.pow(newPos.y - lastPos.y, 2)
-          );
-
-          // [OPTIMIZATION] Throttle network updates
-          const timeSinceLastUpdate =
-            timestamp - lastPositionUpdateTime.current;
-          if (
-            distMoved > 0.3 &&
-            timeSinceLastUpdate > POSITION_UPDATE_INTERVAL
-          ) {
-            sendIslandGamePosition(miniGameId, newPos);
-            lastPositionSentRef.current = newPos;
-            lastPositionUpdateTime.current = timestamp;
-          }
-
           setPlayerPos(newPos);
         } else {
-          if (walkIntervalRef.current) {
-            clearInterval(walkIntervalRef.current);
-            walkIntervalRef.current = null;
-            setWalkFrame(false);
-          }
+           if(walkIntervalRef.current) { clearInterval(walkIntervalRef.current); walkIntervalRef.current = null; setWalkFrame(false); }
         }
       }
 
-      // Only update cannons if angle changes significantly or a shot is fired
-      const updatedCannonsFromRef = activeCannonRef.current.map((c) => {
-        const allPlayerPos = { ...otherPlayersRef.current };
+      // 2. Cannon Logic (Direct DOM & Ref updates)
+      // We iterate over activeCannons from STATE (spawned), but update their data in REF
+      const active = allCannonsRef.current.filter(c => activeCannons.some(ac => ac.id === c.id));
+      
+      active.forEach(c => {
+          // Targeting
+          let closest = null, minDist = Infinity;
+          const playersToCheck = { ...otherPlayersRef.current };
+          if(!isDeadRef.current && auth.currentUser?.uid) playersToCheck[auth.currentUser.uid] = playerPosRef.current;
 
-        for (const uid of deadUidsRef.current) {
-          delete allPlayerPos[uid];
-        }
-
-        if (!isDeadRef.current && auth.currentUser?.uid) {
-          allPlayerPos[auth.currentUser.uid] = playerPosRef.current;
-        }
-
-        let closestPlayer = null;
-        let minDistance = Infinity;
-
-        for (const uid in allPlayerPos) {
-          const pos = allPlayerPos[uid];
-          if (!pos) continue;
-          const distance = Math.sqrt(
-            Math.pow(pos.x - c.pos.x, 2) + Math.pow(pos.y - c.pos.y, 2)
-          );
-          if (distance < minDistance) {
-            minDistance = distance;
-            closestPlayer = pos;
+          for(const uid in playersToCheck) {
+             if(deadUidsRef.current.has(uid)) continue;
+             const p = playersToCheck[uid];
+             const d = Math.hypot(p.x - c.pos.x, p.y - c.pos.y);
+             if(d < minDist) { minDist = d; closest = p; }
           }
-        }
 
-        let newAngle = c.angle;
-        if (closestPlayer) {
-          const targetAngle =
-            (Math.atan2(closestPlayer.y - c.pos.y, closestPlayer.x - c.pos.x) *
-              180) /
-            Math.PI;
-
-          // [OPTIMIZATION] Threshold check
-          if (Math.abs(targetAngle - c.angle) > CANNON_ANGLE_THRESHOLD) {
-            newAngle = targetAngle;
+          if(closest) {
+             const targetAngle = Math.atan2(closest.y - c.pos.y, closest.x - c.pos.x) * 180 / Math.PI;
+             if(Math.abs(targetAngle - c.angle) > CANNON_ANGLE_THRESHOLD) {
+                 c.angle = targetAngle;
+                 // Direct DOM update for rotation
+                 const el = cannonRefs.current[c.id];
+                 if(el) el.style.transform = `translate(-50%, -50%) rotate(${c.angle}deg)`;
+             }
           }
-        }
 
-        if (timestamp - c.lastShot > CANNON_FIRE_INTERVAL) {
-          const angleRad = newAngle * (Math.PI / 180);
-          const velocity = {
-            x: Math.cos(angleRad) * CANNONBALL_SPEED,
-            y: Math.sin(angleRad) * CANNONBALL_SPEED,
-          };
-          const newBall = {
-            id: cannonballIdRef.current++,
-            pos: { ...c.pos },
-            velocity,
-          };
-          cannonballsRef.current = [...cannonballsRef.current, newBall];
-          setCannonballs(cannonballsRef.current);
-          return { ...c, angle: newAngle, lastShot: timestamp };
-        }
-
-        // Only return a new object if something actually changed
-        if (newAngle !== c.angle) {
-          return { ...c, angle: newAngle };
-        }
-        return c;
+          // Firing
+          if(timestamp - c.lastShot > CANNON_FIRE_INTERVAL) {
+             const rad = c.angle * (Math.PI / 180);
+             cannonballsRef.current.push({
+                 id: cannonballIdRef.current++,
+                 pos: { ...c.pos },
+                 velocity: { x: Math.cos(rad) * CANNONBALL_SPEED, y: Math.sin(rad) * CANNONBALL_SPEED }
+             });
+             c.lastShot = timestamp;
+          }
       });
 
-      // [OPTIMIZATION] Check for changes before setting state
-      const cannonsChanged = updatedCannonsFromRef.some(
-        (c, i) =>
-          c.angle !== activeCannonRef.current[i]?.angle ||
-          c.lastShot !== activeCannonRef.current[i]?.lastShot
-      );
+      // 3. Cannonball Logic (Canvas Rendering)
+      const ctx = canvasRef.current?.getContext('2d');
+      if(ctx && canvasRef.current) {
+          ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+          ctx.fillStyle = "black";
+          
+          // Filter and update balls
+          cannonballsRef.current = cannonballsRef.current.filter(b => {
+              b.pos.x += b.velocity.x;
+              b.pos.y += b.velocity.y;
+              
+              // Draw
+              const screenX = b.pos.x * TILE_SIZE;
+              const screenY = b.pos.y * TILE_SIZE;
+              ctx.beginPath();
+              ctx.arc(screenX, screenY, 6, 0, 2 * Math.PI); // 6px radius
+              ctx.fill();
 
-      if (cannonsChanged) {
-        setActiveCannons((prevCannons) => {
-          const updatedMap = new Map(
-            updatedCannonsFromRef.map((c) => [c.id, c])
-          );
-          return prevCannons.map((prevCannon) => {
-            return updatedMap.get(prevCannon.id) || prevCannon;
+              // Local Collision
+              if (!isDeadRef.current && playerPosRef.current) {
+                  const pdx = b.pos.x - playerPosRef.current.x;
+                  const pdy = b.pos.y - playerPosRef.current.y;
+                  if(Math.sqrt(pdx*pdx + pdy*pdy) < 0.8) {
+                      setIsDead(true);
+                      setGameState("spectating");
+                      setGhostPos(playerPosRef.current);
+                      sendIslandGameDeath(miniGameId, playerPosRef.current);
+                      sessionStorage.setItem(`miniGameDead-${miniGameId}`, "true");
+                  }
+              }
+
+              // Remove if out of bounds
+              return b.pos.x > 0 && b.pos.x < BOARD_SIZE && b.pos.y > 0 && b.pos.y < BOARD_SIZE;
           });
-        });
-      }
-
-      // --- 3. Update Cannonballs and Check Collisions ---
-      const updatedBalls = cannonballsRef.current
-        .map((ball) => ({
-          ...ball,
-          pos: {
-            x: ball.pos.x + ball.velocity.x,
-            y: ball.pos.y + ball.velocity.y,
-          },
-        }))
-        .filter(
-          (ball) =>
-            ball.pos.x > 0 &&
-            ball.pos.x < BOARD_SIZE &&
-            ball.pos.y > 0 &&
-            ball.pos.y < BOARD_SIZE
-        );
-
-      if (!isDeadRef.current && playerPosRef.current) {
-        const localPlayerPos = playerPosRef.current;
-        for (const ball of updatedBalls) {
-          const dx = ball.pos.x - localPlayerPos.x;
-          const dy = ball.pos.y - localPlayerPos.y;
-          if (Math.sqrt(dx * dx + dy * dy) < 0.8) {
-            setIsDead(true);
-            isDeadRef.current = true;
-            setGameState("spectating");
-            setGhostPos(localPlayerPos);
-
-            if (walkIntervalRef.current) {
-              clearInterval(walkIntervalRef.current);
-              walkIntervalRef.current = null;
-              setWalkFrame(false);
-            }
-
-            const myUid = auth.currentUser?.uid;
-            if (myUid) {
-              ghostsRef.current[myUid] = localPlayerPos;
-            }
-            if (miniGameId) {
-              sessionStorage.setItem(`miniGameDead-${miniGameId}`, "true");
-              sessionStorage.setItem(
-                `miniGameGhostPos-${miniGameId}`,
-                JSON.stringify(localPlayerPos)
-              );
-            }
-            sendIslandGameDeath(miniGameId, localPlayerPos);
-            break;
-          }
-        }
-      }
-
-      cannonballsRef.current = updatedBalls;
-
-      // Only update if balls actually moved/changed (they always move, but this structure allows future optimization)
-      if (updatedBalls.length !== 0 || cannonballsRef.current.length !== 0) {
-        setCannonballs(updatedBalls);
       }
 
       gameLoopRef.current = requestAnimationFrame(gameLoop);
-    },
-    [miniGameId]
-  );
+  }, [miniGameId, activeCannons]);
 
-  // Event Listeners
+  // --- Event Listeners ---
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (
-        e.key === "ArrowUp" ||
-        e.key === "ArrowDown" ||
-        e.key === "ArrowLeft" ||
-        e.key === "ArrowRight"
-      ) {
-        e.preventDefault();
-      }
-      keysDownRef.current[e.key] = true;
-    };
-    const handleKeyUp = (e) => {
-      keysDownRef.current[e.key] = false;
-    };
-
-    const handleBlur = () => {
-      keysDownRef.current = {};
-      if (walkIntervalRef.current) {
-        clearInterval(walkIntervalRef.current);
-        walkIntervalRef.current = null;
-        setWalkFrame(false);
-      }
-    };
-
+    const handleKeyDown = (e) => { keysDownRef.current[e.key] = true; };
+    const handleKeyUp = (e) => { keysDownRef.current[e.key] = false; };
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
-    window.addEventListener("blur", handleBlur);
-
+    
     if (gameState === "playing" || gameState === "spectating") {
       lastTimeRef.current = performance.now();
       gameLoopRef.current = requestAnimationFrame(gameLoop);
     }
-
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
-      window.removeEventListener("blur", handleBlur);
       cancelAnimationFrame(gameLoopRef.current);
-      if (walkIntervalRef.current) {
-        clearInterval(walkIntervalRef.current);
-      }
     };
   }, [gameState, gameLoop]);
-
-  // Render Data
-  const otherPlayersArray = Object.entries(otherPlayersRef.current);
-  const ghostEntries = Object.entries(ghostsRef.current);
 
   return (
     <div className="mini-game-island" ref={stageRef}>
       {gameState === "waiting" ? (
         <>
-          <MiniGameReadyUp
-            gameTitle={gameTitle}
-            miniGamePlayers={miniGamePlayers}
-            miniGameId={miniGameId}
-          />
+          <MiniGameReadyUp gameTitle={gameTitle} miniGamePlayers={miniGamePlayers} miniGameId={miniGameId} />
           <IslandGameTutorial />
         </>
       ) : (
-        <>
-          <div className="stage" ref={stageRef}>
+        <div className="stage">
             <div className="board-scale" style={{ "--scale": scale }}>
-              <div
-                className="game-board"
-                style={{ width: BOARD_WIDTH, height: BOARD_HEIGHT }}
-              >
+              <div className="game-board" style={{ width: BOARD_WIDTH, height: BOARD_HEIGHT }}>
                 <Island />
+                
+                {/* Canvas for Projectiles */}
+                <canvas 
+                    ref={canvasRef} 
+                    width={BOARD_WIDTH} 
+                    height={BOARD_HEIGHT} 
+                    style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', zIndex: 15 }}
+                />
 
-                {/* Render Local Player */}
-                {!isDead && (
-                  <Player
-                    position={playerPos}
-                    playerIndex={localPlayerIndex}
-                    direction={playerDirection}
-                    walkFrame={walkFrame}
-                  />
-                )}
-
-                {/* Render Remote Players */}
-                {otherPlayersArray.map(([uid, posData]) => (
-                  <Player
-                    key={uid}
-                    position={posData}
-                    playerIndex={playerIndexMap.get(uid) ?? 0}
-                    direction={posData.direction || "front"}
-                    walkFrame={remoteWalkFrame}
-                  />
+                {/* Players */}
+                {!isDead && <Player position={playerPos} playerIndex={localPlayerIndex} direction={playerDirection} walkFrame={walkFrame} />}
+                {Object.entries(otherPlayersRef.current).map(([uid, posData]) => (
+                  <Player key={uid} position={posData} playerIndex={playerIndexMap.get(uid) ?? 0} direction={posData.direction || "front"} walkFrame={remoteWalkFrame} />
+                ))}
+                {Object.entries(ghostsRef.current).map(([uid, pos]) => (
+                  <PlayerGhost key={`ghost-${uid}`} position={pos} playerIndex={playerIndexMap.get(uid) ?? 0} />
                 ))}
 
-                {/* Ghosts for everyone (including my own) */}
-                {ghostEntries.map(([uid, pos]) => (
-                  <PlayerGhost
-                    key={`ghost-${uid}`}
-                    position={pos}
-                    playerIndex={playerIndexMap.get(uid) ?? 0}
-                  />
-                ))}
-
+                {/* Cannons - DOM based but updated via Ref */}
                 {activeCannons.map((c) => (
-                  <Cannon key={c.id} position={c.pos} rotation={c.angle} />
-                ))}
-
-                {cannonballs.map((b) => (
-                  <Cannonball key={b.id} position={b.pos} />
+                  <Cannon key={c.id} id={c.id} position={c.pos} rotationRef={cannonRefs} />
                 ))}
               </div>
             </div>
-          </div>
-
           <div className="game-timer">
-            Time: {Math.ceil(miniGameTimer < 0 ? 0 : miniGameTimer)}s | Cannons:{" "}
-            {activeCannons.length}/{allCannonsRef.current.length}
+            Time: {Math.ceil(miniGameTimer < 0 ? 0 : miniGameTimer)}s
           </div>
-        </>
+        </div>
       )}
     </div>
   );
