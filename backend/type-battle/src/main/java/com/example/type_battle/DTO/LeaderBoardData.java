@@ -1,8 +1,8 @@
 package com.example.type_battle.DTO;
 
 public class LeaderBoardData {
-    private String displayName;
-    private int gamesWon;
+    private final String displayName;
+    private final int gamesWon;
 
     public LeaderBoardData(String displayName, int gamesWon) {
         this.displayName = displayName;

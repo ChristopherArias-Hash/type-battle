@@ -2,6 +2,7 @@ package com.example.type_battle.controller;
 
 import com.example.type_battle.DTO.LeaderBoardData;
 import com.example.type_battle.DTO.LobbyResponseData;
+import com.example.type_battle.DTO.UserData;
 import com.example.type_battle.model.GameParticipants;
 import com.example.type_battle.model.GameSessions;
 import com.example.type_battle.model.Paragraphs;
@@ -117,8 +118,18 @@ public class UserController {
         Optional<User> userOpt = userRepository.findByFirebaseUid(uid);
 
         if (userOpt.isPresent()) {
-            return ResponseEntity.ok(userOpt.get());
+            User user = userOpt.get();
 
+            //Send data to DTO
+            UserData userData = new UserData(
+                    user.getDisplayName(),
+                    user.getGamesPlayed(),
+                    user.getGamesWon(),
+                    user.getHighestWpm(),
+                    user.getImageUrl()
+            );
+
+            return ResponseEntity.ok(userData);
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         }

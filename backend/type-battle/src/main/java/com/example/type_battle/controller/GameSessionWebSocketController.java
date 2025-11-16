@@ -2,6 +2,7 @@ package com.example.type_battle.controller;
 
 import com.example.type_battle.DTO.CrossyRoadPositionData;
 import com.example.type_battle.DTO.IslandGamePositionData;
+import com.example.type_battle.DTO.ParagraphData;
 import com.example.type_battle.model.*;
 import com.example.type_battle.repository.*;
 import com.example.type_battle.service.CrossyRoadSetupService;
@@ -382,10 +383,11 @@ public class GameSessionWebSocketController {
         messagingTemplate.convertAndSend("/topic/lobby/" + sessionId, allParticipants);
         System.out.println("[WebSocket] Sent updated participant list to lobby " + sessionId + " (" + allParticipants.size() + " participants)");
         // Grabs paragraph from session then sends it to the game lobby
-        System.out.println(session.getParagraph());
         Paragraphs paragraph = session.getParagraph();
         if (paragraph != null) {
-            messagingTemplate.convertAndSend("/topic/game/" + sessionId, paragraph);
+            ParagraphData paragraphData = new ParagraphData(paragraph.getText());
+
+            messagingTemplate.convertAndSend("/topic/game/" + sessionId, paragraphData);
         } else {
             System.out.println("[WebSocket] WARNING: Session has no paragraph assigned.");
         }
