@@ -1,8 +1,6 @@
 package com.example.type_battle.controller;
 
-import com.example.type_battle.DTO.LeaderBoardData;
-import com.example.type_battle.DTO.LobbyResponseData;
-import com.example.type_battle.DTO.UserData;
+import com.example.type_battle.DTO.*;
 import com.example.type_battle.model.GameParticipants;
 import com.example.type_battle.model.GameSessions;
 import com.example.type_battle.model.Paragraphs;
@@ -167,7 +165,26 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Session already started");
         }
 
-        return ResponseEntity.ok(session);
+        ParagraphData paragraphData = new ParagraphData(
+                session.getParagraph().getText()
+        );
+
+        HostUserData hostUserData = new HostUserData(
+                session.getHostUser().getDisplayName(),
+                session.getHostUser().getFirebaseUid(),
+                session.getHostUser().getImageUrl()
+
+        );
+        GameSessionData gameSessionData = new GameSessionData(
+                session.getGameDuration(),
+                session.getGameStartTime(),
+                session.getLobbyCode(),
+                session.getPlayersInLobby(),
+                session.getStatus(),
+                paragraphData,
+                hostUserData
+        );
+        return ResponseEntity.ok(gameSessionData);
     }
 
 

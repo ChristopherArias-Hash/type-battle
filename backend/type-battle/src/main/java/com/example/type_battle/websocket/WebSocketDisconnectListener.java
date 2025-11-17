@@ -54,8 +54,6 @@ public class WebSocketDisconnectListener {
         User user = userOpt.get();
 
         try {
-            // ✨ FIX: Only fetch participants where the session is "waiting"
-            // This replaces findAllByUser(user) which was causing the N+1 spam
             List<GameParticipants> participantList = participantsRepository.findByUserAndGameSessions_Status(user, "waiting");
 
             if (participantList.isEmpty()) {
