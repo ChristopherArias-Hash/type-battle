@@ -104,7 +104,7 @@ public class UserController {
 
         GameSessions savedSession = sessionRepository.save(newSession);
 
-        return ResponseEntity.ok(new LobbyResponseData(savedSession.getId(), savedSession.getStatus(), savedSession.getLobbyCode()));
+        return ResponseEntity.ok(new LobbyResponseData(savedSession.getStatus(), savedSession.getLobbyCode()));
     }
 
     //Grabs user info, checks for uid first.
