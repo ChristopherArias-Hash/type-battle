@@ -1,5 +1,5 @@
 // LobbyParticipantDTO.java
-package com.example.type_battle.DTO;
+package com.example.type_battle.dto.main_game;
 
 public class LobbyParticipantData {
     private String displayName;

@@ -1,6 +1,11 @@
 package com.example.type_battle.controller;
 
-import com.example.type_battle.DTO.*;
+import com.example.type_battle.dto.home.LeaderBoardData;
+import com.example.type_battle.dto.home.UserData;
+import com.example.type_battle.dto.main_game.GameSessionData;
+import com.example.type_battle.dto.main_game.HostUserData;
+import com.example.type_battle.dto.main_game.LobbyResponseData;
+import com.example.type_battle.dto.main_game.ParagraphData;
 import com.example.type_battle.model.GameParticipants;
 import com.example.type_battle.model.GameSessions;
 import com.example.type_battle.model.Paragraphs;

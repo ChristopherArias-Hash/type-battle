@@ -1,8 +1,8 @@
-package com.example.type_battle.DTO;
+package com.example.type_battle.dto.main_game;
 
 public class GameSessionData {
     private final Integer gameDuration;
-    private final Long gameStartTime; // ✅ Allow null safely
+    private final Long gameStartTime;
     private final String lobbyCode;
     private final int playersInLobby;
     private final String status;

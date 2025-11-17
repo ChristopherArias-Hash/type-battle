@@ -1,5 +1,5 @@
 // LobbyUpdateDTO.java
-package com.example.type_battle.DTO;
+package com.example.type_battle.dto.main_game;
 
 import java.util.List;
 

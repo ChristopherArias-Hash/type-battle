@@ -1,7 +1,7 @@
 package com.example.type_battle.controller;
 
-import com.example.type_battle.DTO.CrossyRoadPositionData;
-import com.example.type_battle.DTO.IslandGamePositionData;
+import com.example.type_battle.dto.mini_games.crossy_road.CrossyRoadPositionData;
+import com.example.type_battle.dto.mini_games.island_game.IslandGamePositionData;
 import com.example.type_battle.model.MiniGameParticipants;
 import com.example.type_battle.model.MiniGameSession;
 import com.example.type_battle.model.User;

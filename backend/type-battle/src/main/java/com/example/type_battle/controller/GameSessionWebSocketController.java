@@ -1,12 +1,12 @@
 package com.example.type_battle.controller;
 
-import com.example.type_battle.DTO.*;
+import com.example.type_battle.dto.main_game.LobbyParticipantData;
+import com.example.type_battle.dto.main_game.LobbyUpdateData;
+import com.example.type_battle.dto.main_game.ParagraphData;
+import com.example.type_battle.dto.main_game.StrokeData;
 import com.example.type_battle.model.*;
 import com.example.type_battle.repository.*;
-import com.example.type_battle.service.CrossyRoadSetupService;
 import com.example.type_battle.service.GameTimerService;
-import com.example.type_battle.service.IslandGameSetupService;
-import com.example.type_battle.service.ObstacleGenerationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;

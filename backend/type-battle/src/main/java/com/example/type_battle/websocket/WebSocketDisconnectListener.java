@@ -1,7 +1,7 @@
 package com.example.type_battle.websocket;
 
-import com.example.type_battle.DTO.LobbyParticipantData;
-import com.example.type_battle.DTO.LobbyUpdateData;
+import com.example.type_battle.dto.main_game.LobbyParticipantData;
+import com.example.type_battle.dto.main_game.LobbyUpdateData;
 import com.example.type_battle.model.GameParticipants;
 import com.example.type_battle.model.GameSessions;
 import com.example.type_battle.model.User;
@@ -18,7 +18,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @Component

@@ -1,8 +1,5 @@
 // backend/type-battle/src/main/java/com/example/type_battle/DTO/IslandGameStateData.java
-package com.example.type_battle.DTO;
-
-import java.util.List;
-import java.util.Map;
+package com.example.type_battle.dto.mini_games.island_game;
 
 public class IslandGameStateData {
 

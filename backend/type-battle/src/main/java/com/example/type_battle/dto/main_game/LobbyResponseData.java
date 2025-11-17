@@ -1,4 +1,4 @@
-package com.example.type_battle.DTO;
+package com.example.type_battle.dto.main_game;
 
 public class LobbyResponseData {
     private String status;

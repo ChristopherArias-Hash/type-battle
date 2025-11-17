@@ -1,4 +1,4 @@
-package com.example.type_battle.DTO;
+package com.example.type_battle.dto.home;
 
 public class LeaderBoardData {
     private final String displayName;

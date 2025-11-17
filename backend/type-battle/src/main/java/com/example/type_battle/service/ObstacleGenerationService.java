@@ -2,7 +2,7 @@
 
 package com.example.type_battle.service;
 
-import com.example.type_battle.DTO.ObstacleData;
+import com.example.type_battle.dto.mini_games.crossy_road.ObstacleData;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
