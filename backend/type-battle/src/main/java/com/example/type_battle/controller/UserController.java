@@ -1,7 +1,11 @@
 package com.example.type_battle.controller;
 
-import com.example.type_battle.DTO.LeaderBoardData;
-import com.example.type_battle.DTO.LobbyResponseData;
+import com.example.type_battle.dto.home.LeaderBoardData;
+import com.example.type_battle.dto.home.UserData;
+import com.example.type_battle.dto.main_game.GameSessionData;
+import com.example.type_battle.dto.main_game.HostUserData;
+import com.example.type_battle.dto.main_game.LobbyResponseData;
+import com.example.type_battle.dto.main_game.ParagraphData;
 import com.example.type_battle.model.GameParticipants;
 import com.example.type_battle.model.GameSessions;
 import com.example.type_battle.model.Paragraphs;
@@ -103,7 +107,7 @@ public class UserController {
 
         GameSessions savedSession = sessionRepository.save(newSession);
 
-        return ResponseEntity.ok(new LobbyResponseData(savedSession.getId(), savedSession.getStatus(), savedSession.getLobbyCode()));
+        return ResponseEntity.ok(new LobbyResponseData(savedSession.getStatus(), savedSession.getLobbyCode()));
     }
 
     //Grabs user info, checks for uid first.
@@ -117,8 +121,18 @@ public class UserController {
         Optional<User> userOpt = userRepository.findByFirebaseUid(uid);
 
         if (userOpt.isPresent()) {
-            return ResponseEntity.ok(userOpt.get());
+            User user = userOpt.get();
 
+            //Send data to DTO
+            UserData userData = new UserData(
+                    user.getDisplayName(),
+                    user.getGamesPlayed(),
+                    user.getGamesWon(),
+                    user.getHighestWpm(),
+                    user.getImageUrl()
+            );
+
+            return ResponseEntity.ok(userData);
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         }
@@ -156,7 +170,26 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Session already started");
         }
 
-        return ResponseEntity.ok(session);
+        ParagraphData paragraphData = new ParagraphData(
+                session.getParagraph().getText()
+        );
+
+        HostUserData hostUserData = new HostUserData(
+                session.getHostUser().getDisplayName(),
+                session.getHostUser().getFirebaseUid(),
+                session.getHostUser().getImageUrl()
+
+        );
+        GameSessionData gameSessionData = new GameSessionData(
+                session.getGameDuration(),
+                session.getGameStartTime(),
+                session.getLobbyCode(),
+                session.getPlayersInLobby(),
+                session.getStatus(),
+                paragraphData,
+                hostUserData
+        );
+        return ResponseEntity.ok(gameSessionData);
     }
 
 

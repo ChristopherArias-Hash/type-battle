@@ -18,4 +18,5 @@ public interface GameParticipantsRepository extends JpaRepository<GameParticipan
     Optional<GameParticipants> findByGameSessionsAndUser(GameSessions session, User user);
 
     List<GameParticipants> findAllByUser(User user);
-}
+
+    List<GameParticipants> findByUserAndGameSessions_Status(User user, String status);}

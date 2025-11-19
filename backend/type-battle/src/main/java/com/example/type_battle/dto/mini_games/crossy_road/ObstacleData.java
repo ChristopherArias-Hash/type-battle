@@ -1,4 +1,4 @@
-package com.example.type_battle.DTO;
+package com.example.type_battle.dto.mini_games.crossy_road;
 
 // A simple DTO to represent an obstacle's state for the client.
 public class ObstacleData {

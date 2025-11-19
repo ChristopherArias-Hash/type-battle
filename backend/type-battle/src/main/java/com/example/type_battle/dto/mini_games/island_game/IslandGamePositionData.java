@@ -1,4 +1,4 @@
-package com.example.type_battle.DTO;
+package com.example.type_battle.dto.mini_games.island_game;
 
 public class IslandGamePositionData {
     private String uid;

@@ -1,15 +1,13 @@
 package com.example.type_battle.controller;
 
-import com.example.type_battle.DTO.CrossyRoadPositionData;
-import com.example.type_battle.DTO.IslandGamePositionData;
+import com.example.type_battle.dto.main_game.LobbyParticipantData;
+import com.example.type_battle.dto.main_game.LobbyUpdateData;
+import com.example.type_battle.dto.main_game.ParagraphData;
+import com.example.type_battle.dto.main_game.StrokeData;
 import com.example.type_battle.model.*;
 import com.example.type_battle.repository.*;
-import com.example.type_battle.service.CrossyRoadSetupService;
 import com.example.type_battle.service.GameTimerService;
-import com.example.type_battle.service.IslandGameSetupService;
-import com.example.type_battle.service.ObstacleGenerationService;
 import org.springframework.beans.factory.annotation.Autowired;
-import com.example.type_battle.DTO.StrokeData;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -31,22 +29,13 @@ public class GameSessionWebSocketController {
     private UserRepository userRepository;
     @Autowired
     private ParagraphsRepository paragraphsRepository;
-    @Autowired
-    private MiniGameSessionRepository miniGameSessionRepository;
-    @Autowired
-    private MiniGameParticipantsRepository miniGameParticipantRepository;
+
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
     @Autowired
     private GameTimerService gameTimerService;
-    @Autowired
-    private ObstacleGenerationService obstacleGenerationService;
-    @Autowired
-    private IslandGameSetupService islandGameSetupService;
-    @Autowired
-    private CrossyRoadSetupService crossyRoadSetupService;
 
-    //Function to grab UID, to test if user is auth
+    // Function to grab UID, to test if user is auth
     private String resolveUid(SimpMessageHeaderAccessor headerAccessor) {
         String uid = (String) headerAccessor.getSessionAttributes().get("uid");
         if (uid == null) {
@@ -58,198 +47,103 @@ public class GameSessionWebSocketController {
         return uid;
     }
 
-    @MessageMapping("mini_game/ready_up/{miniGameSessionId}")
-    public void readyUp(@DestinationVariable Long miniGameSessionId, SimpMessageHeaderAccessor headerAccessor) {
+    /**
+     * Helper function to consistently send LobbyUpdateData DTO
+     */
+    private void sendLobbyUpdate(GameSessions session) {
+        List<GameParticipants> participants = participantsRepository.findAllByGameSessions(session);
+
+        List<LobbyParticipantData> lobbyParticipantData = participants.stream()
+                .map(p -> new LobbyParticipantData(
+                        p.getUser().getDisplayName(),
+                        p.getUser().getImageUrl(),
+                        p.getUser().getFirebaseUid(),
+                        p.isReady(),
+                        p.getScore()
+                ))
+                .toList();
+
+        LobbyUpdateData lobbyUpdateData = new LobbyUpdateData(
+                session.getLobbyCode(),
+                lobbyParticipantData.size(),
+                session.getHostUser().getFirebaseUid(),
+                lobbyParticipantData
+        );
+
+        // --- FIX ADDED HERE: Send the data to the topic ---
+        messagingTemplate.convertAndSend("/topic/lobby/" + session.getLobbyCode(), lobbyUpdateData);
+        System.out.println("[WebSocket] Sent LobbyUpdateData to " + session.getLobbyCode());
+    }
+
+    @MessageMapping("/join/{sessionId}")
+    public void joinGame(@DestinationVariable String sessionId, SimpMessageHeaderAccessor headerAccessor) {
         String uid = resolveUid(headerAccessor);
-        if (uid == null) {
-            System.out.println("[WebSocket] handlePlayerReadyUp called with no UID available!");
-            return;
-        }
-        Optional<MiniGameSession> sessionOpt = miniGameSessionRepository.findById(miniGameSessionId);
+        if (uid == null) return;
+
+        Optional<GameSessions> sessionOpt = sessionRepository.findByLobbyCode(sessionId);
         Optional<User> userOpt = userRepository.findByFirebaseUid(uid);
-        if (sessionOpt.isEmpty() || userOpt.isEmpty()) {
-            System.out.println("[WebSocket] User or Session not available");
-            return;
-        }
-        MiniGameSession miniGameSession = sessionOpt.get();
+
+        if (sessionOpt.isEmpty() || userOpt.isEmpty()) return;
+
+        GameSessions session = sessionOpt.get();
         User user = userOpt.get();
-        Optional<MiniGameParticipants> participantOpt = miniGameParticipantRepository.findByMiniGameSessionAndUser(miniGameSession, user);
+
+        Optional<GameParticipants> participantOpt = participantsRepository.findByGameSessionsAndUser(session, user);
+
         if (participantOpt.isEmpty()) {
-            System.out.println("[WebSocket] Participant not available");
-            return;
+            if (session.getPlayersInLobby() >= 4) return;
+
+            session.setPlayersInLobby(session.getPlayersInLobby() + 1);
+            sessionRepository.save(session);
+
+            GameParticipants participant = new GameParticipants();
+            participant.setReady(false);
+            participant.setGameSessions(session);
+            participant.setUser(user);
+            participant.setScore(0);
+            participantsRepository.save(participant);
         }
-        MiniGameParticipants miniGameParticipant = participantOpt.get();
-        miniGameParticipant.setIs_ready(true);
-        miniGameParticipantRepository.save(miniGameParticipant);
 
-        List<MiniGameParticipants> allParticipants = miniGameParticipantRepository.findAllByMiniGameSession(miniGameSession);
-        messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId, allParticipants);
+        // Send the update using the helper
+        sendLobbyUpdate(session);
 
-
-        boolean everyoneReady = allParticipants.stream().allMatch(MiniGameParticipants::isIs_ready);
-        if (everyoneReady) {
-            miniGameSession.setStatus("in_progress");
-            miniGameSessionRepository.save(miniGameSession);
-            System.out.println("All players ready! Starting mini-game: " + miniGameSession.getId());
-            gameTimerService.startMiniGameTimer(miniGameSessionId);
-
-            Map<String, Object> gameStartMessage = new HashMap<>();
-            gameStartMessage.put("type", "mini_game_start");
-            gameStartMessage.put("startTime", System.currentTimeMillis());
-
-            // FIX: Only generate setup data for the specific mini-game type
-            Long miniGameTypeId = miniGameSession.getMiniGames().getId();
-
-         /*   if (miniGameTypeId == 3L) {
-                // Island Game
-                gameStartMessage.put("cannons", islandGameSetupService.generateInitialCannons());
-            } else if (miniGameTypeId == 2L) {
-                // Crossy Road
-                gameStartMessage.put("obstacles", obstacleGenerationService.generateObstacles());
-                gameStartMessage.put("initialPositions", crossyRoadSetupService.generateInitialPositions(allParticipants));
-            }
-            // Stacker (id == 1) doesn't need any setup data*/
-
-            gameStartMessage.put("cannons", islandGameSetupService.generateInitialCannons());
-            gameStartMessage.put("obstacles", obstacleGenerationService.generateObstacles());
-            gameStartMessage.put("initialPositions", crossyRoadSetupService.generateInitialPositions(allParticipants));
-            messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId, gameStartMessage);
+        // Send paragraph if applicable
+        Paragraphs paragraph = session.getParagraph();
+        if (paragraph != null) {
+            messagingTemplate.convertAndSend("/topic/game/" + sessionId, new ParagraphData(paragraph.getText()));
         }
     }
-    @MessageMapping("/mini_game/crossy_road/position/{miniGameSessionId}")
-    public void handleCrossyRoadPosition(@DestinationVariable Long miniGameSessionId, @Payload CrossyRoadPositionData positionData, SimpMessageHeaderAccessor headerAccessor) {
-        String uid = resolveUid(headerAccessor);
-        if (uid == null) {
-            return;
-        }
-        positionData.setUid(uid);
-        messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId, Map.of("type", "crossy_road_position_update", "data", positionData));
-    }
 
-    @MessageMapping("/mini_game/island_game/position/{miniGameSessionId}")
-    public void handleIslandGamePosition(@DestinationVariable Long miniGameSessionId, @Payload IslandGamePositionData positionData, SimpMessageHeaderAccessor headerAccessor) {
-        String uid = resolveUid(headerAccessor);
-        if (uid == null) {
-            return;
-        }
-
-        // NEW: Ignore movement from dead players (prevents refresh "revive")
-        Optional<MiniGameSession> mgSessionOpt = miniGameSessionRepository.findById(miniGameSessionId);
-        Optional<User> userOpt = userRepository.findByFirebaseUid(uid);
-        if (mgSessionOpt.isEmpty() || userOpt.isEmpty()) {
-            return;
-        }
-        Optional<MiniGameParticipants> mgpOpt = miniGameParticipantRepository.findByMiniGameSessionAndUser(mgSessionOpt.get(), userOpt.get());
-        if (mgpOpt.isPresent()) {
-            MiniGameParticipants mgp = mgpOpt.get();
-            if (gameTimerService.isMiniGameParticipantDead(miniGameSessionId, mgp.getId())) {
-                // Player is dead; drop update.
-                return;
-            }
-        }
-
-        positionData.setUid(uid);
-        messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId, Map.of("type", "island_game_position_update", "data", positionData));
-    }
-
-    // NEW: Player declares elimination (death) in the Island mini-game, and sends ghost position
-    @MessageMapping("/mini_game/island_game/death/{miniGameSessionId}")
-    public void handleIslandGameDeath(@DestinationVariable Long miniGameSessionId,
-                                      SimpMessageHeaderAccessor headerAccessor,
-                                      @Payload Map<String, Object> payload) {
-        String uid = resolveUid(headerAccessor);
-        if (uid == null) {
-            System.out.println("[WebSocket] handleIslandGameDeath called with no UID available!");
-            return;
-        }
-
-        Optional<User> userOpt = userRepository.findByFirebaseUid(uid);
-        Optional<MiniGameSession> miniGameSessionOpt = miniGameSessionRepository.findById(miniGameSessionId);
-        if (userOpt.isEmpty() || miniGameSessionOpt.isEmpty()) {
-            System.out.println("[WebSocket] User or MiniGameSession not found!");
-            return;
-        }
-
-        User user = userOpt.get();
-        MiniGameSession miniGameSession = miniGameSessionOpt.get();
-
-        Optional<MiniGameParticipants> miniGameParticipantsOpt = miniGameParticipantRepository.findByMiniGameSessionAndUser(miniGameSession, user);
-        if (miniGameParticipantsOpt.isEmpty()) {
-            System.out.println("[WebSocket] MiniGameParticipants not found!");
-            return;
-        }
-
-        MiniGameParticipants miniGameParticipants = miniGameParticipantsOpt.get();
-        gameTimerService.markMiniGameParticipantDead(miniGameSessionId, miniGameParticipants.getId());
-
-        // NEW: record ghost position from payload if present
-        double x = 0.0;
-        double y = 0.0;
-        if (payload != null) {
-            try {
-                Number nx = (Number) payload.get("x");
-                Number ny = (Number) payload.get("y");
-                if (nx != null && ny != null) {
-                    x = nx.doubleValue();
-                    y = ny.doubleValue();
-                    gameTimerService.recordMiniGameGhostPosition(miniGameSessionId, user.getFirebaseUid(), x, y);
-                }
-            } catch (Exception ignored) {}
-        }
-
-        // Broadcast a death event so clients can stop rendering/targeting this player AND show ghost
-        Map<String, Object> msg = new HashMap<>();
-        msg.put("type", "island_game_death");
-        msg.put("uid", user.getFirebaseUid());
-        msg.put("x", x);
-        msg.put("y", y);
-        messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId, msg);
-
-        System.out.println("[WebSocket] Marked player as dead in mini-game " + miniGameSessionId + ": " + user.getDisplayName());
-    }
-
-    //Listener that handles ready up of all users.
     @MessageMapping("/ready_up/{sessionId}")
     public void handlePlayerReadyUp(@DestinationVariable String sessionId, SimpMessageHeaderAccessor headerAccessor) {
         String uid = resolveUid(headerAccessor);
-        if (uid == null) {
-            System.out.println("[WebSocket] handlePlayerReadyUp called with no UID available!");
-            return;
-        }
-        //Check if session or user is real
+        if (uid == null) return;
+
         Optional<GameSessions> sessionOpt = sessionRepository.findByLobbyCode(sessionId);
         Optional<User> userOpt = userRepository.findByFirebaseUid(uid);
-        if (sessionOpt.isEmpty() || userOpt.isEmpty()) {
-            System.out.println("[WebSocket] User or Session not available");
-            return;
-        }
-        //find participant by using session and user
+        if (sessionOpt.isEmpty() || userOpt.isEmpty()) return;
+
         GameSessions session = sessionOpt.get();
         User user = userOpt.get();
-        //Check if participant is real
+
         Optional<GameParticipants> participantOpt = participantsRepository.findByGameSessionsAndUser(session, user);
-        if ("finished".equals(session.getStatus())) {
-            System.out.println("[WebSocket] session has ended");
-        }
-        if (participantOpt.isEmpty()) {
-            System.out.println("[WebSocket] Participant not available");
-            return;
-        }
-        //Once found set ready to true
+        if (participantOpt.isEmpty()) return;
+
         GameParticipants participant = participantOpt.get();
         participant.setReady(true);
         participantsRepository.save(participant);
-        //Grab list of everyone, check if all ready. if everyone ready start game.
+
+        // Send the update using the helper
+        sendLobbyUpdate(session);
+
+        // Check start condition
         List<GameParticipants> allParticipants = participantsRepository.findAllByGameSessions(session);
-        messagingTemplate.convertAndSend("/topic/lobby/" + sessionId, allParticipants);
-        boolean everyoneReady = allParticipants.stream()
-                .allMatch(GameParticipants::isReady);
+        boolean everyoneReady = allParticipants.stream().allMatch(GameParticipants::isReady);
         if (everyoneReady) {
             session.setStatus("in_progress");
             session.setGameStartTime(System.currentTimeMillis());
             sessionRepository.save(session);
-            System.out.println("All players are ready! Starting the game...");
-            // Start the game timer
+
             gameTimerService.startGameTimer(sessionId, session.getGameDuration());
             Map<String, Object> gameStartMessage = new HashMap<>();
             gameStartMessage.put("type", "game_start");
@@ -259,155 +153,29 @@ public class GameSessionWebSocketController {
 
     @MessageMapping("/strokes/{sessionId}")
     public void handleCorrectStrokes(@DestinationVariable String sessionId, @Payload StrokeData strokeData, SimpMessageHeaderAccessor headerAccessor) {
-        //Checking for auth user
         String uid = resolveUid(headerAccessor);
-        if (uid == null) {
-            System.out.println("[WebSocket] handleCorrectStrokes called with no UID available!");
-            return;
-        }
-        //Checking if session and user exists
+        if (uid == null) return;
+
         Optional<GameSessions> sessionOpt = sessionRepository.findByLobbyCode(sessionId);
         Optional<User> userOpt = userRepository.findByFirebaseUid(uid);
-        if (sessionOpt.isEmpty() || userOpt.isEmpty()) {
-            System.out.println("[WebSocket] Session or user not found!");
-            return;
-        }
-        GameSessions session = sessionOpt.get();
-        User user = userOpt.get();
-        // Check if game is still in progress
-        if (!"in_progress".equals(session.getStatus())) {
-            System.out.println("[WebSocket] Game is not in progress, ignoring strokes");
-            return;
-        }
-        //Makes sure to check if the participant is actually in the session.
-        Optional<GameParticipants> participantOpt = participantsRepository.findByGameSessionsAndUser(session, user);
-        if (participantOpt.isEmpty()) {
-            System.out.println("[WebSocket] Participant not found!");
-            return;
-        }
-        GameParticipants participant = participantOpt.get();
-        // Add the batch count to the score of participant
-        int strokeCount = strokeData.getCount();
-        participant.setScore(participant.getScore() + strokeCount);
-        participantsRepository.save(participant);
-        System.out.println("[WebSocket] Updated score for " + user.getDisplayName() + " by +" + strokeCount + " to " + participant.getScore());
-                // Send updated scores to all clients
-                messagingTemplate.convertAndSend("/topic/lobby/" + sessionId, participantsRepository.findAllByGameSessions(session));
-    }
 
-    @MessageMapping("/stacker_points/{miniGameSessionId}")
-    public void hanldeStackerPoints(@DestinationVariable Long miniGameSessionId, SimpMessageHeaderAccessor headerAccessor, @Payload Map<String, Object> stackerPointsData) {
-        String uid = resolveUid(headerAccessor);
-        if (uid == null) {
-            System.out.println("[WebSocket] handleStackerPoints called with no UID available!");
-            return;
-        }
-        Optional<User> userOpt = userRepository.findByFirebaseUid(uid);
-        if (userOpt.isEmpty()) {
-            System.out.println("[WebSocket] User not found!");
-            return;
-        }
-        Optional<MiniGameSession> miniGameSessionOpt = miniGameSessionRepository.findById(miniGameSessionId);
-        if (miniGameSessionOpt.isEmpty()) {
-            System.out.println("[WebSocket] MiniGameSession not found!");
-            return;
-        }
-        MiniGameSession miniGameSession = miniGameSessionOpt.get();
-        User user = userOpt.get();
-        Optional<MiniGameParticipants> miniGameParticipantsOpt = miniGameParticipantRepository.findByMiniGameSessionAndUser(miniGameSession, user);
-        if (miniGameParticipantsOpt.isEmpty()) {
-            System.out.println("[WebSocket] MiniGameParticipants not found!");
-            return;
-        }
-        Integer pointsToAdd = (Integer) stackerPointsData.get("highScore");
-        if (pointsToAdd == null) {
-            System.out.println("[WebSocket] Stacker points data is null!");
-            return;
-        }
-        MiniGameParticipants miniGameParticipants = miniGameParticipantsOpt.get();
-        miniGameParticipants.setScore(pointsToAdd);
-        miniGameParticipantRepository.save(miniGameParticipants);
-        System.out.println("[WebSocket] Stacker point sent to DB");
-    }
+        if (sessionOpt.isEmpty() || userOpt.isEmpty()) return;
 
-    @MessageMapping("/join/{sessionId}")
-    public void joinGame(@DestinationVariable String sessionId, SimpMessageHeaderAccessor headerAccessor) {
-        //Check for auth user
-        String uid = resolveUid(headerAccessor);
-        int maxParticipantAmount = 4;
-        if (uid == null) {
-            System.out.println("[WebSocket] joinGame called with no UID available!");
-            return;
-        }
-        System.out.println("[WebSocket] joinGame called with UID: " + uid + " for session: " + sessionId);
-        //Check if session exists
-        Optional<GameSessions> sessionOpt = sessionRepository.findByLobbyCode(sessionId);
-        if (sessionOpt.isEmpty()) {
-            System.out.println("[WebSocket] ERROR: Game session " + sessionId + " not found in database!");
-            return;
-        }
-        //Check if user exists
-        Optional<User> userOpt = userRepository.findByFirebaseUid(uid);
-        if (userOpt.isEmpty()) {
-            System.out.println("[WebSocket] ERROR: User with UID " + uid + " not found in database!");
-            return;
-        }
-        //Grab session and user object info
         GameSessions session = sessionOpt.get();
+        if (!"in_progress".equals(session.getStatus())) return;
+
         User user = userOpt.get();
-        System.out.println("[WebSocket] Found session: " + session.getId() + ", Found user: " + user.getDisplayName());
-        //Check if user is in game session, if not then edit participant db.
         Optional<GameParticipants> participantOpt = participantsRepository.findByGameSessionsAndUser(session, user);
-        if (participantOpt.isEmpty()) {
-            if (session.getPlayersInLobby() == maxParticipantAmount) {
-                System.out.println("[WebSocket] Lobby is full 4/4");
-                return;
-            } else {
-                session.setPlayersInLobby(session.getPlayersInLobby() + 1);
-                sessionRepository.save(session);
-                System.out.println("[WebSocket] Lobby is at " + session.getPlayersInLobby() + " /4");
-            }
-            GameParticipants participant = new GameParticipants();
-            participant.setReady(false);
-            participant.setGameSessions(session);
-            participant.setUser(user);
-            participant.setScore(0);
+
+        if (participantOpt.isPresent()) {
+            GameParticipants participant = participantOpt.get();
+            participant.setScore(participant.getScore() + strokeData.getCount());
             participantsRepository.save(participant);
-            System.out.println("[WebSocket] User " + user.getDisplayName() + " joined game session " + sessionId);
-        } else {
-            System.out.println("[WebSocket] User " + user.getDisplayName() + " already in game session " + sessionId);
-        }
-        // Creates list of people in lobby and sends it to everyone
-        List<GameParticipants> allParticipants = participantsRepository.findAllByGameSessions(session);
-        messagingTemplate.convertAndSend("/topic/lobby/" + sessionId, allParticipants);
-        System.out.println("[WebSocket] Sent updated participant list to lobby " + sessionId + " (" + allParticipants.size() + " participants)");
-        // Grabs paragraph from session then sends it to the game lobby
-        System.out.println(session.getParagraph());
-        Paragraphs paragraph = session.getParagraph();
-        if (paragraph != null) {
-            messagingTemplate.convertAndSend("/topic/game/" + sessionId, paragraph);
-        } else {
-            System.out.println("[WebSocket] WARNING: Session has no paragraph assigned.");
+
+            // Send the update using the helper
+            sendLobbyUpdate(session);
         }
     }
 
-    @MessageMapping("/mini-game/request-state/{miniGameSessionId}")
-    public void handleMiniGameStateRequest(@DestinationVariable Long miniGameSessionId, SimpMessageHeaderAccessor headerAccessor) {
-        String uid = resolveUid(headerAccessor); // Optional: log who requested
-        System.out.println("[WebSocket] Received state request for mini-game " + miniGameSessionId + " from UID: " + (uid != null ? uid : "unknown"));
 
-        Optional<MiniGameSession> sessionOpt = miniGameSessionRepository.findById(miniGameSessionId);
-        if (sessionOpt.isEmpty()) {
-            System.out.println("[WebSocket] Mini-game session not found for ID: " + miniGameSessionId);
-            return;
-        }
-
-        // Fetch the current list of participants
-        List<MiniGameParticipants> currentParticipants = miniGameParticipantRepository.findAllByMiniGameSession(sessionOpt.get());
-
-
-        messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId, currentParticipants);
-        System.out.println("[WebSocket] Sent current participant list ("+ currentParticipants.size() +") for mini-game " + miniGameSessionId);
-
-    }
 }
