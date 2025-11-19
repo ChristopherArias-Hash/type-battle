@@ -54,7 +54,7 @@ export function useGameSession(sessionId, userDisplayName) {
 
   const currentUser = auth.currentUser;
   const currentPlayerFromServer = players.find(
-    (p) => p.user?.firebaseUid === currentUser?.uid
+    (p) => (p.firebaseUid || p.user?.firebaseUid) === currentUser?.uid
   );
   const playerReady = currentPlayerFromServer?.ready || false;
 

@@ -9,7 +9,6 @@ function MiniGameReadyUp({
   onReady,
   gameTitle,
 }) {
-  console.log("test" + miniGamePlayers);
   const uid = auth.currentUser?.uid;
   const me = useMemo(
     () => miniGamePlayers.find((p) => p?.user?.firebaseUid === uid),

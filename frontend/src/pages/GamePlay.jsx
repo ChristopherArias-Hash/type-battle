@@ -16,7 +16,7 @@ function GamePlay() {
   const {
     timer,
     playerReady,
-    isSendingReady, // <-- Get the temporary lock state
+    isSendingReady, 
     paragraphText,
     players,
     gameStart,
@@ -117,7 +117,7 @@ function GamePlay() {
         <ul>
           {players.map((p, index) => (
             <li key={index}>
-              {p.user?.displayName || p.user?.firebaseUid} – Score: {p.score}
+              {p.displayName || p.firebaseUid} – Score: {p.score}
               {!gameStart && <> | Is ready: {p.ready ? "🟢" : "🔴"} </>}
             </li>
           ))}
