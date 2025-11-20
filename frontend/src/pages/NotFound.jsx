@@ -1,9 +1,21 @@
+import "./NotFound.css"
+import NavBar from "../components/navbar/NavBar"
+import { useAuth } from "../utils/authContext"
 function NotFound() {
+    const { isUserLoggedIn, userInfo, logOutFirebase, loading, loadUserInfo} = useAuth();
+    
     return (
-        <div className ="404-container">
+        <>
+        <NavBar
+          userInfo={userInfo}
+          isUserLoggedIn={isUserLoggedIn}
+          logOut={logOutFirebase}
+        />
+        <div className ="error-container">
             <h1>404</h1>
-            <p>Meow</p>
+            <p>This page does not exist please return to the homepage.</p>
         </div>
+        </>
     )
 }
 
