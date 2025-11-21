@@ -46,36 +46,166 @@
   color: white;
   background-color: #212121;
 }
+
+/* Game Ended Modal Styles */
+
 .game-ended-container {
   position: absolute;
-  top: 40%;
+  top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  padding: 15px;
-  margin: 40px;
+  padding: 40px;
+  width: 600px;
+  max-width: 90vw;
+  background-color: rgb(22, 22, 22);
+  border-radius: 20px;
   text-align: center;
-  list-style-position: inside;
-  background-color: #171717;
-  border: 2px solid #14adff;
-  border-radius: 10px;
-  width: 500px;
-  
+  z-index: 100;
+  overflow: visible;
+}
+
+.game-ended-container::before,
+.game-ended-container::after {
+  content: "";
+  position: absolute;
+  width: 50px;
+  height: 40px;
+  border: 4px solid #14adff;
+  pointer-events: none;
+}
+
+.game-ended-container::before {
+  top: 0;
+  left: 0;
+  border-right: none;
+  border-bottom: none;
+  border-top-left-radius: 20px;
+}
+
+.game-ended-container::after {
+  bottom: 0;
+  right: 0;
+  border-left: none;
+  border-top: none;
+  border-bottom-right-radius: 20px;
 }
 
 .game-over {
-  font-size: 50px;
+  font-size: 3.5rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .final-scores {
-  text-decoration: underline;
-  text-decoration-color: #14adff;
-  text-underline-offset: 6px; /* adjust this value */
-  
-}
-.user-wpm,
-.winner-text,
-.return-screen {
-  text-align: center;
-  
+  font-size: 1.5rem;
+  color: #14adff;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid rgba(20, 173, 255, 0.3);
+  display: inline-block;
+  padding-bottom: 5px;
+  text-decoration: none;
 }
 
+.win-list {
+  list-style: none;
+  flex-direction: column;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.win-list li {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: baseline; /* align name and score on same text line */
+  gap: 8px;
+  padding: 12px;
+  background: linear-gradient(180deg, #2a2a2a, #1f1f1f);
+  border: 2px solid #14adffab;
+  border-radius: 10px;
+  font-size: clamp(0.8rem, 3vw, 1.1rem);
+  white-space: nowrap;
+  overflow: hidden;
+  transition: transform 0.15s ease, border-color 0.15s ease,
+    box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.win-list li:hover {
+  transform: scale(1.02);
+  background: linear-gradient(180deg, #333333, #252525);
+  border-color: #14adff;
+  box-shadow: 0 0 10px rgba(20, 173, 255, 0.4);
+}
+
+/* Rank borders: 1st gold, 2nd silver, 3rd bronze, rest blue */
+.win-list li:nth-child(1) {
+  border-color: #ffd700; /* gold */
+}
+
+.win-list li:nth-child(2) {
+  border-color: #c0c0c0; /* silver */
+}
+
+.win-list li:nth-child(3) {
+  border-color: #cd7f32; /* bronze */
+}
+
+.win-list li:nth-child(n + 4) {
+  border-color: #14adffab; /* default blue */
+}
+
+.win-list-player-name {
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 1.1em;
+  margin: 0;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  flex-shrink: 1;
+}
+
+.win-list-player-score {
+  color: #30b6ff;
+  font-weight: bold;
+  font-size: 1.1em;
+  text-align: center;
+  margin: 0;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.user-wpm {
+  font-size: 1.2rem;
+  color: #14adff;
+  margin: 20px 0 10px;
+  font-weight: 600;
+}
+
+.winnerText {
+  font-size: 1.4rem;
+  color: #ffffff;
+  margin-bottom: 30px;
+  font-weight: bold;
+}
+
+.winner-name-blue,
+.winner-score-blue {
+  color: #14adff;
+}
+
+.return-screen {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 20px;
+  font-style: italic;
+}

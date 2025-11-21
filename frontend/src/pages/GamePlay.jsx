@@ -11,12 +11,13 @@ import { Navigate, useParams } from "react-router-dom";
 function GamePlay() {
   const { id: sessionId } = useParams();
   const [enableWarning, disableWarning] = useUserLeavingWarning();
-  const { isUserLoggedIn, userInfo, logOutFirebase, loading, loadUserInfo} = useAuth();
+  const { isUserLoggedIn, userInfo, logOutFirebase, loading, loadUserInfo } =
+    useAuth();
 
   const {
     timer,
     playerReady,
-    isSendingReady, 
+    isSendingReady,
     paragraphText,
     players,
     gameStart,
@@ -30,6 +31,7 @@ function GamePlay() {
     lastMiniGameMessage,
     miniGameStartSignal,
     miniGameTimer,
+    winnerInfo,
     readyUp,
   } = useGameSession(sessionId, userInfo.getDisplayName);
 
@@ -43,11 +45,8 @@ function GamePlay() {
   useEffect(() => {
     if (gameEnded) {
       disableWarning();
-      loadUserInfo();
     }
   }, [gameEnded, disableWarning, loadUserInfo]);
-
-  
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -81,12 +80,26 @@ function GamePlay() {
           <ul className="win-list">
             {players.map((p, index) => (
               <li key={index}>
-                {p.user?.displayName || p.user?.firebaseUid} - Score: {p.score}
+                <p className="win-list-player-name">
+                  {p.displayName || p.firebaseUid}
+                </p>
+                Score: <p className="win-list-player-score"> {p.score}</p>
               </li>
             ))}
           </ul>
-          <p className="user-wpm">Your wpm {wpm}</p>
-          <p className="winnerText">{winnerText}</p>
+          <p className="user-wpm">
+            Your wpm <b>{wpm}</b>
+          </p>
+          {winnerInfo ? (
+            <p className="winnerText">
+              <span>{winnerInfo.prefix} </span>
+              <span className="winner-name-blue">{winnerInfo.name}</span>
+              <span> {winnerInfo.middle} </span>
+              <span className="winner-score-blue">{winnerInfo.score}</span>
+            </p>
+          ) : (
+            <p className="winnerText">{winnerText}</p>
+          )}
           <p className="return-screen">
             Returning to main menu in 10 seconds...
           </p>

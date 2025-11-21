@@ -4,11 +4,12 @@
   align-items: center;
   justify-content: center;
   height: 70vh;
+  padding: 10px;
 }
 
 .error-container h1 {
   color: #14adffab;
-  font-size: 300px;
+  font-size: clamp(160px, 20vw, 300px);
   margin: 0;
   text-shadow: 8px 2px #080808b6;
   margin-bottom: 10px;
@@ -17,13 +18,14 @@
 .error-container p {
   position: relative;
   color: #ffffff;
-  font-size: 30px;
+  font-size: clamp(20px, 2.5vw, 30px);
   margin: 0;
   background-color: #161616;
-  padding:25px 40px;
+  padding: clamp(18px, 2.5vw, 25px) clamp(28px, 4vw, 40px);
   border-radius: 50px;
   border: none;
   overflow: visible;
+  
 }
 
 .error-container p::before,

@@ -8,7 +8,6 @@ import {
 } from "../websocket";
 import { auth } from "../firebase";
 
-
 export function useGameSession(sessionId, userDisplayName) {
   const navigate = useNavigate();
 
@@ -29,6 +28,7 @@ export function useGameSession(sessionId, userDisplayName) {
   );
   const [wpm, setWpm] = useState(0);
   const [winnerText, setWinnerText] = useState("");
+  const [winnerInfo, setWinnerInfo] = useState(null);
 
   // FIX: Initialize miniGameId from sessionStorage
   const [miniGameId, setMiniGameId] = useState(() => {
@@ -131,7 +131,9 @@ export function useGameSession(sessionId, userDisplayName) {
       console.log("Received mini-game data:", miniGameData);
       setLastMiniGameMessage(miniGameData);
       if (miniGameData && miniGameData.type === "mini_game_start") {
-        console.log(`🏁 Received mini-game start signal for ${miniGameSessionId}!`);
+        console.log(
+          `🏁 Received mini-game start signal for ${miniGameSessionId}!`
+        );
         setMiniGameStartSignal(miniGameData);
         return;
       }
@@ -188,7 +190,24 @@ export function useGameSession(sessionId, userDisplayName) {
     (data) => {
       setGameEnded(true);
       setGameStart(false);
-      setWinnerText(data.win_message);
+      setWinnerText(data.win_message || "");
+
+      // Map flat winner fields from GameTimerService into a simple object
+      if (
+        data["text-prefix"] &&
+        data.name &&
+        data["text-middle"] &&
+        data.score !== undefined
+      ) {
+        setWinnerInfo({
+          prefix: data["text-prefix"],
+          name: data.name,
+          middle: data["text-middle"],
+          score: data.score,
+        });
+      } else {
+        setWinnerInfo(null);
+      }
       const currentUserWpm = data.wpm_data?.find(
         (entry) => entry.displayName === userDisplayName
       );
@@ -212,7 +231,7 @@ export function useGameSession(sessionId, userDisplayName) {
         sessionStorage.removeItem(`miniGameDead-${completedMiniGameId}`);
         sessionStorage.removeItem(`miniGameGhostPos-${completedMiniGameId}`);
       }
-      setTimeout(() => navigate("/"), 10000);
+      setTimeout(() => navigate("/"), 10000000000);
     },
     [userDisplayName, sessionId, navigate]
   );
@@ -259,7 +278,11 @@ export function useGameSession(sessionId, userDisplayName) {
 
     // FIX: Use the ref 'miniGameIdRef.current' which is synced from the state
     // The state itself was initialized from session storage.
-    if (isRestoredPaused && restoredMiniGameId && restoredMiniGameId !== "null") {
+    if (
+      isRestoredPaused &&
+      restoredMiniGameId &&
+      restoredMiniGameId !== "null"
+    ) {
       console.log(
         `[Re-Subscribing] Found existing mini-game ${restoredMiniGameId} on reconnect.`
       );
@@ -366,6 +389,7 @@ export function useGameSession(sessionId, userDisplayName) {
     lastMiniGameMessage,
     miniGameStartSignal,
     miniGameTimer,
+    winnerInfo,
     readyUp,
   };
 }
