@@ -170,9 +170,8 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Session already started");
         }
 
-        ParagraphData paragraphData = new ParagraphData(
-                session.getParagraph().getText()
-        );
+        //Sub DTO's for main
+        ParagraphData paragraphData = new ParagraphData(session.getParagraph().getText());
 
         HostUserData hostUserData = new HostUserData(
                 session.getHostUser().getDisplayName(),
@@ -180,6 +179,8 @@ public class UserController {
                 session.getHostUser().getImageUrl()
 
         );
+
+        //Main DTO message sent out with above nested
         GameSessionData gameSessionData = new GameSessionData(
                 session.getGameDuration(),
                 session.getGameStartTime(),
@@ -189,6 +190,7 @@ public class UserController {
                 paragraphData,
                 hostUserData
         );
+
         return ResponseEntity.ok(gameSessionData);
     }
 

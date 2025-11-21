@@ -38,7 +38,7 @@ public class GameTimerService {
 
     private final Set<Integer> pausePoints = Set.of(45, 30, 15);
     private final List<Integer> miniGameBonusPoints = List.of(45, 30, 15, 5);
-    private final int PAUSE_DURATION = 60; // Duration of the mini-game in seconds
+    private final int PAUSE_DURATION = 1; // Duration of the mini-game in seconds
 
     // NEW: Track dead participants per mini-game (MiniGameParticipants.id)
     private final Map<Long, Set<Long>> miniGameDeadParticipantIds = new ConcurrentHashMap<>();
@@ -73,7 +73,7 @@ public class GameTimerService {
             if (pausePoints.contains(remainingTime) && triggered != null && !triggered.contains(remainingTime)) {
                 triggered.add(remainingTime);
                 pauseGame(sessionId, remainingTime);
-            } else if (remainingTime <= 0) {
+            } else if (remainingTime <= 60) {
                 endGame(sessionId);
                 stopGameTimer(sessionId);
             } else {
@@ -414,7 +414,11 @@ public class GameTimerService {
                 int currentWins = winnerUser.getGamesWon();
                 winnerUser.setGamesWon(currentWins + 1);
                 userRepository.save(winnerUser);
-                gameEndMessage.put("win_message", "Winner is: " + winnerUser.getDisplayName() + " with a score of " + winnerParticipant.getScore());
+                gameEndMessage.put("text-prefix", "Winner is: ");
+                gameEndMessage.put("name", winnerUser.getDisplayName());
+                gameEndMessage.put("text-middle", " with a score of ");
+                gameEndMessage.put("score", winnerParticipant.getScore());
+
                 System.out.println("[WebSocket] Winner is " + winnerUser.getDisplayName() + " with updated wins: " + winnerUser.getGamesWon());
             }
         }

@@ -57,6 +57,17 @@ public class MiniGameSessionWebSocketController {
         return uid;
     }
 
+    @MessageMapping("/mini-game/request-state/{miniGameSessionId}")
+    public void handleMiniGameStateRequest(@DestinationVariable Long miniGameSessionId, SimpMessageHeaderAccessor headerAccessor) {
+        String uid = resolveUid(headerAccessor);
+        if (uid == null) return;
+        Optional<MiniGameSession> sessionOpt = miniGameSessionRepository.findById(miniGameSessionId);
+        if (sessionOpt.isEmpty()) return;
+
+        List<MiniGameParticipants> allParticipants = miniGameParticipantRepository.findAllByMiniGameSession(sessionOpt.get());
+        messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId, allParticipants);
+    }
+
     @MessageMapping("mini_game/ready_up/{miniGameSessionId}")
     public void readyUp(@DestinationVariable Long miniGameSessionId, SimpMessageHeaderAccessor headerAccessor) {
         String uid = resolveUid(headerAccessor);
@@ -192,13 +203,6 @@ public class MiniGameSessionWebSocketController {
         miniGameParticipantRepository.save(miniGameParticipants);
     }
 
-    @MessageMapping("/mini-game/request-state/{miniGameSessionId}")
-    public void handleMiniGameStateRequest(@DestinationVariable Long miniGameSessionId, SimpMessageHeaderAccessor headerAccessor) {
-        Optional<MiniGameSession> sessionOpt = miniGameSessionRepository.findById(miniGameSessionId);
-        if (sessionOpt.isEmpty()) return;
 
-        List<MiniGameParticipants> currentParticipants = miniGameParticipantRepository.findAllByMiniGameSession(sessionOpt.get());
-        messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId, currentParticipants);
-    }
 }
 
