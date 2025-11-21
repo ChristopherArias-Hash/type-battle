@@ -83,12 +83,12 @@ function GamePlay() {
                 <p className="win-list-player-name">
                   {p.displayName || p.firebaseUid}
                 </p>
-                Score: <p className="win-list-player-score"> {p.score}</p>
+                <p className="win-list-player-score">score: <b className="win-list-player-score-number"> {p.score}</b></p>
               </li>
             ))}
           </ul>
-          <p className="user-wpm">
-            Your wpm <b>{wpm}</b>
+          <p className="user-wpm-text">
+            Your wpm <b className="user-wpm-number">{wpm}</b>
           </p>
           {winnerInfo ? (
             <p className="winnerText">

@@ -57,7 +57,7 @@
   padding: 40px;
   width: 600px;
   max-width: 90vw;
-  background-color: rgb(22, 22, 22);
+  background-color: #161616;
   border-radius: 20px;
   text-align: center;
   z-index: 100;
@@ -164,7 +164,7 @@
 .win-list-player-name {
   color: #ffffff;
   font-weight: bold;
-  font-size: 1.1em;
+  font-size: 1.2em;
   margin: 0;
   text-align: center;
   white-space: nowrap;
@@ -175,22 +175,32 @@
 }
 
 .win-list-player-score {
-  color: #30b6ff;
-  font-weight: bold;
-  font-size: 1.1em;
+  color: #ffffff;
+  font-weight: 500;
+  font-size: 1em;
   text-align: center;
   margin: 0;
   white-space: nowrap;
   flex-shrink: 0;
+  padding: 6px;
+  background-color: #161616;
+  border-radius: 20px;
 }
 
-.user-wpm {
+.win-list-player-score-number {
+  color: #30b6ff;
+}
+
+.user-wpm-text {
   font-size: 1.2rem;
-  color: #14adff;
+  color: #ffffff;
   margin: 20px 0 10px;
   font-weight: 600;
 }
 
+.user-wpm-number {
+  color: #30b6ff;
+}
 .winnerText {
   font-size: 1.4rem;
   color: #ffffff;
