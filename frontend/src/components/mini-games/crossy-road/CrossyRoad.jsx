@@ -143,7 +143,7 @@ const CrossyRoad = ({
   // Get the local player's index
   const localPlayerIndex = playerIndexMap.get(auth.currentUser?.uid) ?? 0;
 
-  // Keeps track of crossing in session storage 
+  // Keeps track of crossing in session storage
   useEffect(() => {
     if (miniGameId) {
       sessionStorage.setItem(`crossy-crossings-${miniGameId}`, crossings);
@@ -167,7 +167,7 @@ const CrossyRoad = ({
     return () => ro.disconnect();
   }, []);
 
-  // Creates Road or Safety lanes 
+  // Creates Road or Safety lanes
   const roadLanes = useMemo(() => {
     const lanes = [];
     for (let i = 1; i < GRID_SIZE_V - 1; i++) {
@@ -180,7 +180,6 @@ const CrossyRoad = ({
     return lanes;
   }, []);
 
-   
   useEffect(() => {
     if (
       miniGameStartSignal &&
@@ -280,7 +279,7 @@ const CrossyRoad = ({
     },
     [gameState, miniGameId, playerPos]
   );
-  
+
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
