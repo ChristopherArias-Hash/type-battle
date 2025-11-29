@@ -182,8 +182,8 @@ const IslandGame = ({
   const playerIndexMap = useMemo(() => {
     const map = new Map();
     miniGamePlayers.forEach((player, index) => {
-      if (player.user?.firebaseUid) {
-        map.set(player.user.firebaseUid, index % 4);
+      if (player.firebaseUid) {
+        map.set(player.firebaseUid, index % 4);
       }
     });
     return map;

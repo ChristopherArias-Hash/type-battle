@@ -36,7 +36,7 @@ function MiniGameReadyUp({
         {miniGamePlayers.map((p, index) => (
           <li key={index} className="mini-game-user-section">
             <p className="mini-game-username">
-              {p.user?.displayName || p.user?.firebaseUid || "Unknown"}
+              {p.displayName || p.firebaseUid || "Unknown"}
             </p>
             <p
               className={`mini-game-user-status ${

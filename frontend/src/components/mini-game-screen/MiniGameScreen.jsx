@@ -31,7 +31,7 @@ function MiniGameScreen({
                 {miniGamePlayers.map((p, index) => (
                   <li key={index} className="mini-game-screen-player-list-item">
                     <p className="mini-game-screen-player-name">
-                      {p.user.displayName}
+                      {p.displayName}
                     </p>
                     <p className="mini-game-screen-player-score">{p.score}</p>
                   </li>

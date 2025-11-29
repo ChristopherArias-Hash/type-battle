@@ -133,8 +133,8 @@ const CrossyRoad = ({
     // Use the miniGamePlayers array order as the source of truth
     // This is stable as long as the server sends the same order
     miniGamePlayers.forEach((player, index) => {
-      if (player.user?.firebaseUid) {
-        map.set(player.user.firebaseUid, index % 4); // Use modulo 4 to be safe
+      if (player.firebaseUid) {
+        map.set(player.firebaseUid, index % 4); // Use modulo 4 to be safe
       }
     });
     return map;
