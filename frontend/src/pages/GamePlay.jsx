@@ -83,7 +83,10 @@ function GamePlay() {
                 <p className="win-list-player-name">
                   {p.displayName || p.firebaseUid}
                 </p>
-                <p className="win-list-player-score">score: <b className="win-list-player-score-number"> {p.score}</b></p>
+                <p className="win-list-player-score">
+                  score:{" "}
+                  <b className="win-list-player-score-number"> {p.score}</b>
+                </p>
               </li>
             ))}
           </ul>
@@ -127,7 +130,7 @@ function GamePlay() {
           </b>
           )
         </h2>
-        <ul>
+        <ul className="lobby-list">
           {players.map((p, index) => (
             <li key={index}>
               {p.displayName || p.firebaseUid} – Score: {p.score}
@@ -143,7 +146,7 @@ function GamePlay() {
             // The button is disabled if you've just clicked it
             disabled={isSendingReady}
           >
-            {isSendingReady ? "Waiting..." : "Ready Up"}
+            <span>{isSendingReady ? "Waiting..." : "Ready Up"}</span>
           </button>
         )}
       </div>

@@ -35,7 +35,7 @@ body {
   text-align: center;
   flex-wrap: wrap;
   gap: 10rem;  
-  background-color: rgb(22, 22, 22);
+   background-color: #161616;;
   border-color: #14adffab;
   box-shadow: 0 0 8px rgba(14, 165, 233, 0.6); /* soft glow */
   border-radius: 8px;

@@ -1,42 +1,36 @@
 /* Base modal colors*/
 .dark-modal .dark-modal-content {
-  --bs-modal-bg: #212121;
+  --bs-modal-bg: #161616;
   --bs-modal-color: #ffffff; /* Borders & separators */
   --bs-modal-border-color: #212121;
-  --bs-modal-header-border-color:#14adffab;
+  --bs-modal-header-border-color: #14adffab;
   --bs-modal-footer-border-color: #14adffab;
-
-
-} 
+}
 
 .modal-backdrop {
-  opacity: 0.6 !important; /* Adjust 0.5 to your preference */
+  opacity: 0.9 !important; /* Adjust 0.5 to your preference */
 }
 
 /* Tweaking padding/margins around the whole moda */
 .dark-modal .modal-header,
 .dark-modal .modal-footer {
-
   padding: 0.9rem 1rem;
-
 } /*  Inputs for dark background */
 .dark-modal .form-control {
-  
   background-color: #3d3d3d;
   color: #fff;
   border-color: rgba(255, 255, 255, 0.16);
-  
 }
 
 /* Controls width and height of modal */
 .dark-modal .modal-dialog {
-  max-width: 600px;   /* control width */
-  width: 100%;        /* take available space */
+  max-width: 600px; /* control width */
+  width: 100%; /* take available space */
 }
 
 .dark-modal .btn-close {
-  filter: invert(1);   /* makes the black "X" white */
-  opacity: 1;          /* ensures it’s fully visible */
+  filter: invert(1); /* makes the black "X" white */
+  opacity: 1; /* ensures it’s fully visible */
 }
 
 /* Override autofill colors */
@@ -55,3 +49,33 @@
   color: #fff !important;
 }
 
+/* Button styles matching navbar logout */
+.dark-modal .btn {
+  background: linear-gradient(135deg, #2a2a2a 0%, #404040 100%);
+  border: 1px solid rgba(20, 173, 255, 0.3);
+  color: #ffffff;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  z-index: 2;
+  position: relative;
+}
+
+.dark-modal .btn:hover {
+  background: linear-gradient(135deg, #14adff 0%, #1e83ba 100%);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(20, 173, 255, 0.3), 0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.dark-modal .btn:active {
+  transform: translateY(0px);
+}

@@ -344,7 +344,7 @@ transform: translateY(-2px);
   background: linear-gradient(135deg, #2a2a2a 0%, #404040 100%);
   border: 2px solid rgba(20, 173, 255, 0.587);
   color: #ffffff;
-  padding: 14px 14px;
+  padding: 10px 14px;
   border-radius: 8px;
   cursor: pointer;
   font-size: 12px;
