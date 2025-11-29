@@ -1,15 +1,11 @@
 package com.example.type_battle.controller;
 
-import com.example.type_battle.dto.mini_games.crossy_road.CrossyRoadPositionData;
-import com.example.type_battle.dto.mini_games.island_game.IslandGamePositionData;
-import com.example.type_battle.model.MiniGameParticipants;
-import com.example.type_battle.model.MiniGameSession;
-import com.example.type_battle.model.User;
-import com.example.type_battle.repository.*;
-import com.example.type_battle.service.CrossyRoadSetupService;
-import com.example.type_battle.service.GameTimerService;
-import com.example.type_battle.service.IslandGameSetupService;
-import com.example.type_battle.service.ObstacleGenerationService;
+import java.security.Principal;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -18,11 +14,21 @@ import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
-import java.security.Principal;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import com.example.type_battle.dto.mini_games.MiniGameLobbyState;
+import com.example.type_battle.dto.mini_games.MiniGamePlayerData;
+import com.example.type_battle.dto.mini_games.crossy_road.CrossyRoadPositionData;
+import com.example.type_battle.dto.mini_games.island_game.IslandGamePositionData;
+import com.example.type_battle.model.MiniGameParticipants;
+import com.example.type_battle.model.MiniGameSession;
+import com.example.type_battle.model.User;
+import com.example.type_battle.repository.MiniGameParticipantsRepository;
+import com.example.type_battle.repository.MiniGameSessionRepository;
+import com.example.type_battle.repository.ParagraphsRepository;
+import com.example.type_battle.repository.UserRepository;
+import com.example.type_battle.service.CrossyRoadSetupService;
+import com.example.type_battle.service.GameTimerService;
+import com.example.type_battle.service.IslandGameSetupService;
+import com.example.type_battle.service.ObstacleGenerationService;
 
 @Controller
 public class MiniGameSessionWebSocketController {
@@ -65,7 +71,13 @@ public class MiniGameSessionWebSocketController {
         if (sessionOpt.isEmpty()) return;
 
         List<MiniGameParticipants> allParticipants = miniGameParticipantRepository.findAllByMiniGameSession(sessionOpt.get());
-        messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId, allParticipants);
+        
+        List<MiniGamePlayerData> flatPlayers = allParticipants.stream()
+                .map(MiniGamePlayerData::new)
+                .toList();
+        
+        MiniGameLobbyState state = new MiniGameLobbyState(flatPlayers, 0);
+        messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId, state);
     }
 
     @MessageMapping("mini_game/ready_up/{miniGameSessionId}")
@@ -89,7 +101,13 @@ public class MiniGameSessionWebSocketController {
         miniGameParticipantRepository.save(miniGameParticipant);
 
         List<MiniGameParticipants> allParticipants = miniGameParticipantRepository.findAllByMiniGameSession(miniGameSession);
-        messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId, allParticipants);
+        
+        List<MiniGamePlayerData> flatPlayers = allParticipants.stream()
+                .map(MiniGamePlayerData::new)
+                .toList();
+        
+        MiniGameLobbyState state = new MiniGameLobbyState(flatPlayers, 0);
+        messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId, state);
 
         boolean everyoneReady = allParticipants.stream().allMatch(MiniGameParticipants::isIs_ready);
         if (everyoneReady) {

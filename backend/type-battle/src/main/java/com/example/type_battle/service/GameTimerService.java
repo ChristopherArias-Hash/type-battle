@@ -1,13 +1,41 @@
 package com.example.type_battle.service;
 
-import com.example.type_battle.model.*;
-import com.example.type_battle.repository.*;
-import jakarta.annotation.PreDestroy;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
+
+import com.example.type_battle.dto.mini_games.MiniGameLobbyState;
+import com.example.type_battle.dto.mini_games.MiniGamePlayerData;
+import com.example.type_battle.model.GameParticipants;
+import com.example.type_battle.model.GameSessions;
+import com.example.type_battle.model.MiniGameParticipants;
+import com.example.type_battle.model.MiniGameSession;
+import com.example.type_battle.model.MiniGames;
+import com.example.type_battle.model.User;
+import com.example.type_battle.repository.GameParticipantsRepository;
+import com.example.type_battle.repository.GameSessionsRepository;
+import com.example.type_battle.repository.MiniGameParticipantsRepository;
+import com.example.type_battle.repository.MiniGameSessionRepository;
+import com.example.type_battle.repository.MiniGamesRepository;
+import com.example.type_battle.repository.UserRepository;
+
+import jakarta.annotation.PreDestroy;
 
 @Component
 public class GameTimerService {
@@ -242,8 +270,12 @@ public class GameTimerService {
                     endMiniGame(miniGameSessionId);
                 } else {
                     // NEW (island only): include deadUids + deadPlayers (with ghost positions)
+                    List<MiniGamePlayerData> flatPlayers = participants.stream()
+                            .map(MiniGamePlayerData::new)
+                            .toList();
+                    
                     Map<String, Object> update = new HashMap<>();
-                    update.put("players", participants);
+                    update.put("players", flatPlayers);
                     update.put("remainingTime", remainingTime);
                     update.put("deadUids", deadUids);
                     update.put("deadPlayers", deadPlayers);
@@ -254,10 +286,12 @@ public class GameTimerService {
                 if (remainingTime <= 0) {
                     endMiniGame(miniGameSessionId);
                 } else {
-                    Map<String, Object> update = new HashMap<>();
-                    update.put("players", participants);
-                    update.put("remainingTime", remainingTime);
-                    messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId, update);
+                    List<MiniGamePlayerData> flatPlayers = participants.stream()
+                            .map(MiniGamePlayerData::new)
+                            .toList();
+                    
+                    MiniGameLobbyState state = new MiniGameLobbyState(flatPlayers, remainingTime);
+                    messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId, state);
                 }
             }
         }, 0, 1, TimeUnit.SECONDS);
