@@ -341,15 +341,31 @@ transform: translateY(-2px);
 }
 
 .auth-links a {
-  color: #f6f6f6;
+  background: linear-gradient(135deg, #2a2a2a 0%, #404040 100%);
+  border: 2px solid rgba(20, 173, 255, 0.587);
+  color: #ffffff;
+  padding: 14px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  z-index: 2;
+  position: relative;
   text-decoration: none;
-  padding: 8px 16px;
-  border: 1px solid #f6f6f6;
-  border-radius: 4px;
-  transition: all 0.3s ease;
 }
 
 .auth-links a:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(135deg, #14adff 0%, #1e83ba 100%);
+  border-color: rgba(255, 255, 255, 0.2);
   transform: translateY(-1px);
+  box-shadow: 
+    0 4px 12px rgba(20, 173, 255, 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }

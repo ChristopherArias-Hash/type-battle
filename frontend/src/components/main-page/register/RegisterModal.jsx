@@ -77,7 +77,7 @@ const registerAndLogin = async () => {
               ></Form.Control>
             </Form.Group>
             <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
-              <Form.Label><b>Profile Picture</b></Form.Label>
+              <Form.Label><b>Profile Picture - <i>Optional</i></b></Form.Label>
               <Form.Control
                 type="file"
                 onChange={(e) => setFilePath(e.target.files[0])}

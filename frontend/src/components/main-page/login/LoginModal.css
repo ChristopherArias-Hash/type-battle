@@ -9,6 +9,10 @@
 
 } 
 
+.modal-backdrop {
+  opacity: 0.6 !important; /* Adjust 0.5 to your preference */
+}
+
 /* Tweaking padding/margins around the whole moda */
 .dark-modal .modal-header,
 .dark-modal .modal-footer {
@@ -34,3 +38,20 @@
   filter: invert(1);   /* makes the black "X" white */
   opacity: 1;          /* ensures it’s fully visible */
 }
+
+/* Override autofill colors */
+.dark-modal .form-control:-webkit-autofill,
+.dark-modal .form-control:-webkit-autofill:hover,
+.dark-modal .form-control:-webkit-autofill:focus,
+.dark-modal .form-control:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #14adff77 inset !important;
+  -webkit-text-fill-color: #fff !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* For Firefox */
+.dark-modal .form-control:-moz-autofill {
+  box-shadow: 0 0 0 30px #14adff77 inset !important;
+  color: #fff !important;
+}
+
