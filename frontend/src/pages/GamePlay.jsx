@@ -1,12 +1,13 @@
 import "./GamePlay.css";
-import MiniGameScreen from "../components/mini-game-screen/MiniGameScreen";
-import NavBar from "../components/navbar/NavBar";
-import TypingSentences from "../components/gameplay/typing-sentences/TypingSentences";
-import useUserLeavingWarning from "../utils/useUserLeavingWarning";
 import { useAuth } from "../utils/authContext";
 import { useGameSession } from "../utils/useGameSession";
 import { useEffect } from "react";
 import { Navigate, useParams } from "react-router-dom";
+import MiniGameScreen from "../components/mini-game-screen/MiniGameScreen";
+import NavBar from "../components/navbar/NavBar";
+import TypingSentences from "../components/gameplay/typing-sentences/TypingSentences";
+import useUserLeavingWarning from "../utils/useUserLeavingWarning";
+import NumberAnimated from "../utils/animateNumber.jsx";
 
 function GamePlay() {
   const { id: sessionId } = useParams();
@@ -37,7 +38,6 @@ function GamePlay() {
 
   const disableLogout = true;
 
-  // ... (all useEffects remain the same)
   useEffect(() => {
     enableWarning();
   }, [enableWarning]);
@@ -85,7 +85,7 @@ function GamePlay() {
                 </p>
                 <p className="win-list-player-score">
                   score:{" "}
-                  <b className="win-list-player-score-number"> {p.score}</b>
+                  <b className="win-list-player-score-number"> <NumberAnimated n = {p.score} /></b>
                 </p>
               </li>
             ))}

@@ -223,7 +223,6 @@ export function useGameSession(sessionId, userDisplayName) {
       sessionStorage.removeItem(`gameStart-${sessionId}`);
       sessionStorage.removeItem(`playerReady-${sessionId}`);
       sessionStorage.removeItem(`miniGameId-${sessionId}`);
-      // REMOVED: miniGameTimer cleanup - it's not stored anymore
       sessionStorage.removeItem(`miniGame-${sessionId}`);
       sessionStorage.removeItem(`miniGameStartSignal-${sessionId}`);
       const completedMiniGameId = miniGameIdRef.current;
@@ -231,9 +230,8 @@ export function useGameSession(sessionId, userDisplayName) {
         sessionStorage.removeItem(`miniGameDead-${completedMiniGameId}`);
         sessionStorage.removeItem(`miniGameGhostPos-${completedMiniGameId}`);
       }
-      setTimeout(() => navigate("/"), 10000000000);
     },
-    [userDisplayName, sessionId, navigate]
+    [userDisplayName, sessionId]
   );
 
   const handleGameDataReceived = useCallback(

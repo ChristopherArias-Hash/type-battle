@@ -159,12 +159,12 @@
 }
 
 .final-scores {
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   color: #14adff;
   margin-bottom: 20px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  border-bottom: 1px solid rgba(20, 173, 255, 0.3);
+  border-bottom: 2px solid rgba(20, 173, 255, 0.3);
   display: inline-block;
   padding-bottom: 5px;
   text-decoration: none;
@@ -199,8 +199,7 @@
 .win-list li:hover {
   transform: scale(1.02);
   background: linear-gradient(180deg, #333333, #252525);
-  border-color: #14adff;
-  box-shadow: 0 0 10px rgba(20, 173, 255, 0.4);
+
 }
 
 /* Rank borders: 1st gold, 2nd silver, 3rd bronze, rest blue */

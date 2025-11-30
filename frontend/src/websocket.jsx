@@ -47,7 +47,6 @@ export function connectWebSocket(
         body: "",
       });
 
-      // ✨ 2. CALL THE NEW CALLBACK AFTER EVERYTHING IS SET UP
       if (onSuccessfulConnect) {
         onSuccessfulConnect();
       }
@@ -75,6 +74,11 @@ export function disconnectWebSocket() {
   stompClient = null;
 }
 
+/**
+ * 
+ * MAIN GAME DATA SENDING FUNCTIONS
+ * 
+ */
 export function sendCorrectStrokesOptimized(sessionId, count) {
   if (!stompClient || !stompClient.connected || count <= 0) {
     console.warn(
@@ -111,6 +115,12 @@ export function sendReadyUp(sessionId) {
     console.log("[WebSocket] ready_up not sent");
   }
 }
+
+/**
+ * 
+ * MINI GAME DATA SENDING FUNCTIONS
+ * 
+ */
 
 export function subscribeToMiniGameLobby(miniGameSessionId, onMiniGameDataUpdate) {
   if (!stompClient || !stompClient.connected) {
