@@ -28,6 +28,15 @@
   
 }
 
+.error-container p a{
+ color: #14adff;
+  
+}
+
+.error-container p a:hover{
+ color: #14adffae;
+  
+}
 .error-container p::before,
 .error-container p::after {
   content: "";

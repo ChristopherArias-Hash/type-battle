@@ -6,6 +6,110 @@
 .gameplay-lobby-list{
   padding: auto;
 }
+
+.lobby-list {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap; /* Wraps to next line if needed */
+  justify-content: left;
+  list-style: none;  
+  padding: 0;        
+  margin: 5px 0;
+}
+
+.lobby-list-section {
+  display: flex; /* Aligns list items horizontally */
+  justify-content: -around; 
+  align-items: center;
+  margin: 3px;
+  gap: 10px;
+  padding:2px;              
+  list-style: none;   
+  background: linear-gradient(135deg, #2a2a2a 0%, #40404032 100%);
+  border-radius: 50px;
+  width: 180px; 
+  
+}
+
+.lobby-list-username {
+  font-size: 16px;
+  color: #e0e0e0;
+  margin: 0px;
+  flex: 1;  
+  overflow: hidden; 
+  text-overflow: ellipsis;  
+  text-align: center;
+  font-weight: 1000;
+}
+
+.lobby-list-score{
+ font-size: 14px;
+  color: #14adff;
+  text-align: right;
+  padding: 3px;
+  background: linear-gradient(180deg, #282828, #202020);
+  font-weight: 600;
+  border: 2px solid #14adffab;
+  border-radius: 0px 20px 0px 20px;  margin: 0px;
+  margin: 0px;
+ flex-shrink: 0;
+ padding: 5px;
+}
+
+.current-player-highlight .lobby-list-username{
+  font-weight: bold;
+  color: #30b6ff;
+}
+.lobby-list-status {
+  font-size: 14px;
+  color: #14adff;
+  text-align: right;
+  background: linear-gradient(180deg, #282828, #202020);
+  font-weight: 600;
+  border: 2px solid #14adffab;
+border-radius: 0px 20px 0px 20px;  margin: 0px;
+ flex-shrink: 0;
+ padding: 5px;
+}
+
+.status-waiting {
+  color: #ffcc02;
+  border-color: #ffcc02;
+}
+
+.status-ready{
+  color: #00ff00;
+  border-color: #00ff00;
+
+}
+
+/* Slide Rotate Transition Animations */
+.status-exit {
+  animation: slideRotateOut 0.4s cubic-bezier(0.6, 0.04, 0.98, 0.34) forwards;
+}
+
+.score-enter {
+  animation: slideRotateIn 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+@keyframes slideRotateOut {
+  to {
+    transform: translateX(-30px) rotate(-15deg);
+    opacity: 0;
+  }
+}
+
+@keyframes slideRotateIn {
+  from {
+    transform: translateX(30px) rotate(15deg);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) rotate(0);
+    opacity: 1;
+  }
+}
+
 .ready-up-button {
    position: relative;
     display: inline-block;

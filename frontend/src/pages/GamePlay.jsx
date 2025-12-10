@@ -65,7 +65,8 @@ function GamePlay() {
 
   if (loading || paragraphText === null) return <div>Loading...</div>;
   if (!isUserLoggedIn) return <Navigate to="/" replace />;
-
+  console.log(userInfo)
+  console.log(players)
   if (gameEnded) {
     return (
       <>
@@ -85,7 +86,10 @@ function GamePlay() {
                 </p>
                 <p className="win-list-player-score">
                   score:{" "}
-                  <b className="win-list-player-score-number"> <NumberAnimated n = {p.score} /></b>
+                  <b className="win-list-player-score-number">
+                    {" "}
+                    <NumberAnimated n={p.score} />
+                  </b>
                 </p>
               </li>
             ))}
@@ -110,7 +114,7 @@ function GamePlay() {
       </>
     );
   }
-
+  
   return (
     <>
       <NavBar
@@ -132,9 +136,28 @@ function GamePlay() {
         </h2>
         <ul className="lobby-list">
           {players.map((p, index) => (
-            <li key={index}>
-              {p.displayName || p.firebaseUid} – Score: {p.score}
-              {!gameStart && <> | Is ready: {p.ready ? "🟢" : "🔴"} </>}
+            <li key={index} className={`lobby-list-section ${userInfo.getDisplayName === p.displayName ? "current-player-highlight" : ""}`}>
+              <p className="lobby-list-username">
+                {p.displayName || p.firebaseUid}
+              </p>
+              {gameStart && (
+                <p
+                  className={`lobby-list-score ${
+                    !gameStart ? "" : "score-enter"
+                  }`}
+                >
+                  Score: {p.score}
+                </p>
+              )}
+              {!gameStart && (
+                <p
+                  className={`lobby-list-status ${
+                    p.ready ? "status-ready" : "status-waiting"
+                  }`}
+                >
+                  {p.ready ? "Ready" : "Waiting"}
+                </p>
+              )}
             </li>
           ))}
         </ul>
