@@ -26,9 +26,15 @@
   padding:2px;              
   list-style: none;   
   background: linear-gradient(135deg, #2a2a2a 0%, #40404032 100%);
-  border-radius: 50px;
+  border-radius: 20px  20px  0px  20px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  border-left: 2px solid #ffffff;
   width: 180px; 
   
+}
+
+.lobby-list-section:hover {
+  transform: translateY(-4px) rotate(1deg);
 }
 
 .lobby-list-username {
@@ -40,25 +46,34 @@
   text-overflow: ellipsis;  
   text-align: center;
   font-weight: 1000;
+  
 }
 
 .lobby-list-score{
  font-size: 14px;
   color: #14adff;
   text-align: right;
-  padding: 3px;
+  padding: 5px;
   background: linear-gradient(180deg, #282828, #202020);
   font-weight: 600;
-  border: 2px solid #14adffab;
+  border: 2px solid #30b6ff;
   border-radius: 0px 20px 0px 20px;  margin: 0px;
   margin: 0px;
  flex-shrink: 0;
- padding: 5px;
+
+
 }
+
+.current-player-highlight {
+  border-left-color: #30b6ff !important;
+}
+
 
 .current-player-highlight .lobby-list-username{
   font-weight: bold;
   color: #30b6ff;
+  border-color: #30b6ff;
+  
 }
 .lobby-list-status {
   font-size: 14px;
@@ -67,9 +82,10 @@
   background: linear-gradient(180deg, #282828, #202020);
   font-weight: 600;
   border: 2px solid #14adffab;
-border-radius: 0px 20px 0px 20px;  margin: 0px;
+ border-radius: 0px 20px 0px 20px;  margin: 0px;
  flex-shrink: 0;
- padding: 5px;
+ padding: 6px;
+ 
 }
 
 .status-waiting {

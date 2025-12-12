@@ -140,13 +140,14 @@ function GamePlay() {
               <p className="lobby-list-username">
                 {p.displayName || p.firebaseUid}
               </p>
+              {/* Show score if game has started, otherwise show ready status */}
               {gameStart && (
                 <p
                   className={`lobby-list-score ${
                     !gameStart ? "" : "score-enter"
                   }`}
                 >
-                  Score: {p.score}
+                  Score {p.score}
                 </p>
               )}
               {!gameStart && (
@@ -155,7 +156,7 @@ function GamePlay() {
                     p.ready ? "status-ready" : "status-waiting"
                   }`}
                 >
-                  {p.ready ? "Ready" : "Waiting"}
+                  {p.ready ? "READY" : "WAITING"}
                 </p>
               )}
             </li>

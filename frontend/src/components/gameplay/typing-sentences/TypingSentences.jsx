@@ -225,7 +225,7 @@ function TypingSentences({ paragraphText, sessionId, timer, isPaused }) {
     <>
       <div className="typing-area">
         <div className="timer-display">
-          <h2>Time Remaining: {timer}s</h2>
+          <h2>Time Remaining: <b className="time-display-digits">{timer}</b></h2>
         </div>
         <div className="ghost-text">{listOfSentence}</div>
       </div>

@@ -3,6 +3,11 @@
   color:white;
 }
 
+.time-display-digits {
+  color: #14adff;
+  margin-left: -7px;
+}
+
 .typing-area {
   position: relative;
   width: 100%;
