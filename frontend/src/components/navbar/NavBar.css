@@ -155,7 +155,7 @@
   display: flex;
   margin-right: 10px;
   align-items: center;
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+
   border: 2px solid transparent;
   background-clip: padding-box;
   border-radius: 12px;
@@ -233,7 +233,7 @@ transform: translateY(-2px);
 }
 
 .user-stats {
-  color: #b0b0b0;
+  color: #ffffff;
   font-size: 13px;
   margin: 0;
   font-weight: 500;
@@ -262,7 +262,7 @@ transform: translateY(-2px);
   height: 64px;
   border-radius: 12px;
   object-fit: cover;
-  border: 2px solid rgba(20, 173, 255, 0.3);
+  border: 2px solid rgba(20, 173, 255, 0.752);
   transition: all 0.3s ease;
   box-shadow: 
     0 4px 12px rgba(0, 0, 0, 0.3),
