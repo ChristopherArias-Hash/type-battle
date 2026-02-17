@@ -81,6 +81,7 @@
   position: relative;
   display: inline-block;
   padding: 0;
+  margin-bottom:10px;
   width: 110px;   /* smaller than 160px */
   height: 45px;   /* smaller than 60px */
   border-radius: 8px;

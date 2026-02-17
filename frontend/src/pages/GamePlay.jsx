@@ -1,7 +1,7 @@
 import "./GamePlay.css";
 import { useAuth } from "../utils/authContext";
 import { useGameSession } from "../utils/useGameSession";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import MiniGameScreen from "../components/mini-game-screen/MiniGameScreen";
 import NavBar from "../components/navbar/NavBar";
@@ -10,6 +10,8 @@ import useUserLeavingWarning from "../utils/useUserLeavingWarning";
 import NumberAnimated from "../utils/animateNumber.jsx";
 
 function GamePlay() {
+  const usernameRef = useRef(null);
+
   const { id: sessionId } = useParams();
   const [enableWarning, disableWarning] = useUserLeavingWarning();
   const { isUserLoggedIn, userInfo, logOutFirebase, loading, loadUserInfo } =
@@ -65,8 +67,8 @@ function GamePlay() {
 
   if (loading || paragraphText === null) return <div>Loading...</div>;
   if (!isUserLoggedIn) return <Navigate to="/" replace />;
-  console.log(userInfo)
-  console.log(players)
+  console.log(userInfo);
+  console.log(players);
   if (gameEnded) {
     return (
       <>
@@ -114,7 +116,7 @@ function GamePlay() {
       </>
     );
   }
-  
+
   return (
     <>
       <NavBar
@@ -136,9 +138,20 @@ function GamePlay() {
         </h2>
         <ul className="lobby-list">
           {players.map((p, index) => (
-            <li key={index} className={`lobby-list-section ${userInfo.getDisplayName === p.displayName ? "current-player-highlight" : ""}`}>
-              <p className="lobby-list-username">
-                {p.displayName || p.firebaseUid}
+            <li
+              key={index}
+              className={`lobby-list-section ${userInfo.getDisplayName === p.displayName ? "current-player-highlight" : ""}`}
+            >
+              <p
+                ref={usernameRef}
+                className="lobby-list-username"
+                onMouseLeave={() => {
+                  if (usernameRef.current) {
+                    usernameRef.current.scrollLeft = 0;
+                  }
+                }}
+              >
+                {p.displayName || "Unknown Player"}
               </p>
               {/* Show score if game has started, otherwise show ready status */}
               {gameStart && (

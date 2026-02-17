@@ -186,6 +186,7 @@ const IslandGame = ({
 
   // Only used for spawning/despawning - NOT for rotation updates
   const [activeCannons, setActiveCannons] = useState([]);
+  const activeCannonsRef = useRef([]); // Added to prevent gameLoop tearing
 
   // Refs for Optimization
   const cannonRefs = useRef({});
@@ -229,7 +230,8 @@ const IslandGame = ({
   // --- Player Index Mapping ---
   const playerIndexMap = useMemo(() => {
     const map = new Map();
-    miniGamePlayers.forEach((player, index) => {
+    // Added Fallback empty array to prevent Crash
+    (miniGamePlayers || []).forEach((player, index) => {
       if (player.firebaseUid) {
         map.set(player.firebaseUid, index % 4);
       }
@@ -312,7 +314,9 @@ const IslandGame = ({
 
   // --- WebSocket Handling ---
   useEffect(() => {
-    if (lastMiniGameMessage?.type === "island_game_position_update") {
+    if (!lastMiniGameMessage) return;
+
+    if (lastMiniGameMessage.type === "island_game_position_update") {
       const { data } = lastMiniGameMessage;
       if (deadUidsRef.current.has(data.uid)) return;
       if (data.uid !== auth.currentUser?.uid) {
@@ -330,8 +334,14 @@ const IslandGame = ({
           [data.uid]: { x: data.x, y: data.y, direction: newDirection },
         };
       }
+      
+      // Auto-start if we missed the start event but are getting position updates
+      if (gameState === "waiting" && !isDeadRef.current) {
+        setGameState("playing");
+      }
     }
-    if (lastMiniGameMessage?.type === "island_game_death") {
+
+    if (lastMiniGameMessage.type === "island_game_death") {
       const { uid, x, y } = lastMiniGameMessage;
       deadUidsRef.current.add(uid);
       if (typeof x === "number") ghostsRef.current[uid] = { x, y };
@@ -351,8 +361,9 @@ const IslandGame = ({
         );
       }
     }
+
     // Bulk update from server interval
-    if (lastMiniGameMessage?.players) {
+    if (lastMiniGameMessage.type === "island_game_bulk_update" || (lastMiniGameMessage.players && lastMiniGameMessage.deadUids)) {
       const deadUids = lastMiniGameMessage.deadUids || [];
       const deadPlayers = lastMiniGameMessage.deadPlayers || [];
       deadUids.forEach((uid) => {
@@ -375,9 +386,6 @@ const IslandGame = ({
       ) {
         setIsDead(true);
         setGameState("spectating");
-      } else if (gameState === "waiting" && !isDeadRef.current) {
-        // Auto-start if we missed the start event but getting updates
-        setGameState("playing");
       }
     }
   }, [lastMiniGameMessage, miniGameId, gameState]);
@@ -398,6 +406,7 @@ const IslandGame = ({
   const resetGame = useCallback(() => {
     setPlayerPos({ x: BOARD_SIZE / 2, y: BOARD_SIZE / 2 });
     setActiveCannons([]);
+    activeCannonsRef.current = [];
     cannonballsRef.current = [];
     otherPlayersRef.current = {};
     keysDownRef.current = {};
@@ -471,6 +480,8 @@ const IslandGame = ({
       (c) => miniGameTimer <= c.spawnTime
     );
 
+    activeCannonsRef.current = shouldBeActive; // Keep the Ref synced for the game loop
+
     setActiveCannons((prev) => {
       const prevIds = new Set(prev.map((c) => c.id));
       const newIds = new Set(shouldBeActive.map((c) => c.id));
@@ -484,6 +495,39 @@ const IslandGame = ({
     });
   }, [miniGameTimer, gameState]);
 
+
+  // --- Strict Anti-Cheat Event Listeners (Triggers BEFORE thread pauses) ---
+  useEffect(() => {
+    const handleInstantAFK = () => {
+      // Only penalize if they are actively playing
+      if (!isDeadRef.current && gameStateRef.current === "playing") {
+        setIsDead(true);
+        setGameState("spectating");
+        setGhostPos(playerPosRef.current);
+        sendIslandGameDeath(miniGameId, playerPosRef.current);
+        sessionStorage.setItem(`miniGameDead-${miniGameId}`, "true");
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        handleInstantAFK();
+      }
+    };
+
+    // 1. Instantly triggers the exact moment the refresh pop-up appears
+    window.addEventListener("beforeunload", handleInstantAFK);
+    
+    // 2. Instantly triggers if they try switching tabs or minimizing to pause the browser
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleInstantAFK);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [miniGameId]);
+
+
   // --- GAME LOOP (High Frequency) ---
   const gameLoop = useCallback(
     (timestamp) => {
@@ -495,6 +539,19 @@ const IslandGame = ({
         return;
       }
       if (!lastTimeRef.current) lastTimeRef.current = timestamp;
+
+      // Calculate time passed since the last frame
+      const deltaTime = timestamp - lastTimeRef.current;
+      lastTimeRef.current = timestamp;
+
+      // Fallback Pause Detection (In case they bypass the tab/refresh listeners via DevTools)
+      if (deltaTime > 2000 && !isDeadRef.current && gameStateRef.current === "playing") {
+        setIsDead(true);
+        setGameState("spectating");
+        setGhostPos(playerPosRef.current);
+        sendIslandGameDeath(miniGameId, playerPosRef.current);
+        sessionStorage.setItem(`miniGameDead-${miniGameId}`, "true");
+      }
 
       // 1. Player Movement
       if (!isDeadRef.current) {
@@ -565,15 +622,15 @@ const IslandGame = ({
       }
 
       // 2. Cannon Logic (Direct DOM & Ref updates)
-      // We iterate over activeCannons from STATE (spawned), but update their data in REF
+      // Use the activeCannonsRef instead of state to avoid re-creating gameLoop
       const active = allCannonsRef.current.filter((c) =>
-        activeCannons.some((ac) => ac.id === c.id)
+        activeCannonsRef.current.some((ac) => ac.id === c.id)
       );
 
       active.forEach((c) => {
-        // Targeting
+        // Targeting (Optimized: Removed expensive Math.hypot)
         let closest = null,
-          minDist = Infinity;
+          minDistSq = Infinity;
         const playersToCheck = { ...otherPlayersRef.current };
         if (!isDeadRef.current && auth.currentUser?.uid)
           playersToCheck[auth.currentUser.uid] = playerPosRef.current;
@@ -581,9 +638,11 @@ const IslandGame = ({
         for (const uid in playersToCheck) {
           if (deadUidsRef.current.has(uid)) continue;
           const p = playersToCheck[uid];
-          const d = Math.hypot(p.x - c.pos.x, p.y - c.pos.y);
-          if (d < minDist) {
-            minDist = d;
+          const dx = p.x - c.pos.x;
+          const dy = p.y - c.pos.y;
+          const dSq = dx * dx + dy * dy; // Faster than Math.hypot
+          if (dSq < minDistSq) {
+            minDistSq = dSq;
             closest = p;
           }
         }
@@ -621,6 +680,9 @@ const IslandGame = ({
       if (ctx && canvasRef.current) {
         ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
         ctx.fillStyle = "black";
+        
+        // BATCH RENDERING: Start ONE path for ALL cannonballs
+        ctx.beginPath();
 
         // Filter and update balls
         cannonballsRef.current = cannonballsRef.current.filter((b) => {
@@ -630,15 +692,16 @@ const IslandGame = ({
           // Draw
           const screenX = b.pos.x * TILE_SIZE;
           const screenY = b.pos.y * TILE_SIZE;
-          ctx.beginPath();
-          ctx.arc(screenX, screenY, 6, 0, 2 * Math.PI); // 6px radius
-          ctx.fill();
+          
+          // BATCH RENDERING: Move to the edge of the circle (prevents connecting lines) then draw arc
+          ctx.moveTo(screenX + 6, screenY);
+          ctx.arc(screenX, screenY, 6, 0, 2 * Math.PI);
 
-          // Local Collision
+          // Local Collision (Optimized: Removed Math.sqrt, 0.8 * 0.8 = 0.64)
           if (!isDeadRef.current && playerPosRef.current) {
             const pdx = b.pos.x - playerPosRef.current.x;
             const pdy = b.pos.y - playerPosRef.current.y;
-            if (Math.sqrt(pdx * pdx + pdy * pdy) < 0.8) {
+            if (pdx * pdx + pdy * pdy < 0.64) {
               setIsDead(true);
               setGameState("spectating");
               setGhostPos(playerPosRef.current);
@@ -649,17 +712,20 @@ const IslandGame = ({
 
           // Remove if out of bounds
           return (
-            b.pos.x > 0 &&
-            b.pos.x < BOARD_SIZE &&
-            b.pos.y > 0 &&
-            b.pos.y < BOARD_SIZE
+            b.pos.x > -2 &&
+            b.pos.x < BOARD_SIZE + 2 &&
+            b.pos.y > -2 &&
+            b.pos.y < BOARD_SIZE + 2
           );
         });
+        
+        // BATCH RENDERING: Fill all the circles in a single graphics operation
+        ctx.fill(); 
       }
 
       gameLoopRef.current = requestAnimationFrame(gameLoop);
     },
-    [miniGameId, activeCannons]
+    [miniGameId] // REMOVED activeCannons from dependencies to prevent animation tearing
   );
 
   // --- Event Listeners ---
@@ -690,7 +756,7 @@ const IslandGame = ({
         <>
           <MiniGameReadyUp
             gameTitle={gameTitle}
-            miniGamePlayers={miniGamePlayers}
+            miniGamePlayers={miniGamePlayers || []} // Added Fallback
             miniGameId={miniGameId}
           />
           <IslandGameTutorial />

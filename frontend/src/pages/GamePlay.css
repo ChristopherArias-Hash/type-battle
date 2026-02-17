@@ -33,20 +33,29 @@
   
 }
 
-.lobby-list-section:hover {
-  transform: translateY(-4px) rotate(1deg);
-}
+
 
 .lobby-list-username {
   font-size: 16px;
   color: #e0e0e0;
   margin: 0px;
+  margin-left:10px;
   flex: 1;  
   overflow: hidden; 
+  white-space: nowrap;
   text-overflow: ellipsis;  
   text-align: center;
   font-weight: 1000;
   
+}
+
+.lobby-list-username:hover {
+  overflow-x: auto;      /* allow horizontal scroll */
+  text-overflow: clip;   /* remove ellipsis */
+  cursor: pointer;
+  scrollbar-width: thin;
+  scrollbar-color: #14adff #1f1f1f;
+
 }
 
 .lobby-list-score{

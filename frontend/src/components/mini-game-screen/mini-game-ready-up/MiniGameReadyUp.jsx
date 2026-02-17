@@ -40,10 +40,10 @@ function MiniGameReadyUp({
             </p>
             <p
               className={`mini-game-user-status ${
-                p.is_ready ? "status-ready" : "status-waiting"
+                p.ready ? "status-ready" : "status-waiting"
               }`}
             >
-              {p.is_ready ? "Ready" : "Waiting"}
+              {p.ready ? "Ready" : "Waiting"}
             </p>
           </li>
         ))}
