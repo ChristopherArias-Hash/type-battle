@@ -10,7 +10,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**") // apply to all endpoints
-                .allowedOrigins("http://localhost:5173", "https://typebattle.org", "https://type-battle-9cjw.onrender.com") // Add your production frontend URL
+                .allowedOrigins("http://localhost:5173", "https://typebattle.org", "https://typebattle-d91115883902.herokuapp.com") // Add your production frontend URL
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true); // optional: if you use cookies/session
