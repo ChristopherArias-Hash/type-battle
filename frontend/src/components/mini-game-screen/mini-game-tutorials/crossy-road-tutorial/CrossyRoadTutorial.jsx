@@ -16,7 +16,9 @@ function CrossyRoadTutorial() {
     const handleKeyDown = (event) => {
       // Find matching control
       const control = controls.find(
-        (c) => event.code === `Key${c.key}` || event.key.toLowerCase() === c.key.toLowerCase()
+        (c) =>
+          event.code === `Key${c.key}` ||
+          event.key.toLowerCase() === c.key.toLowerCase(),
       );
 
       if (control && buttonRefs.current[control.id]) {
@@ -47,10 +49,12 @@ function CrossyRoadTutorial() {
         <h3 className="crossyroad-setting-heading">Controls</h3>
         {controls.map((control) => (
           <div key={control.id} className="crossyroad-controls">
-            <p className="crossyroad-control-description">{control.description}</p>
+            <p className="crossyroad-control-description">
+              {control.description}
+            </p>
             <button
               ref={(el) => (buttonRefs.current[control.id] = el)}
-              onClick={() => console.log(`${control.description} pressed`)}
+              onClick={() => {}}
               className="crossyroad-control-button"
             >
               <span className="letter-enter">{control.key}</span>
@@ -63,7 +67,7 @@ function CrossyRoadTutorial() {
         <p>-1 point per car hit</p>
       </div>
       <div className="crossyroad-right-bar">
-        <h2 className="crossyroad-play-heading" >Gameplay</h2>
+        <h2 className="crossyroad-play-heading">Gameplay</h2>
         <img
           src={crossyRoadGif}
           alt="Crossy Road Tutorial"

@@ -40,7 +40,7 @@ function StackerTutorial() {
           <p className="stacker-control-description">DROP BLOCK</p>
           <button
             ref={spacebarButtonRef}
-            onClick={() => console.log("test")}
+            onClick={() => {}}
             className="stacker-control-button"
           >
             <span className="stacker-letter-enter">Spacebar</span>

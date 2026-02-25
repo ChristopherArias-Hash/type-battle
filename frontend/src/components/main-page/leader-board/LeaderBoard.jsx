@@ -19,9 +19,7 @@ function LeaderBoard({ loadLeaderboardInfo, isUserLoggedIn }) {
           </li>
         ));
         setListItems(items);
-      } catch (error) {
-        console.log(error, "not logged in leaderboard no avaible");
-      }
+      } catch (_error) {}
     };
 
     fetchLeaderboard();

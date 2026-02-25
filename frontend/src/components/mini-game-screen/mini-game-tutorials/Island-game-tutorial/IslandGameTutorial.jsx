@@ -16,7 +16,9 @@ function IslandGameTutorial() {
     const handleKeyDown = (event) => {
       // Find matching control
       const control = controls.find(
-        (c) => event.code === `Key${c.key}` || event.key.toLowerCase() === c.key.toLowerCase()
+        (c) =>
+          event.code === `Key${c.key}` ||
+          event.key.toLowerCase() === c.key.toLowerCase(),
       );
 
       if (control && buttonRefs.current[control.id]) {
@@ -47,10 +49,12 @@ function IslandGameTutorial() {
         <h3 className="island-game-setting-heading">Controls</h3>
         {controls.map((control) => (
           <div key={control.id} className="island-game-controls">
-            <p className="island-game-control-description">{control.description}</p>
+            <p className="island-game-control-description">
+              {control.description}
+            </p>
             <button
               ref={(el) => (buttonRefs.current[control.id] = el)}
-              onClick={() => console.log(`${control.description} pressed`)}
+              onClick={() => {}}
               className="island-game-control-button"
             >
               <span className="island-game-letter-enter">{control.key}</span>
@@ -63,7 +67,7 @@ function IslandGameTutorial() {
         <p>no points gained if dead</p>
       </div>
       <div className="island-game-right-bar">
-                <h2 className="island-game-play-heading" >Gameplay</h2>
+        <h2 className="island-game-play-heading">Gameplay</h2>
 
         <img
           src={islandGameGif}
