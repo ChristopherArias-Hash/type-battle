@@ -10,13 +10,19 @@
   align-items: center;
   border-color: #14adffab;
   background-color: #161616;
+  
 
 }
 
-.nav-left {
+.nav-left{
   display: flex;
-  align-items: center;
-  gap: 20px;
+  align-items: flex-end; 
+  gap: 5px;             
+}
+.nav-left h1,
+.nav-left p{
+  margin: 0;
+  line-height: 1;        
 }
 
 .nav-right {

@@ -200,6 +200,9 @@ const IslandGame = ({
   const cannonballIdRef = useRef(0);
   const stageRef = useRef(null);
   const [scale, setScale] = useState(1);
+  
+  // Anti-flash sync ref
+  const hasTimerSyncedRef = useRef(false);
 
   // Skin/Animation State
   const [playerDirection, setPlayerDirection] = useState("front");
@@ -230,7 +233,6 @@ const IslandGame = ({
   // --- Player Index Mapping ---
   const playerIndexMap = useMemo(() => {
     const map = new Map();
-    // Added Fallback empty array to prevent Crash
     (miniGamePlayers || []).forEach((player, index) => {
       if (player.firebaseUid) {
         map.set(player.firebaseUid, index % 4);
@@ -263,12 +265,13 @@ const IslandGame = ({
     }
   }, [playerPos, miniGameId]);
 
-  // --- Broadcast on Mount ---
+  // --- Broadcast Initial Position (FIXED: Only fires when game is actually playing) ---
   useEffect(() => {
-    if (miniGameId && playerPos && !isDead) {
+    if (miniGameId && playerPos && !isDead && gameState === "playing") {
       sendIslandGamePosition(miniGameId, playerPos);
     }
-  }, [miniGameId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [miniGameId, gameState]);
 
   // --- Remote walk frame animation ---
   useEffect(() => {
@@ -335,10 +338,7 @@ const IslandGame = ({
         };
       }
       
-      // Auto-start if we missed the start event but are getting position updates
-      if (gameState === "waiting" && !isDeadRef.current) {
-        setGameState("playing");
-      }
+      // FIXED: Removed the auto-start logic here that caused the refresh bug in the lobby
     }
 
     if (lastMiniGameMessage.type === "island_game_death") {
@@ -415,6 +415,7 @@ const IslandGame = ({
     setWalkFrame(false);
     deadUidsRef.current = new Set();
     ghostsRef.current = {};
+    hasTimerSyncedRef.current = false; // Reset the anti-flash timer
   }, []);
 
   const startGame = useCallback(
@@ -469,10 +470,16 @@ const IslandGame = ({
 
   // --- Cannon Spawning Logic (React State: Low Frequency) ---
   useEffect(() => {
+    // Validate that the timer has actually synced a real number from the server before spawning
+    if (miniGameTimer > 0) {
+      hasTimerSyncedRef.current = true;
+    }
+
     if (
       (gameState !== "playing" && gameState !== "spectating") ||
       !allCannonsRef.current.length ||
-      miniGameTimer === null
+      miniGameTimer === null ||
+      !hasTimerSyncedRef.current // <-- FIXED: Prevents cannons flashing on screen when timer is 0 for a millisecond
     )
       return;
 
@@ -515,10 +522,7 @@ const IslandGame = ({
       }
     };
 
-    // 1. Instantly triggers the exact moment the refresh pop-up appears
     window.addEventListener("beforeunload", handleInstantAFK);
-    
-    // 2. Instantly triggers if they try switching tabs or minimizing to pause the browser
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
@@ -622,7 +626,6 @@ const IslandGame = ({
       }
 
       // 2. Cannon Logic (Direct DOM & Ref updates)
-      // Use the activeCannonsRef instead of state to avoid re-creating gameLoop
       const active = allCannonsRef.current.filter((c) =>
         activeCannonsRef.current.some((ac) => ac.id === c.id)
       );

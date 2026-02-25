@@ -21,7 +21,6 @@ function MainPage() {
   const [showRegisterModal, setShowRegisterModal] = useState(false);
 
   // Sound
-
   const [playClickSound] = useSound(clickSound)
   return (
     <>

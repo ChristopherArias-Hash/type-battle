@@ -52,6 +52,7 @@ const registerAndLogin = async () => {
             <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
               <Form.Label><b>Email</b>  *required</Form.Label>
               <Form.Control
+                maxLength={40}
                 type="email"
                 placeholder="Enter email"
                 value={email}
@@ -61,6 +62,7 @@ const registerAndLogin = async () => {
             <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
               <Form.Label><b>Password</b> *required</Form.Label>
               <Form.Control
+                maxLength={20}
                 type="password"
                 placeholder="Enter password"
                 value={password}
@@ -70,6 +72,7 @@ const registerAndLogin = async () => {
             <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
               <Form.Label><b>Username</b>  *required</Form.Label>
               <Form.Control
+                maxLength={20}
                 type="Username"
                 placeholder="Enter username"
                 value={username}

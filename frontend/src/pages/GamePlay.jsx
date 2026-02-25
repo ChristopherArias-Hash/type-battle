@@ -39,6 +39,7 @@ function GamePlay() {
   } = useGameSession(sessionId, userInfo.getDisplayName);
 
   const disableLogout = true;
+  const singlePlayer = players.length === 1;
 
   useEffect(() => {
     enableWarning();
@@ -67,8 +68,6 @@ function GamePlay() {
 
   if (loading || paragraphText === null) return <div>Loading...</div>;
   if (!isUserLoggedIn) return <Navigate to="/" replace />;
-  console.log(userInfo);
-  console.log(players);
   if (gameEnded) {
     return (
       <>
@@ -110,7 +109,7 @@ function GamePlay() {
             <p className="winnerText">{winnerText}</p>
           )}
           <p className="return-screen">
-            Returning to main menu in 10 seconds...
+            Returning to main menu in 60 seconds...
           </p>
         </div>
       </>
@@ -173,8 +172,11 @@ function GamePlay() {
                 </p>
               )}
             </li>
+            
           ))}
         </ul>
+     {singlePlayer && !playerReady && (<p className="single-player-text"><b>Single player games do not count toward stats!</b></p>) }
+
         {/* The button is only shown if the server says you are NOT ready */}
         {!playerReady && (
           <button

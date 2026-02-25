@@ -18,8 +18,18 @@ const invalidRegistrationInput = (email, password, username, file) => {
     return true;
   }
 
-  if (password.length < 6) {
-    alert("Password must be at least 6 characters.");
+  if (username.length < 3 || username.length > 20) {
+    alert("Username must be between 3 and 20 characters.");
+    return true;
+  }
+
+  if (password.length < 6 || password.length > 20) {
+    alert("Password must be between 6 and 20 characters.");
+    return true;
+  }
+
+   if (email.length < 1 || email.length > 40) {
+    alert("Email must be between 1 and 40 characters.");
     return true;
   }
 

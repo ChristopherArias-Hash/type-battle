@@ -12,7 +12,7 @@ function NavBar({onLoginClick, onRegisterClick, isUserLoggedIn, logOut, userInfo
                         </h1>
                     </li>
                     <li className="nav-item pull-left">
-                        <p>server up: {serverStatus ? "true" : "false"}</p>
+                        <p>Beta 1.0</p>
                     </li>
                 </div>
 

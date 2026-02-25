@@ -135,6 +135,12 @@
   }
 }
 
+.single-player-text{
+  font-size: 1.2rem;
+  color: #ffffff;
+  margin-top: 15px;
+  font-weight: bold;
+}
 .ready-up-button {
    position: relative;
     display: inline-block;
@@ -154,7 +160,7 @@
   transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-    margin-top: 15px;
+    margin-top: 16px;
 
 }
 
