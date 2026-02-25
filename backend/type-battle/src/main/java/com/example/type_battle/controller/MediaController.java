@@ -25,10 +25,19 @@ public class MediaController {
     @PostMapping("/upload")
     public ResponseEntity<String> uploadImage(HttpServletRequest request, @RequestParam("file") MultipartFile file) {
         String uid = (String) request.getAttribute("uid");
+
         if (uid == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         }
+        if (file.getSize() > 5 * 1024 * 1024) {
+            return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body("File exceeds 5MB limit.");
+        }
 
+        // Check Mime Type (Only allow images)
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body("Only image files are allowed.");
+        }
         // Upload file
         String key = mediaService.uploadFile(file, uid);
 

@@ -64,17 +64,17 @@ public class GameTimerService {
     private final Map<String, Integer> remainingTimeBeforePause = new ConcurrentHashMap<>();
     private final Map<String, Set<Integer>> triggeredPausePoints = new ConcurrentHashMap<>();
 
-    private final Set<Integer> pausePoints = Set.of(45, 30, 15);
-    private final List<Integer> miniGameBonusPoints = List.of(45, 30, 15, 5);
-    private final int PAUSE_DURATION = 1; // Duration of the mini-game in seconds
+    private final Set<Integer> pausePoints = Set.of(44, 29, 14);
+    private final List<Integer> miniGameBonusPoints = List.of(100, 75, 50, 25);
+    private final int PAUSE_DURATION = 60; // Duration of the mini-game in seconds
 
-    // NEW: Track dead participants per mini-game (MiniGameParticipants.id)
+    // Track dead participants per mini-game (MiniGameParticipants.id)
     private final Map<Long, Set<Long>> miniGameDeadParticipantIds = new ConcurrentHashMap<>();
 
-    // NEW: Track ghost positions for dead players per mini-game (keyed by uid)
+    // Track ghost positions for dead players per mini-game (keyed by uid)
     private final Map<Long, Map<String, double[]>> miniGameDeadGhostPositions = new ConcurrentHashMap<>();
 
-    // NEW: Track which mini-game IDs were already used per main game session (by lobbyCode)
+    // Track which mini-game IDs were already used per main game session (by lobbyCode)
     private final Map<String, Set<Long>> usedMiniGameIdsBySession = new ConcurrentHashMap<>();
 
     public void startGameTimer(String sessionId, int durationSeconds) {
@@ -101,7 +101,7 @@ public class GameTimerService {
             if (pausePoints.contains(remainingTime) && triggered != null && !triggered.contains(remainingTime)) {
                 triggered.add(remainingTime);
                 pauseGame(sessionId, remainingTime);
-            } else if (remainingTime <= 60) {
+            } else if (remainingTime <= 0) {
                 endGame(sessionId);
                 stopGameTimer(sessionId);
             } else {
@@ -259,7 +259,7 @@ public class GameTimerService {
                     miniGameParticipantRepository.saveAll(alive);
                 }
 
-                // NEW (island only): If everyone is dead, end the mini-game early
+                // (island only): If everyone is dead, end the mini-game early
                 if (participants.isEmpty() || deadSet.size() >= participants.size()) {
                     System.out.println("[GameTimer] All players eliminated. Ending mini-game " + miniGameSessionId + " early.");
                     endMiniGame(miniGameSessionId);
@@ -269,7 +269,7 @@ public class GameTimerService {
                 if (remainingTime <= 0) {
                     endMiniGame(miniGameSessionId);
                 } else {
-                    // NEW (island only): include deadUids + deadPlayers (with ghost positions)
+                    // (island only): include deadUids + deadPlayers (with ghost positions)
                     List<MiniGamePlayerData> flatPlayers = participants.stream()
                             .map(MiniGamePlayerData::new)
                             .toList();
@@ -402,7 +402,7 @@ public class GameTimerService {
         remainingTimeBeforePause.remove(sessionId);
         triggeredPausePoints.remove(sessionId);
 
-        // NEW: clear the used mini-game set for this main session so a new main game can reuse them
+        // Clear the used mini-game set for this main session so a new main game can reuse them
         usedMiniGameIdsBySession.remove(sessionId);
     }
 
@@ -424,8 +424,6 @@ public class GameTimerService {
         List<Map<String, Object>> wpmData = new ArrayList<>();
         for (GameParticipants participants : allParticipantsScores) {
             User user = participants.getUser();
-            int gamesPlayedByUser = user.getGamesPlayed();
-            user.setGamesPlayed(gamesPlayedByUser + 1);
             int score = participants.getScore();
             int wpm = (score / 5);
             Map<String, Object> userWpm = new HashMap<>();
@@ -433,10 +431,15 @@ public class GameTimerService {
             userWpm.put("displayName", user.getDisplayName());
             userWpm.put("wpm", wpm);
             wpmData.add(userWpm);
-            if (user.getHighestWpm() < wpm) {
-                user.setHighestWpm(wpm);
+            if (allParticipantsScores.size() != 1){
+                int gamesPlayedByUser = user.getGamesPlayed();
+                user.setGamesPlayed(gamesPlayedByUser + 1);
+
+                if (user.getHighestWpm() < wpm) {
+                    user.setHighestWpm(wpm);
+                }
+                userRepository.save(user);
             }
-            userRepository.save(user);
         }
         gameEndMessage.put("wpm_data", wpmData);
 
@@ -445,9 +448,11 @@ public class GameTimerService {
             GameParticipants winnerParticipant = winner.get();
             User winnerUser = winnerParticipant.getUser();
             if (winnerUser != null) {
-                int currentWins = winnerUser.getGamesWon();
-                winnerUser.setGamesWon(currentWins + 1);
-                userRepository.save(winnerUser);
+                if (allParticipantsScores.size() != 1) {
+                    int currentWins = winnerUser.getGamesWon();
+                    winnerUser.setGamesWon(currentWins + 1);
+                    userRepository.save(winnerUser);
+                }
                 gameEndMessage.put("text-prefix", "Winner is: ");
                 gameEndMessage.put("name", winnerUser.getDisplayName());
                 gameEndMessage.put("text-middle", " with a score of ");
@@ -460,21 +465,21 @@ public class GameTimerService {
         messagingTemplate.convertAndSend("/topic/game/" + sessionId, gameEndMessage);
     }
 
-    // NEW: mark a MiniGameParticipants row as dead (by ID) for this session.
+    // Mark a MiniGameParticipants row as dead (by ID) for this session.
     public void markMiniGameParticipantDead(Long miniGameSessionId, Long miniGameParticipantId) {
         miniGameDeadParticipantIds
                 .computeIfAbsent(miniGameSessionId, k -> ConcurrentHashMap.newKeySet())
                 .add(miniGameParticipantId);
     }
 
-    // NEW: record ghost position for a dead player (by uid)
+    // Record ghost position for a dead player (by uid)
     public void recordMiniGameGhostPosition(Long miniGameSessionId, String uid, double x, double y) {
         miniGameDeadGhostPositions
                 .computeIfAbsent(miniGameSessionId, k -> new ConcurrentHashMap<>())
                 .put(uid, new double[]{x, y});
     }
 
-    // NEW: check if dead
+    // Check if dead
     public boolean isMiniGameParticipantDead(Long miniGameSessionId, Long miniGameParticipantId) {
         return miniGameDeadParticipantIds
                 .getOrDefault(miniGameSessionId, Collections.emptySet())

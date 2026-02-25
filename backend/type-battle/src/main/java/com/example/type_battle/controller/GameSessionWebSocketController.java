@@ -70,7 +70,6 @@ public class GameSessionWebSocketController {
                 lobbyParticipantData
         );
 
-        // --- FIX ADDED HERE: Send the data to the topic ---
         messagingTemplate.convertAndSend("/topic/lobby/" + session.getLobbyCode(), lobbyUpdateData);
         System.out.println("[WebSocket] Sent LobbyUpdateData to " + session.getLobbyCode());
     }

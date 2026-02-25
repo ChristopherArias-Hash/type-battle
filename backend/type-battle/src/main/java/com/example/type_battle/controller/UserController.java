@@ -41,7 +41,7 @@ public class UserController {
     @Autowired
     private ParagraphsRepository paragraphsRepository;
 
-    //When user logs in this verifys token from frontend to makesure its a real auth user
+    //When user logs in this verify's token from frontend to make sure its a real auth user
     @PostMapping("/verify-token")
     public ResponseEntity<String> verifyToken(HttpServletRequest request) {
         String uid = (String) request.getAttribute("uid");
@@ -110,6 +110,26 @@ public class UserController {
         return ResponseEntity.ok(new LobbyResponseData(savedSession.getStatus(), savedSession.getLobbyCode()));
     }
 
+    //Grabs list of all users, sorts by leaderboard wins.
+    @GetMapping("leader-board")
+    public ResponseEntity<List<LeaderBoardData>> leaderboard(HttpServletRequest request) {
+        String uid = (String) request.getAttribute("uid");
+
+        if (uid == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        List<LeaderBoardData> leaderboard = userRepository.findAll().stream()
+                .sorted(Comparator.comparingInt(User::getGamesWon).reversed())
+                .limit(10) //limits list size
+                .map(user -> new LeaderBoardData(user.getDisplayName(), user.getGamesWon()))
+                .collect(Collectors.toList());
+
+        if (leaderboard.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        return ResponseEntity.ok(leaderboard);
+    }
+
     //Grabs user info, checks for uid first.
     @GetMapping("/user")
     public ResponseEntity<?> getUser(HttpServletRequest request) {
@@ -118,6 +138,7 @@ public class UserController {
         if (uid == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         }
+
         Optional<User> userOpt = userRepository.findByFirebaseUid(uid);
 
         if (userOpt.isPresent()) {
@@ -152,6 +173,7 @@ public class UserController {
         if (userOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         }
+
         User user = userOpt.get();
 
         Optional<GameSessions> sessionOpt = sessionRepository.findByLobbyCode(lobbyCode);
@@ -192,27 +214,6 @@ public class UserController {
         );
 
         return ResponseEntity.ok(gameSessionData);
-    }
-
-
-    //Grabs list of all users, sorts by leaderboard wins.
-    @GetMapping("leader-board")
-    public ResponseEntity<List<LeaderBoardData>> leaderboard(HttpServletRequest request) {
-        String uid = (String) request.getAttribute("uid");
-
-        if (uid == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        List<LeaderBoardData> leaderboard = userRepository.findAll().stream()
-                .sorted(Comparator.comparingInt(User::getGamesWon).reversed())
-                .limit(10) //limits list size
-                .map(user -> new LeaderBoardData(user.getDisplayName(), user.getGamesWon()))
-                .collect(Collectors.toList());
-
-        if (leaderboard.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-        return ResponseEntity.ok(leaderboard);
     }
 
 

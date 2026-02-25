@@ -67,6 +67,7 @@ public class MiniGameSessionWebSocketController {
     public void handleMiniGameStateRequest(@DestinationVariable Long miniGameSessionId, SimpMessageHeaderAccessor headerAccessor) {
         String uid = resolveUid(headerAccessor);
         if (uid == null) return;
+
         Optional<MiniGameSession> sessionOpt = miniGameSessionRepository.findById(miniGameSessionId);
         if (sessionOpt.isEmpty()) return;
 
@@ -119,9 +120,15 @@ public class MiniGameSessionWebSocketController {
             gameStartMessage.put("type", "mini_game_start");
             gameStartMessage.put("startTime", System.currentTimeMillis());
 
-            gameStartMessage.put("cannons", islandGameSetupService.generateInitialCannons());
-            gameStartMessage.put("obstacles", obstacleGenerationService.generateObstacles());
-            gameStartMessage.put("initialPositions", crossyRoadSetupService.generateInitialPositions(allParticipants));
+            if (miniGameSession.getMiniGames().getId() == 3) {
+                gameStartMessage.put("cannons", islandGameSetupService.generateInitialCannons());
+            }
+            else if (miniGameSession.getMiniGames().getId() == 2) {
+                gameStartMessage.put("obstacles", obstacleGenerationService.generateObstacles());
+                gameStartMessage.put("initialPositions", crossyRoadSetupService.generateInitialPositions(allParticipants));
+            }else{
+                //throw error
+            }
             messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId, gameStartMessage);
         }
     }
