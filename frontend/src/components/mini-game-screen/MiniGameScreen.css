@@ -1,0 +1,185 @@
+.mini-game-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.898);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.mini-game-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+   overflow-y: auto;
+  width: 95vw;
+  height: 97vh;
+  max-width: 900px;
+  background: #212121;
+  border: 5px solid #161313;
+  border-radius: 16px;
+
+  --color: #161313;
+  background-image: linear-gradient(
+      0deg,
+      transparent 24%,
+      var(--color) 25%,
+      var(--color) 26%,
+      transparent 27%,
+      transparent 74%,
+      var(--color) 75%,
+      var(--color) 76%,
+      transparent 77%,
+      transparent
+    ),
+    linear-gradient(
+      90deg,
+      transparent 24%,
+      var(--color) 25%,
+      var(--color) 26%,
+      transparent 27%,
+      transparent 74%,
+      var(--color) 75%,
+      var(--color) 76%,
+      transparent 77%,
+      transparent
+    );
+  background-size: 70px 70px;
+}
+
+.mini-game-screen-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  height: 100%;
+  flex: 1;
+  overflow: hidden;
+}
+
+.mini-game-screen-player-section {
+  display: flex;
+  flex-direction: column;
+  color: white;
+  width: 200px;
+  padding: 20px;
+  background-color: rgba(0, 0, 0, 0.5);
+  border-right: 2px solid #161313;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.mini-game-screen-player-section h2 {
+  margin: 0 0 20px 0;
+  font-size: 1.5em;
+  text-align: center;
+}
+
+.mini-game-screen-player-list {
+  list-style: none;
+  display: flex;  
+  flex-direction: column;
+  gap: 15px;
+  margin: 15px 0;
+  padding: 0;
+}
+
+.mini-game-screen-player-list-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: linear-gradient(180deg, #2a2a2a, #1f1f1f);
+  border: 2px solid #14adffab;
+  border-radius: 10px;
+  
+}
+
+.mini-game-screen-player-name {
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 1.1em;
+  margin: 0;
+  text-align: center;
+  overflow-wrap: break-word; /* Allows long words to break and wrap */
+  word-break: break-word;    /* (Optional) A fallback for some browsers */
+  max-width: 100%;
+}
+
+.mini-game-screen-player-score {
+  color: #30b6ff;
+  font-weight: bold;
+  font-size: 1.3em;
+  text-align: center;
+  margin: 0;
+}
+
+.mini-game-screen-game-area {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.mini-game-screen-timer-container {
+  position: absolute;
+  right: 10px;
+  z-index: 100;
+}
+
+.mini-game-screen-timer {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 700;
+  font-size: 30px;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 50%;
+  
+}
+
+.mini-game-screen-timer span {
+  position: relative;
+  z-index: 1;
+  max-width: 40px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.timer-circle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 80px;
+  height: 80px;
+  transform: rotate(-90deg);
+}
+
+.timer-circle circle {
+  fill: none;
+  stroke: #30b7ff;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 251.2;
+  stroke-dashoffset: 251.2;
+  animation: countdownCircle 1s linear infinite;
+}
+
+@keyframes countdownCircle {
+  0% {
+    stroke-dashoffset: 251.2;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}

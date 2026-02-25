@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" 
+     viewBox="0 0 256 256" 
+     width="512" 
+     height="512">
+
+  <!-- Background -->
+  <rect width="250" height="256" fill="#2a2a2a" rx="32"/>
+  
+  <!-- Top-left bracket -->
+  <path d="M32 64 L32 32 L64 32" 
+        stroke="#14adff" 
+        stroke-width="12" 
+        stroke-linecap="round" 
+        fill="none"/>
+  
+  <!-- Bottom-right bracket -->
+  <path d="M224 192 L224 224 L192 224" 
+        stroke="#14adff" 
+        stroke-width="12" 
+        stroke-linecap="round" 
+        fill="none"/>
+  
+  <!-- Main Text -->
+  <text x="50%" y="65%" 
+        text-anchor="middle" 
+        font-family="Cabin, sans-serif" 
+        font-size="120" 
+        font-weight="700" 
+        fill="white">TB</text>
+</svg>
