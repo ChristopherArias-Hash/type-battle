@@ -11,7 +11,7 @@ import { auth } from "../firebase";
 export function useGameSession(sessionId, userDisplayName) {
   const navigate = useNavigate();
 
-  // Core state
+  // Core states
   const [players, setPlayers] = useState([]);
   const [isSendingReady, setIsSendingReady] = useState(false);
 
