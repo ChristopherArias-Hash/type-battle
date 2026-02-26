@@ -20,6 +20,7 @@
     "react-router-dom": "^7.13.1",
     "react-spring": "^10.0.3",
     "sockjs-client": "^1.6.1",
+    "tone": "^15.1.22",
     "use-sound": "^5.0.0"
   },
   "devDependencies": {
