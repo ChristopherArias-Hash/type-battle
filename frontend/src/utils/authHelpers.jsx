@@ -41,6 +41,7 @@ const invalidRegistrationInput = (email, password, username, file) => {
   return false;
 };
 
+// 
 const invalidLoginInput = (email, password) => {
   if (!email || !password) {
     alert("Please fill in all required fields.");
