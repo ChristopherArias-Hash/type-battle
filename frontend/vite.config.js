@@ -1,12 +1,24 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import nodePolyfills from 'rollup-plugin-node-polyfills'
 
 export default defineConfig({
   plugins: [react()],
-  define: {
-    // This safely fakes the Node environment for SockJS/Stomp
-    // without breaking React's internal build process!
-    global: "window",
-    "process.env": {},
+  resolve: {
+    alias: {
+      process: 'process/browser',
+      buffer: 'buffer',
+    },
   },
-});
+  define: {
+    global: 'window', // <--- THIS is the fix
+  },
+  optimizeDeps: {
+    include: ['buffer', 'process'],
+  },
+  build: {
+    rollupOptions: {
+      plugins: [nodePolyfills()],
+    },
+  },
+})
