@@ -8,7 +8,7 @@ export function connectWebSocket(
   firebaseToken,
   onPlayerListUpdate,
   onGameDataReceived,
-  onSuccessfulConnect, // ✨ 1. ADD THE NEW PARAMETER
+  onSuccessfulConnect, 
 ) {
   if (stompClient && stompClient.active) {
     stompClient.deactivate();
