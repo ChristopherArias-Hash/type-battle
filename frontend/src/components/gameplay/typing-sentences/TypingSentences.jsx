@@ -22,10 +22,7 @@ function TypingSentences({ paragraphText, sessionId, timer, isPaused }) {
         setCorrectStrokes(data.correctStrokes ?? 0);
         setLetters(data.letters ?? 0);
         setInputStatus(data.inputStatus ?? []);
-        console.log("✅ Restored progress from sessionStorage:", data);
-      } catch (e) {
-        console.warn("Failed to parse saved progress:", e);
-      }
+      } catch (_e) {}
     }
     setRestored(true);
   }, [paragraphText, sessionId]);
@@ -36,7 +33,7 @@ function TypingSentences({ paragraphText, sessionId, timer, isPaused }) {
     const dataToStore = { strokes, correctStrokes, letters, inputStatus };
     sessionStorage.setItem(
       `typing-progress-${sessionId}`,
-      JSON.stringify(dataToStore)
+      JSON.stringify(dataToStore),
     );
   }, [strokes, correctStrokes, letters, inputStatus, sessionId, restored]);
 
@@ -225,7 +222,9 @@ function TypingSentences({ paragraphText, sessionId, timer, isPaused }) {
     <>
       <div className="typing-area">
         <div className="timer-display">
-          <h2>Time Remaining: <b className="time-display-digits">{timer}</b></h2>
+          <h2>
+            Time Remaining: <b className="time-display-digits">{timer}</b>
+          </h2>
         </div>
         <div className="ghost-text">{listOfSentence}</div>
       </div>

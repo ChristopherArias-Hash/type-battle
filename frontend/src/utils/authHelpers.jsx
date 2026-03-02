@@ -28,7 +28,7 @@ const invalidRegistrationInput = (email, password, username, file) => {
     return true;
   }
 
-   if (email.length < 1 || email.length > 40) {
+  if (email.length < 1 || email.length > 40) {
     alert("Email must be between 1 and 40 characters.");
     return true;
   }
@@ -72,14 +72,13 @@ const isAllowedImageType = (file) => {
 
 export const isServerUp = async () => {
   try {
-    const serverRespones = await axios.get("http://localhost:8080/ping");
+    const serverRespones = await axios.get(
+      `${import.meta.env.VITE_BACKEND_URL}/ping`,
+    );
     if (serverRespones.status) {
-       console.log("server is up")
       return true;
-     
     }
-  } catch (error) {
-    console.log("Server is down, please try again later", error);
+  } catch (_error) {
     alert("Server is down please try again later");
     return false;
   }
@@ -96,19 +95,18 @@ export async function handleLogin(email, password) {
     const userCredential = await signInWithEmailAndPassword(
       auth,
       email,
-      password
+      password,
     );
-    console.log(userCredential);
     const token = await userCredential.user.getIdToken();
 
     const response = await fetch(
-      "http://localhost:8080/protected/verify-token",
+      `${import.meta.env.VITE_BACKEND_URL}/protected/verify-token`,
       {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
 
     if (!response.ok) {
@@ -124,12 +122,10 @@ export async function handleLogin(email, password) {
 
 export async function handleRegister(email, password, username, file) {
   if (invalidRegistrationInput(email, password, username, file)) {
-    console.log("Bad Registration Input");
     return false;
   }
 
   if (!(await isServerUp())) {
-    console.log("fired");
     return;
   }
   let firebaseUser = null;
@@ -139,7 +135,7 @@ export async function handleRegister(email, password, username, file) {
     const userCredential = await createUserWithEmailAndPassword(
       auth,
       email,
-      password
+      password,
     );
     firebaseUser = userCredential.user;
     const idToken = await firebaseUser.getIdToken();
@@ -147,7 +143,7 @@ export async function handleRegister(email, password, username, file) {
     // Step 2: Backend user registration
     try {
       await axios.post(
-        "http://localhost:8080/protected/users",
+        `${import.meta.env.VITE_BACKEND_URL}/protected/users`,
         {
           email,
           displayName: username,
@@ -156,15 +152,14 @@ export async function handleRegister(email, password, username, file) {
           headers: {
             Authorization: `Bearer ${idToken}`,
           },
-        }
+        },
       );
     } catch (backendError) {
-      console.error("Backend user creation failed:", backendError.message);
+      void backendError;
       alert("Failed to register user in backend.");
 
       if (firebaseUser) {
         await deleteUser(firebaseUser);
-        console.log("Firebase user deleted due to backend failure.");
       }
 
       return;
@@ -176,19 +171,22 @@ export async function handleRegister(email, password, username, file) {
       formData.append("file", file);
 
       try {
-        await axios.post("http://localhost:8080/api/media/upload", formData, {
-          headers: {
-            Authorization: `Bearer ${idToken}`,
-            "Content-Type": "multipart/form-data",
+        await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/api/media/upload`,
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${idToken}`,
+              "Content-Type": "multipart/form-data",
+            },
           },
-        });
+        );
       } catch (uploadError) {
-        console.error("Image upload failed:", uploadError.message);
+        void uploadError;
         alert("Image upload failed. Please try again.");
 
         if (firebaseUser) {
           await deleteUser(firebaseUser);
-          console.log("Firebase user deleted due to image upload failure.");
         }
 
         return;
@@ -197,8 +195,7 @@ export async function handleRegister(email, password, username, file) {
 
     alert("Registration successful!");
     return true;
-  } catch (error) {
-    console.error("Registration error (Firebase):", error.message);
+  } catch (_error) {
     alert("Failed to register with Firebase.");
     return;
   }
@@ -215,22 +212,17 @@ export async function createGame() {
 
   try {
     const res = await axios.post(
-      "http://localhost:8080/protected/lobbies",
+      `${import.meta.env.VITE_BACKEND_URL}/protected/lobbies`,
       {}, // empty body
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
 
-    console.log("Lobby created:", res.data);
     return res.data.lobbyCode; // return the session ID from backend
   } catch (error) {
-    console.error(
-      "Failed to create lobby:",
-      error.response?.data || error.message
-    );
     throw error;
   }
 }
@@ -245,12 +237,12 @@ export const joinGameUsingCode = async (code, navigate) => {
     try {
       const token = await user.getIdToken();
       const response = await axios.get(
-        `http://localhost:8080/protected/game-session?lobbyCode=${code}`,
+        `${import.meta.env.VITE_BACKEND_URL}/protected/game-session?lobbyCode=${code}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       const lobbyData = response.data;
@@ -258,8 +250,7 @@ export const joinGameUsingCode = async (code, navigate) => {
       if (lobbyData.lobbyCode == code) {
         navigate(`/game/${code}`);
       }
-    } catch (error) {
-      console.log("Error getting info", error);
+    } catch (_error) {
       alert("CODE IS NOT CORRECT");
     }
   } else {

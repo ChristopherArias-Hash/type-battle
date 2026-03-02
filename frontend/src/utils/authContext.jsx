@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import {isServerUp} from "./authHelpers"
+import { isServerUp } from "./authHelpers";
 import { auth } from "../firebase";
-import { onAuthStateChanged, signOut} from "firebase/auth";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import axios from "axios";
 
 const AuthContext = createContext();
@@ -17,7 +17,7 @@ export const useAuth = () => {
 //Contains all fuctions that require auth protection
 export const AuthProvider = ({ children }) => {
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
-  const [serverStatus, setServerStatus] = useState(false)
+  const [serverStatus, setServerStatus] = useState(false);
   const [userInfo, setUserInfo] = useState({
     getWinsInfo: 0,
     getGamesPlayedInfo: 0,
@@ -29,13 +29,13 @@ export const AuthProvider = ({ children }) => {
   //Loading screens
   const [loading, setLoading] = useState(true);
 
-  const loadServerStatus = async () =>{
-    if(!await isServerUp()){
-      setServerStatus(false)
-  }else{
-    setServerStatus(true)
-  }
-}
+  const loadServerStatus = async () => {
+    if (!(await isServerUp())) {
+      setServerStatus(false);
+    } else {
+      setServerStatus(true);
+    }
+  };
   //GET: User Info
   const loadUserInfo = async () => {
     const user = auth.currentUser;
@@ -43,11 +43,14 @@ export const AuthProvider = ({ children }) => {
 
     try {
       const idToken = await user.getIdToken();
-      const response = await axios.get("http://localhost:8080/protected/user", {
-        headers: {
-          Authorization: `Bearer ${idToken}`,
+      const response = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/protected/user`,
+        {
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+          },
         },
-      });
+      );
 
       const userDetails = response.data;
       setUserInfo({
@@ -57,9 +60,7 @@ export const AuthProvider = ({ children }) => {
         getDisplayName: userDetails.displayName,
         getProfilePicture: userDetails.imageUrl,
       });
-    } catch (error) {
-      console.error("Error loading user info:", error);
-    }
+    } catch (error) {}
   };
 
   //GET: Leaderboard info
@@ -71,20 +72,18 @@ export const AuthProvider = ({ children }) => {
     try {
       const idToken = await user.getIdToken();
       const response = await axios.get(
-        "http://localhost:8080/protected/leader-board",
+        `${import.meta.env.VITE_BACKEND_URL}/protected/leader-board`,
         {
           headers: {
             Authorization: `Bearer ${idToken}`,
           },
-        }
+        },
       );
 
       const leaderboard = response.data;
-      console.log(leaderboard);
+      void leaderboard;
       return response;
-    } catch (error) {
-      console.error("Error loading leaderboard data:", error);
-    }
+    } catch (error) {}
   };
 
   //Firebase logout
@@ -99,15 +98,12 @@ export const AuthProvider = ({ children }) => {
         getDisplayName: "",
         getProfilePicture: null,
       });
-      console.log("User signed out successfully.");
-    } catch (err) {
-      console.error("Error signing out", err);
-    }
+    } catch (_err) {}
   };
 
   useEffect(() => {
-  loadServerStatus();
-}, []);
+    loadServerStatus();
+  }, []);
 
   //Keeps track if user is logged in or out.
   useEffect(() => {

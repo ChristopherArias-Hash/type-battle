@@ -149,7 +149,7 @@ const CrossyRoad = ({
       sessionStorage.setItem(`crossy-crossings-${miniGameId}`, crossings);
       sessionStorage.setItem(
         `crossy-direction-${miniGameId}`,
-        crossingDirection
+        crossingDirection,
       );
     }
   }, [crossings, crossingDirection, miniGameId]);
@@ -186,8 +186,6 @@ const CrossyRoad = ({
       miniGameStartSignal.type === "mini_game_start" &&
       gameState === "waiting"
     ) {
-      console.log("🚀 CrossyRoad is starting...");
-
       const { obstacles: serverObstacles, initialPositions } =
         miniGameStartSignal;
       const currentUid = auth.currentUser?.uid;
@@ -277,7 +275,7 @@ const CrossyRoad = ({
         return np;
       });
     },
-    [gameState, miniGameId, playerPos]
+    [gameState, miniGameId, playerPos],
   );
 
   useEffect(() => {
@@ -304,7 +302,7 @@ const CrossyRoad = ({
           const finalX = wrappedShifted - obs.width;
 
           return { ...obs, x: finalX };
-        })
+        }),
       );
       animationFrameId = requestAnimationFrame(loop);
     };

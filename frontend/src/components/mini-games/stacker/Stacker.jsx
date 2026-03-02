@@ -197,7 +197,7 @@ function Stacker({ miniGamePlayers, miniGameId, miniGameStartSignal }) {
     initializeCanvas();
     try {
       const savedState = sessionStorage.getItem(
-        `stackerGameState-${miniGameId}`
+        `stackerGameState-${miniGameId}`,
       );
       if (savedState) {
         const data = JSON.parse(savedState);
@@ -209,14 +209,13 @@ function Stacker({ miniGamePlayers, miniGameId, miniGameStartSignal }) {
         speedRef.current = data.speed;
         groundOffsetRef.current = data.groundOffset || 0;
       }
-    } catch (error) {
-      console.error("❗️ Error loading state:", error);
+    } catch (_error) {
     } finally {
       hasInitializedRef.current = true;
     }
     parseInt(
       sessionStorage.getItem(`stackerHighScore-${miniGameId}`) || "0",
-      10
+      10,
     );
   }, [miniGameId, initializeCanvas]);
 
@@ -233,13 +232,11 @@ function Stacker({ miniGamePlayers, miniGameId, miniGameStartSignal }) {
         direction: directionRef.current,
         speed: speedRef.current,
         groundOffset: groundOffsetRef.current,
-      })
+      }),
     );
   }, [gameState, stack, score, miniGameId]);
 
-  const handleReadyUp = () => {
-    console.log("✅ Player readied up in Stacker!");
-  };
+  const handleReadyUp = () => {};
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -253,7 +250,7 @@ function Stacker({ miniGamePlayers, miniGameId, miniGameStartSignal }) {
       canvas.width,
       canvas.height,
       blockDepth,
-      groundOffsetRef.current
+      groundOffsetRef.current,
     );
     if (
       gameState === "playing" &&
@@ -267,7 +264,7 @@ function Stacker({ miniGamePlayers, miniGameId, miniGameStartSignal }) {
         currentBlockRef.current.y,
         prevBlock.width,
         blockHeight,
-        blockDepth
+        blockDepth,
       );
     }
     const colorBands = [0, 60, 120, 180, 240, 300];
@@ -282,7 +279,7 @@ function Stacker({ miniGamePlayers, miniGameId, miniGameStartSignal }) {
         block.width,
         blockHeight,
         blockDepth,
-        color
+        color,
       );
     });
     if (gameState === "playing" && currentBlockRef.current) {
@@ -296,27 +293,19 @@ function Stacker({ miniGamePlayers, miniGameId, miniGameStartSignal }) {
         currentBlockRef.current.width,
         blockHeight,
         blockDepth,
-        color
+        color,
       );
     }
   }, [stack, gameState]);
 
   const initializeGame = useCallback(
     (isNewGame) => {
-      console.log("🎯 initializeGame called, isNewGame:", isNewGame);
-
       const canvas = canvasRef.current;
       if (!canvas) {
-        console.log("❌ Canvas not found!");
         return;
       }
       const { newWidth, newHeight } = initializeCanvas();
       if (canvas.width === 0 || canvas.height === 0) {
-        console.error(
-          "Canvas dimensions are invalid:",
-          canvas.width,
-          canvas.height
-        );
         return;
       }
       if (isNewGame || !stack || stack.length === 0) {
@@ -348,9 +337,8 @@ function Stacker({ miniGamePlayers, miniGameId, miniGameStartSignal }) {
         };
         speedRef.current = 2.5;
       }
-      console.log("✅ Game initialized successfully!");
     },
-    [stack, initializeCanvas]
+    [stack, initializeCanvas],
   );
 
   const endGame = useCallback(() => {
@@ -369,7 +357,6 @@ function Stacker({ miniGamePlayers, miniGameId, miniGameStartSignal }) {
 
   useEffect(() => {
     if (score > 0 && score > highScore) {
-      console.log(`✨ New High Score: ${score}`);
       setHighScore(score);
       localStorage.setItem("stackerHighScore", score);
       sendStackerPoints(miniGameId, { highScore: score });
@@ -378,26 +365,17 @@ function Stacker({ miniGamePlayers, miniGameId, miniGameStartSignal }) {
 
   //Listen to gameStartSignal and set state to playing
   useEffect(() => {
-    console.log("🔍 Game start check:", {
-      hasInitialized: hasInitializedRef.current,
-      miniGameStartSignal,
-      gameState,
-    });
-
     if (!hasInitializedRef.current) {
-      console.log("⏸️ Not initialized yet, skipping game start");
       return;
     }
 
     if (miniGameStartSignal && gameState === "waiting") {
-      console.log("🎮 Setting game state to playing!");
       setGameState("playing");
     }
   }, [miniGameStartSignal, gameState]);
 
   useEffect(() => {
     if (gameState === "playing" && canvasRef.current && stack.length === 0) {
-      console.log("🎯 Canvas is ready, initializing game!");
       initializeGame(true);
     }
   }, [gameState, initializeGame, stack.length]);
@@ -472,8 +450,8 @@ function Stacker({ miniGamePlayers, miniGameId, miniGameStartSignal }) {
       0,
       Math.min(
         blockToDrop.x + blockToDrop.width,
-        prevBlock.x + prevBlock.width
-      ) - Math.max(blockToDrop.x, prevBlock.x)
+        prevBlock.x + prevBlock.width,
+      ) - Math.max(blockToDrop.x, prevBlock.x),
     );
     let newBlock;
     let newWidth;
@@ -500,7 +478,7 @@ function Stacker({ miniGamePlayers, miniGameId, miniGameStartSignal }) {
     let newStack = [...stack, newBlock];
     if (canvas && newStack.length > 0) {
       const highestBlock = newStack.reduce((highest, block) =>
-        block.y < highest.y ? block : highest
+        block.y < highest.y ? block : highest,
       );
       if (highestBlock.y < canvas.height * 0.3) {
         const shiftAmount = blockHeight;

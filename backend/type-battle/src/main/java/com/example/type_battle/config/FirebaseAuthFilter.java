@@ -59,7 +59,7 @@ public class FirebaseAuthFilter implements Filter {
         if (origin != null && (
                 origin.equals("http://localhost:5173") ||
                         origin.equals("https://typebattle.org") ||
-                        origin.equals("https://type-battle-9cjw.onrender.com")
+                        origin.equals("https://typebattle-d91115883902.herokuapp.com/")
         )) {
             response.setHeader("Access-Control-Allow-Origin", origin);
         }
