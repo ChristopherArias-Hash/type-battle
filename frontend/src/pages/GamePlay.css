@@ -125,6 +125,42 @@
   animation: slideRotateIn 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28);
 }
 
+.transition-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(2px);
+  display: flex;
+  justify-content: center;
+  align-items: top;
+  z-index: 999;
+  animation: overlayFadeIn 0.3s ease forwards;
+  
+}
+
+/* Modal content */
+.transition-modal {
+  text-align: center;
+  animation: popIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.4);
+}
+
+.transition-title {
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  color: white;
+  font-weight: 900;
+  letter-spacing: 3px;
+  margin: 0;
+}
+
+.transition-count {
+  font-size: clamp(4rem, 10vw, 7rem);
+  color: #30b6ff;
+  font-weight: 900;
+  margin-top: 10px;
+  animation: pulse 1s infinite ease-in-out;
+}
+
+
 @keyframes slideRotateOut {
   to {
     transform: translateX(-30px) rotate(-15deg);
@@ -140,6 +176,41 @@
   to {
     transform: translateX(0) rotate(0);
     opacity: 1;
+  }
+}
+
+@keyframes popIn {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes overlayFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 

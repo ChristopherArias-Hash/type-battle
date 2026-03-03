@@ -1,0 +1,106 @@
+.generator-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  justify-content: center;
+  padding: 20px;
+  color: white;
+  font-family: 'Cabin', sans-serif;
+}
+
+.generator-panel {
+  border: 3px solid #14adffab;
+  background-color: #161616;
+  box-shadow: 0 0 8px rgba(14, 165, 233, 0.6);
+  border-radius: 8px;
+  padding: 30px;
+  flex: 1;
+  min-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.generator-label {
+  font-weight: bold;
+  color: #14adffab;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.generator-input {
+  background-color: #212121;
+  border: 1px solid #14adffab;
+  color: white;
+  padding: 10px;
+  border-radius: 4px;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+  margin-bottom: 15px;
+  font-family: inherit;
+}
+
+.generator-textarea {
+  resize: vertical;
+}
+
+.generator-section-block {
+  background-color: #212121;
+  border: 1px dashed #14adffab;
+  padding: 15px;
+  border-radius: 4px;
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.generator-remove-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #ff4d4d;
+  border: none;
+  padding: 5px 10px;
+  font-size: 12px;
+  color: white;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.generator-button {
+  background-color: transparent;
+  border: 2px solid #14adffab;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.2s ease;
+  margin-top: 10px;
+}
+
+.generator-button-primary {
+  background-color: #14adffab;
+  color: #161616;
+  margin-top: 30px;
+}
+
+.generator-output {
+  height: 450px;
+  white-space: pre;
+  overflow-x: auto;
+  resize: vertical;
+  font-family: monospace;
+  font-size: 14px;
+  background-color: #212121;
+  border: 1px solid #14adffab;
+  color: #aaffaa;
+  padding: 10px;
+  border-radius: 4px;
+  width: 100%;
+  box-sizing: border-box;
+}

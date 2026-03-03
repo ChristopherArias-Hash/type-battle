@@ -1,0 +1,77 @@
+.patch-notes-container {
+  background-color: #161616;
+  border: 3px solid #14adffab;
+  box-shadow: 0 0 8px rgba(14, 165, 233, 0.6);
+  border-radius: 8px;
+  padding: 40px;
+  color: white;
+  font-family: 'Cabin', sans-serif;
+  max-width: 800px;
+  margin: 0 auto;
+  margin-top: 30px;
+}
+
+.patch-header {
+  border-bottom: 2px solid #313131;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+}
+
+.patch-header-top {
+  display: flex;
+  justify-content: space-between;
+  color: #14adffab;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.patch-title {
+  font-size: 2.5rem;
+  margin: 10px 0 0 0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.patch-intro {
+  font-size: 1.1rem;
+  color: #ddd;
+  margin-bottom: 30px;
+  line-height: 1.6;
+}
+
+.patch-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.patch-section-title {
+  color: #14adffab;
+  border-bottom: 1px dashed #313131;
+  padding-bottom: 10px;
+  text-transform: uppercase;
+  margin-top: 0;
+}
+
+.patch-list {
+  list-style: none;
+  padding-left: 0;
+  margin-top: 15px;
+}
+
+.patch-list li {
+  position: relative;
+  padding-left: 20px;
+  margin-bottom: 8px;
+  line-height: 1.5;
+  color: #eee;
+}
+
+.patch-list li::before {
+  content: "-";
+  position: absolute;
+  left: 0;
+  color: #14adffab;
+  font-weight: bold;
+}

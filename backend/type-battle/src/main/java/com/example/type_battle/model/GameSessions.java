@@ -34,22 +34,6 @@ public class GameSessions {
     @Column(name = "players_in_lobby")
     private Integer playersInLobby = 0; // 0 default, 4 is max.
 
-    // =========================================================================
-    // NEW: THE CASCADE LISTS (This tells Hibernate about the children)
-    // =========================================================================
-
-    // Deletes all participants when the lobby is deleted
-    @OneToMany(mappedBy = "gameSessions", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<GameParticipants> participants = new ArrayList<>();
-
-    // Deletes all mini-games when the lobby is deleted
-    @OneToMany(mappedBy = "gameSessions", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<MiniGameSession> miniGameSessions = new ArrayList<>();
-
-
-    // =========================================================================
-    // GETTERS AND SETTERS
-    // =========================================================================
 
     public Integer getPlayersInLobby() {
         return playersInLobby;
@@ -115,20 +99,5 @@ public class GameSessions {
         this.gameDuration = gameDuration;
     }
 
-    // Getters and setters for the new lists (Good practice to have them)
-    public List<GameParticipants> getParticipants() {
-        return participants;
-    }
 
-    public void setParticipants(List<GameParticipants> participants) {
-        this.participants = participants;
-    }
-
-    public List<MiniGameSession> getMiniGameSessions() {
-        return miniGameSessions;
-    }
-
-    public void setMiniGameSessions(List<MiniGameSession> miniGameSessions) {
-        this.miniGameSessions = miniGameSessions;
-    }
 }

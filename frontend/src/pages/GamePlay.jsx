@@ -117,15 +117,6 @@ function GamePlay() {
     );
   }
 
-  if (transitionTime !== null) {
-  return (
-    <div className="transition-screen">
-      <h1>Get Ready!</h1>
-      <h2>Game resuming in {transitionTime}</h2>
-    </div>
-  );
-}
-
   return (
     <>
       <NavBar
@@ -135,6 +126,14 @@ function GamePlay() {
         logOut={logOutFirebase}
       />
       <div className="lobby-container">
+        {transitionTime !== null && (
+          <div className="transition-overlay">
+            <div className="transition-modal">
+              <h1 className="transition-title">GET READY!</h1>
+              <h2 className="transition-count">{transitionTime}</h2>
+            </div>
+          </div>
+        )}
         <h2 className="lobby-info">
           Lobby {players.length}/4 (Game Session #
           <b
@@ -221,7 +220,7 @@ function GamePlay() {
         <h2 className="please-ready-text">Please ready up to start the game</h2>
       )}
 
-      {isPaused && (
+      {isPaused && transitionTime == null && (
         <MiniGameScreen
           miniGamePlayers={miniGamePlayers}
           lastMiniGameMessage={lastMiniGameMessage}

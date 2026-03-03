@@ -345,13 +345,13 @@ public class GameTimerService {
             }
         }
     }
-    // NEW: The 5-Second Transition Timer
+    // The 5-Second Transition Timer
     private void startTransitionTimer(String sessionId) {
-        localTransitionClocks.put(sessionId, 5);
+        localTransitionClocks.put(sessionId, 10);
 
         Map<String, Object> startMsg = new HashMap<>();
         startMsg.put("type", "transition_tick");
-        startMsg.put("remainingTime", 5);
+        startMsg.put("remainingTime", 10);
         messagingTemplate.convertAndSend("/topic/game/" + sessionId, startMsg);
 
         ScheduledFuture<?> future = scheduler.scheduleAtFixedRate(() -> {
@@ -377,7 +377,7 @@ public class GameTimerService {
 
     private void resumeGame(String sessionId) {
         gamePaused.put(sessionId, false);
-        int remainingTime = remainingTimeBeforePause.get(sessionId);
+        int remainingTime = remainingTimeBeforePause.get(sessionId)+ 1;
         localGameClocks.put(sessionId, remainingTime);
 
         Optional<GameSessions> sessionOpt = sessionRepository.findByLobbyCode(sessionId);
