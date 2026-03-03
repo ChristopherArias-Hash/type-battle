@@ -38,6 +38,7 @@ function MainPage() {
           setShowLoginModal(false);
         }}
       />
+      
       {showLoginModal && (
         <LoginModal  show={showLoginModal}     onClose={() => setShowLoginModal(false)} />
       )}

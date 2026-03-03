@@ -18,6 +18,12 @@ export function useGameSession(sessionId, userDisplayName) {
   const [timer, setTimer] = useState(
     () => JSON.parse(sessionStorage.getItem(`timer-${sessionId}`)) || 60,
   );
+  
+  // NEW: Transition Timer State
+  const [transitionTime, setTransitionTime] = useState(
+    () => JSON.parse(sessionStorage.getItem(`transitionTime-${sessionId}`)) || null,
+  );
+
   const [paragraphText, setParagraphText] = useState(null);
   const [gameStart, setGameStart] = useState(
     () => JSON.parse(sessionStorage.getItem(`gameStart-${sessionId}`)) || false,
@@ -30,10 +36,8 @@ export function useGameSession(sessionId, userDisplayName) {
   const [winnerText, setWinnerText] = useState("");
   const [winnerInfo, setWinnerInfo] = useState(null);
 
-  // FIX: Initialize miniGameId from sessionStorage
   const [miniGameId, setMiniGameId] = useState(() => {
     const savedId = sessionStorage.getItem(`miniGameId-${sessionId}`);
-    // Ensure we don't return the string "null", just the value or actual null
     return savedId && savedId !== "null" ? savedId : null;
   });
 
@@ -67,13 +71,15 @@ export function useGameSession(sessionId, userDisplayName) {
     sendReadyUp(sessionId);
   }, [sessionId]);
 
-  // Persist session state (but NOT miniGameTimer - that's server-driven)
+  // Persist session state
   useEffect(() => {
     sessionStorage.setItem(`timer-${sessionId}`, JSON.stringify(timer));
     sessionStorage.setItem(`isPaused-${sessionId}`, JSON.stringify(isPaused));
     sessionStorage.setItem(`gameStart-${sessionId}`, JSON.stringify(gameStart));
+    
+    // NEW: Persist transition time
+    sessionStorage.setItem(`transitionTime-${sessionId}`, JSON.stringify(transitionTime));
 
-    // FIX: Only store miniGameId if it's not null
     if (miniGameId !== null) {
       sessionStorage.setItem(`miniGameId-${sessionId}`, miniGameId.toString());
     } else {
@@ -93,6 +99,7 @@ export function useGameSession(sessionId, userDisplayName) {
     sessionId,
     miniGameStartSignal,
     miniGame,
+    transitionTime, // Added to deps
   ]);
 
   // Keep ref synced
@@ -104,7 +111,6 @@ export function useGameSession(sessionId, userDisplayName) {
     (completedMiniGameId) => {
       sessionStorage.removeItem(`stackerGameState-${completedMiniGameId}`);
       sessionStorage.removeItem(`stackerHighScore-${completedMiniGameId}`);
-      // REMOVED: miniGameTimer cleanup - it's not stored anymore
       sessionStorage.removeItem(`miniGame-${sessionId}`);
       sessionStorage.removeItem(`miniGameId-${sessionId}`);
       sessionStorage.removeItem(`miniGameStartSignal-${sessionId}`);
@@ -134,7 +140,6 @@ export function useGameSession(sessionId, userDisplayName) {
         setMiniGamePlayers(miniGameData);
       } else if (miniGameData && miniGameData.players) {
         setMiniGamePlayers(miniGameData.players);
-        // FIX: This is the ONLY place miniGameTimer should be updated
         if (miniGameData.remainingTime !== undefined) {
           setMiniGameTimer(miniGameData.remainingTime);
         }
@@ -149,7 +154,7 @@ export function useGameSession(sessionId, userDisplayName) {
       const newMiniGame = data.miniGameId;
       setMiniGameId(newMiniGameId);
       setIsPaused(true);
-      // FIX: Don't set timer from pause message - let server updates handle it
+      setMiniGameTimer(data.duration);
       setMiniGame(newMiniGame);
       setLastMiniGameMessage(null);
       if (newMiniGameId) {
@@ -158,6 +163,11 @@ export function useGameSession(sessionId, userDisplayName) {
     },
     [handleMiniGameSubscription],
   );
+
+  // NEW: Handle the transition ticks
+  const handleTransitionTime = useCallback((data) => {
+    setTransitionTime(data.remainingTime);
+  }, []);
 
   const handleGameResume = useCallback(() => {
     const completedMiniGameId = miniGameIdRef.current;
@@ -168,11 +178,13 @@ export function useGameSession(sessionId, userDisplayName) {
       miniGameSubRef.current = null;
     }
     setIsPaused(false);
+    setTransitionTime(null); // Reset transition timer when game officially resumes
     setMiniGamePlayers([]);
     setMiniGameId(null);
     setMiniGameStartSignal(null);
     setLastMiniGameMessage(null);
     setMiniGameTimer(null);
+    
     if (completedMiniGameId) {
       cleanupMiniGameStorage(completedMiniGameId);
     }
@@ -184,7 +196,6 @@ export function useGameSession(sessionId, userDisplayName) {
       setGameStart(false);
       setWinnerText(data.win_message || "");
 
-      // Map flat winner fields from GameTimerService into a simple object
       if (
         data["text-prefix"] &&
         data.name &&
@@ -210,7 +221,10 @@ export function useGameSession(sessionId, userDisplayName) {
         } catch (_) {}
         miniGameSubRef.current = null;
       }
+      
+      // Cleanup all storage
       sessionStorage.removeItem(`timer-${sessionId}`);
+      sessionStorage.removeItem(`transitionTime-${sessionId}`);
       sessionStorage.removeItem(`isPaused-${sessionId}`);
       sessionStorage.removeItem(`gameStart-${sessionId}`);
       sessionStorage.removeItem(`playerReady-${sessionId}`);
@@ -231,6 +245,9 @@ export function useGameSession(sessionId, userDisplayName) {
       switch (data.type) {
         case "game_start":
           setGameStart(true);
+          break;
+        case "transition_tick":
+          handleTransitionTime(data); // Will update transitionTime state
           break;
         case "game_pause":
           handleGamePause(data);
@@ -253,18 +270,15 @@ export function useGameSession(sessionId, userDisplayName) {
           }
       }
     },
-    [handleGamePause, handleGameResume, handleGameEnd, isPaused],
+    [handleGamePause, handleTransitionTime, handleGameResume, handleGameEnd, isPaused],
   );
 
   const restoreMiniGameSession = useCallback(() => {
-    // NOW, because miniGameId is initialized from storage, this value should be correct
     const restoredMiniGameId = miniGameIdRef.current;
     const isRestoredPaused = JSON.parse(
       sessionStorage.getItem(`isPaused-${sessionId}`),
     );
 
-    // FIX: Use the ref 'miniGameIdRef.current' which is synced from the state
-    // The state itself was initialized from session storage.
     if (
       isRestoredPaused &&
       restoredMiniGameId &&
@@ -276,10 +290,9 @@ export function useGameSession(sessionId, userDisplayName) {
         } catch (_) {}
         miniGameSubRef.current = null;
       }
-      // Re-subscribe and let server updates set the timer
       handleMiniGameSubscription(restoredMiniGameId);
     }
-  }, [sessionId, handleMiniGameSubscription]); // Removed miniGameId from deps, use ref
+  }, [sessionId, handleMiniGameSubscription]);
 
   useEffect(() => {
     const validateAndConnect = async () => {
@@ -326,11 +339,12 @@ export function useGameSession(sessionId, userDisplayName) {
     if (players.length > 0) {
       const currentUserId = auth.currentUser?.uid;
       const isInLobby = players.some(
-        (p) => p.user?.firebaseUid === currentUserId,
+        (p) => (p.firebaseUid || p.user?.firebaseUid) === currentUserId,
       );
+    
       if (!isInLobby && players.length >= 4) {
-        alert("Cannot join: lobby is full.");
         navigate("/");
+        alert("Cannot join: lobby is full.");
       }
     }
   }, [players, navigate]);
@@ -340,11 +354,11 @@ export function useGameSession(sessionId, userDisplayName) {
       const isRefreshing = sessionStorage.getItem("isRefreshing");
       if (!isRefreshing) {
         sessionStorage.removeItem(`timer-${sessionId}`);
+        sessionStorage.removeItem(`transitionTime-${sessionId}`);
         sessionStorage.removeItem(`isPaused-${sessionId}`);
         sessionStorage.removeItem(`gameStart-${sessionId}`);
         sessionStorage.removeItem(`playerReady-${sessionId}`);
         sessionStorage.removeItem(`miniGameId-${sessionId}`);
-        // REMOVED: miniGameTimer cleanup - it's not stored anymore
         sessionStorage.removeItem(`miniGame-${sessionId}`);
         sessionStorage.removeItem(`miniGameStartSignal-${sessionId}`);
       }
@@ -353,6 +367,7 @@ export function useGameSession(sessionId, userDisplayName) {
 
   return {
     timer,
+    transitionTime, // NEW: Now exported for your GamePlay.jsx to use!
     playerReady,
     isSendingReady,
     paragraphText,

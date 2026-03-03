@@ -12,7 +12,10 @@ function NavBar({onLoginClick, onRegisterClick, isUserLoggedIn, logOut, userInfo
                         </h1>
                     </li>
                     <li className="nav-item pull-left">
+                        
                         <p>Beta 1.0</p>
+                        <p className="patch-notes"><a href="/patch-notes">Patch notes</a></p>
+
                     </li>
                 </div>
 

@@ -1,0 +1,18 @@
+# ========================
+# IntelliJ IDEA
+# ========================
+.idea/compiler.xml
+.idea/misc.xml
+.idea/modules.xml
+*.iml
+
+# ========================
+# Maven / Backend
+# ========================
+**/src/main/resources/application.yml
+backend/type-battle/src/main/java/com/example/type_battle/config/RateLimitFilter.java
+
+# ========================
+# Node / Frontend
+# ========================
+package-lock.json

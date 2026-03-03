@@ -8,6 +8,7 @@ import com.example.type_battle.model.*;
 import com.example.type_battle.repository.*;
 import com.example.type_battle.service.GameTimerService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -90,20 +91,29 @@ public class GameSessionWebSocketController {
         Optional<GameParticipants> participantOpt = participantsRepository.findByGameSessionsAndUser(session, user);
 
         if (participantOpt.isEmpty()) {
-            if (session.getPlayersInLobby() >= 4) return;
+            if (session.getPlayersInLobby() >= 4) {
+                //send session so frontend see's length and kicks user out
+                sendLobbyUpdate(session);
+                return;
+            }
 
-            session.setPlayersInLobby(session.getPlayersInLobby() + 1);
-            sessionRepository.save(session);
+            try {
+                session.setPlayersInLobby(session.getPlayersInLobby() + 1);
+                sessionRepository.save(session);
 
-            GameParticipants participant = new GameParticipants();
-            participant.setReady(false);
-            participant.setGameSessions(session);
-            participant.setUser(user);
-            participant.setScore(0);
-            participantsRepository.save(participant);
+                GameParticipants participant = new GameParticipants();
+                participant.setReady(false);
+                participant.setGameSessions(session);
+                participant.setUser(user);
+                participant.setScore(0);
+                participantsRepository.save(participant);
+
+            } catch (DataIntegrityViolationException e) {
+                System.out.println("[WebSocket] Caught concurrent duplicate join request for user: " + uid);
+            }
         }
 
-        // Send the update using the helper
+        // Send the update using the helper (Both Thread A and Thread B will safely reach this point)
         sendLobbyUpdate(session);
 
         // Send paragraph if applicable
@@ -112,7 +122,6 @@ public class GameSessionWebSocketController {
             messagingTemplate.convertAndSend("/topic/game/" + sessionId, new ParagraphData(paragraph.getText()));
         }
     }
-
     @MessageMapping("/ready_up/{sessionId}")
     public void handlePlayerReadyUp(@DestinationVariable String sessionId, SimpMessageHeaderAccessor headerAccessor) {
         String uid = resolveUid(headerAccessor);

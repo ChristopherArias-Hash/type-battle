@@ -1,6 +1,8 @@
 package com.example.type_battle.model;
 
 import jakarta.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "game_session")
@@ -23,7 +25,6 @@ public class GameSessions {
     @Column(name = "lobby_code", unique = true, nullable = false)
     private String lobbyCode;
 
-    // NEW TIMER FIELDS
     @Column(name = "game_start_time")
     private Long gameStartTime;
 
@@ -42,8 +43,6 @@ public class GameSessions {
         this.playersInLobby = playersInLobby;
     }
 
-
-    // Existing getters and setters...
     public Long getId() {
         return id;
     }
@@ -84,7 +83,6 @@ public class GameSessions {
         this.lobbyCode = lobbyCode;
     }
 
-    // NEW TIMER GETTERS AND SETTERS
     public Long getGameStartTime() {
         return gameStartTime;
     }
@@ -100,4 +98,6 @@ public class GameSessions {
     public void setGameDuration(Integer gameDuration) {
         this.gameDuration = gameDuration;
     }
+
+
 }

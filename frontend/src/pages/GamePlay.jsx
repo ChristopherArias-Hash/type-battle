@@ -24,6 +24,7 @@ function GamePlay() {
     paragraphText,
     players,
     gameStart,
+    transitionTime,
     gameEnded,
     isPaused,
     wpm,
@@ -125,6 +126,14 @@ function GamePlay() {
         logOut={logOutFirebase}
       />
       <div className="lobby-container">
+        {transitionTime !== null && (
+          <div className="transition-overlay">
+            <div className="transition-modal">
+              <h1 className="transition-title">GET READY!</h1>
+              <h2 className="transition-count">{transitionTime}</h2>
+            </div>
+          </div>
+        )}
         <h2 className="lobby-info">
           Lobby {players.length}/4 (Game Session #
           <b
@@ -141,6 +150,13 @@ function GamePlay() {
               key={index}
               className={`lobby-list-section ${userInfo.getDisplayName === p.displayName ? "current-player-highlight" : ""}`}
             >
+              {p.imageUrl && (
+                <img
+                  src={p.imageUrl}
+                  alt="Profile"
+                  className="lobby-list-profile-pic"
+                />
+              )}
               <p
                 ref={usernameRef}
                 className="lobby-list-username"
@@ -172,10 +188,13 @@ function GamePlay() {
                 </p>
               )}
             </li>
-            
           ))}
         </ul>
-     {singlePlayer && !playerReady && (<p className="single-player-text"><b>Single player games do not count toward stats!</b></p>) }
+        {singlePlayer && !playerReady && (
+          <p className="single-player-text">
+            <b>Single player games do not count toward stats!</b>
+          </p>
+        )}
 
         {/* The button is only shown if the server says you are NOT ready */}
         {!playerReady && (
@@ -201,7 +220,7 @@ function GamePlay() {
         <h2 className="please-ready-text">Please ready up to start the game</h2>
       )}
 
-      {isPaused && (
+      {isPaused && transitionTime == null && (
         <MiniGameScreen
           miniGamePlayers={miniGamePlayers}
           lastMiniGameMessage={lastMiniGameMessage}

@@ -213,10 +213,11 @@ function Stacker({ miniGamePlayers, miniGameId, miniGameStartSignal }) {
     } finally {
       hasInitializedRef.current = true;
     }
-    parseInt(
+    const savedHighScore = parseInt(
       sessionStorage.getItem(`stackerHighScore-${miniGameId}`) || "0",
       10,
     );
+    setHighScore(savedHighScore);
   }, [miniGameId, initializeCanvas]);
 
   useEffect(() => {
@@ -341,25 +342,23 @@ function Stacker({ miniGamePlayers, miniGameId, miniGameStartSignal }) {
     [stack, initializeCanvas],
   );
 
-  const endGame = useCallback(() => {
-    // 🎵 Play game over sound
+ const endGame = useCallback(() => {
+    // Play game over sound
     synthsRef.current?.errorSynth.triggerAttackRelease("C3", "4n");
 
-    if (score > highScore) {
-      setHighScore(score);
-      sessionStorage.setItem(`stackerHighScore-${miniGameId}`, score);
-    }
     if (miniGameId) {
       sessionStorage.removeItem(`stackerGameState-${miniGameId}`);
     }
     initializeGame(true);
-  }, [score, highScore, miniGameId, initializeGame]);
+  }, [miniGameId, initializeGame]); // Removed score and highScore from dependencies
 
   useEffect(() => {
     if (score > 0 && score > highScore) {
       setHighScore(score);
-      localStorage.setItem("stackerHighScore", score);
-      sendStackerPoints(miniGameId, { highScore: score });
+      if (miniGameId) {
+        sessionStorage.setItem(`stackerHighScore-${miniGameId}`, score.toString());
+        sendStackerPoints(miniGameId, { highScore: score });
+      }
     }
   }, [score, highScore, miniGameId]);
 

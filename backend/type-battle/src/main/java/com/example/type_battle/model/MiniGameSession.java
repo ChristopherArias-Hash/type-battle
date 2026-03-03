@@ -2,6 +2,9 @@ package com.example.type_battle.model;
 
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 @Entity
 @Table(name = "mini_game_sessions")
@@ -27,6 +30,7 @@ public class MiniGameSession {
 
     @Column(name = "status")
     private String status;
+
 
     public Long getId() {
         return id;

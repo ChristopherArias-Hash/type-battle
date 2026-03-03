@@ -22,24 +22,36 @@
   display: flex; /* Aligns list items horizontally */
   justify-content: -around; 
   align-items: center;
-  margin: 3px;
-  gap: 10px;
+  margin: 2px;
+  gap: 5px;
   padding:2px;             
   background: linear-gradient(135deg, #2a2a2a 0%, #40404032 100%);
   border-radius: 20px  20px  0px  20px;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
   border-left: 2px solid #ffffff;
-  width: 180px; 
+  height: 45px;
+  width: 200px; 
   
 }
 
-
+.lobby-list-status {
+  font-size: 13px;
+  color: #14adff;
+  text-align: right;
+  background: linear-gradient(180deg, #282828, #202020);
+  font-weight: 600;
+  border: 2px solid #14adffab;
+ border-radius: 0px 20px 0px 20px;  margin: 0px;
+ flex-shrink: 0;
+ padding: 8px;
+ 
+}
 
 .lobby-list-username {
   font-size: 16px;
   color: #e0e0e0;
   margin: 0px;
-  margin-left:10px;
+  margin-left:2px;
   flex: 1;  
   overflow: hidden; 
   white-space: nowrap;
@@ -59,16 +71,16 @@
 }
 
 .lobby-list-score{
- font-size: 14px;
+ font-size: 13px;
   color: #14adff;
-  text-align: right;
-  padding: 5px;
+  text-align: right;;
   background: linear-gradient(180deg, #282828, #202020);
   font-weight: 600;
   border: 2px solid #30b6ff;
   border-radius: 0px 20px 0px 20px;  margin: 0px;
   margin: 0px;
- flex-shrink: 0;
+  padding: 8px;
+  flex-shrink: 0;
 
 
 }
@@ -84,17 +96,13 @@
   border-color: #30b6ff;
   
 }
-.lobby-list-status {
-  font-size: 14px;
-  color: #14adff;
-  text-align: right;
-  background: linear-gradient(180deg, #282828, #202020);
-  font-weight: 600;
-  border: 2px solid #14adffab;
- border-radius: 0px 20px 0px 20px;  margin: 0px;
- flex-shrink: 0;
- padding: 6px;
- 
+
+
+.lobby-list-profile-pic {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  margin-right: 0px;
 }
 
 .status-waiting {
@@ -117,6 +125,42 @@
   animation: slideRotateIn 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28);
 }
 
+.transition-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(2px);
+  display: flex;
+  justify-content: center;
+  align-items: top;
+  z-index: 999;
+  animation: overlayFadeIn 0.3s ease forwards;
+  
+}
+
+/* Modal content */
+.transition-modal {
+  text-align: center;
+  animation: popIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.4);
+}
+
+.transition-title {
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  color: white;
+  font-weight: 900;
+  letter-spacing: 3px;
+  margin: 0;
+}
+
+.transition-count {
+  font-size: clamp(4rem, 10vw, 7rem);
+  color: #30b6ff;
+  font-weight: 900;
+  margin-top: 10px;
+  animation: pulse 1s infinite ease-in-out;
+}
+
+
 @keyframes slideRotateOut {
   to {
     transform: translateX(-30px) rotate(-15deg);
@@ -135,12 +179,48 @@
   }
 }
 
+@keyframes popIn {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes overlayFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 .single-player-text{
   font-size: 1.2rem;
   color: #ffffff;
   margin-top: 15px;
   font-weight: bold;
 }
+
 .ready-up-button {
    position: relative;
     display: inline-block;
