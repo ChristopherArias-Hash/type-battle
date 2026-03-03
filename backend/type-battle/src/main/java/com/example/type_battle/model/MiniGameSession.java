@@ -2,6 +2,9 @@ package com.example.type_battle.model;
 
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 @Entity
 @Table(name = "mini_game_sessions")
@@ -28,6 +31,18 @@ public class MiniGameSession {
     @Column(name = "status")
     private String status;
 
+    @OneToMany(mappedBy = "miniGameSession", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MiniGameParticipants> miniGameParticipants = new ArrayList<>();
+
+
+
+    public List<MiniGameParticipants> getMiniGameParticipants() {
+        return miniGameParticipants;
+    }
+
+    public void setMiniGameParticipants(List<MiniGameParticipants> miniGameParticipants) {
+        this.miniGameParticipants = miniGameParticipants;
+    }
     public Long getId() {
         return id;
     }

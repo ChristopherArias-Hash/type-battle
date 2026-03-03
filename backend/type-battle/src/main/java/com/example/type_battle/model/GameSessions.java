@@ -1,6 +1,8 @@
 package com.example.type_battle.model;
 
 import jakarta.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "game_session")
@@ -23,7 +25,6 @@ public class GameSessions {
     @Column(name = "lobby_code", unique = true, nullable = false)
     private String lobbyCode;
 
-    // NEW TIMER FIELDS
     @Column(name = "game_start_time")
     private Long gameStartTime;
 
@@ -33,6 +34,22 @@ public class GameSessions {
     @Column(name = "players_in_lobby")
     private Integer playersInLobby = 0; // 0 default, 4 is max.
 
+    // =========================================================================
+    // NEW: THE CASCADE LISTS (This tells Hibernate about the children)
+    // =========================================================================
+
+    // Deletes all participants when the lobby is deleted
+    @OneToMany(mappedBy = "gameSessions", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<GameParticipants> participants = new ArrayList<>();
+
+    // Deletes all mini-games when the lobby is deleted
+    @OneToMany(mappedBy = "gameSessions", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MiniGameSession> miniGameSessions = new ArrayList<>();
+
+
+    // =========================================================================
+    // GETTERS AND SETTERS
+    // =========================================================================
 
     public Integer getPlayersInLobby() {
         return playersInLobby;
@@ -42,8 +59,6 @@ public class GameSessions {
         this.playersInLobby = playersInLobby;
     }
 
-
-    // Existing getters and setters...
     public Long getId() {
         return id;
     }
@@ -84,7 +99,6 @@ public class GameSessions {
         this.lobbyCode = lobbyCode;
     }
 
-    // NEW TIMER GETTERS AND SETTERS
     public Long getGameStartTime() {
         return gameStartTime;
     }
@@ -99,5 +113,22 @@ public class GameSessions {
 
     public void setGameDuration(Integer gameDuration) {
         this.gameDuration = gameDuration;
+    }
+
+    // Getters and setters for the new lists (Good practice to have them)
+    public List<GameParticipants> getParticipants() {
+        return participants;
+    }
+
+    public void setParticipants(List<GameParticipants> participants) {
+        this.participants = participants;
+    }
+
+    public List<MiniGameSession> getMiniGameSessions() {
+        return miniGameSessions;
+    }
+
+    public void setMiniGameSessions(List<MiniGameSession> miniGameSessions) {
+        this.miniGameSessions = miniGameSessions;
     }
 }

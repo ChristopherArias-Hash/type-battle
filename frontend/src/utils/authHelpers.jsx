@@ -41,6 +41,17 @@ const invalidRegistrationInput = (email, password, username, file) => {
   return false;
 };
 
+const invalidFirebaseAuthErrors = (_error) => {
+  if (_error.code === "auth/email-already-in-use") {
+      alert("This email is already registered. Please log in or use a different email.");
+    } else if (_error.code === "auth/invalid-email") {
+      alert("The email address is not valid.");
+    } else if (_error.code === "auth/weak-password") {
+      alert("The password is too weak.");
+    } else {
+      alert("Failed to register with Firebase: " + _error.message);
+    }
+  };
 // 
 const invalidLoginInput = (email, password) => {
   if (!email || !password) {
@@ -196,8 +207,8 @@ export async function handleRegister(email, password, username, file) {
     alert("Registration successful!");
     return true;
   } catch (_error) {
-    alert("Failed to register with Firebase.");
-    return;
+    invalidFirebaseAuthErrors(_error);
+    return; 
   }
 }
 

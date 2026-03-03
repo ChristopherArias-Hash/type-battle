@@ -28,6 +28,7 @@ export function connectWebSocket(
       stompClient.subscribe(`/topic/lobby/${sessionId}`, (message) => {
         const data = JSON.parse(message.body);
         const updatedPlayers = data.participants || data;
+        console.log("Received player list update:", updatedPlayers);
         onPlayerListUpdate(updatedPlayers);
       });
 

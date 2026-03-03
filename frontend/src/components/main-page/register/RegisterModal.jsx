@@ -53,7 +53,8 @@ function RegisterModal({ onClose, show, onUserInfoUpdated }) {
           <Form>
             <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
               <Form.Label>
-                <b>Email</b> *required
+                <b>Email</b> <span className="required">*required</span> (6-40 characters)
+                
               </Form.Label>
               <Form.Control
                 maxLength={40}
@@ -65,7 +66,7 @@ function RegisterModal({ onClose, show, onUserInfoUpdated }) {
             </Form.Group>
             <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
               <Form.Label>
-                <b>Password</b> *required
+                <b>Password</b> <span className="required">required</span> (6-20 characters)
               </Form.Label>
               <Form.Control
                 maxLength={20}
@@ -77,7 +78,7 @@ function RegisterModal({ onClose, show, onUserInfoUpdated }) {
             </Form.Group>
             <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
               <Form.Label>
-                <b>Username</b> *required
+                <b>Username</b> <span className="required">*required</span> (3-20 characters)
               </Form.Label>
               <Form.Control
                 maxLength={20}
@@ -90,7 +91,7 @@ function RegisterModal({ onClose, show, onUserInfoUpdated }) {
             <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
               <Form.Label>
                 <b>
-                  Profile Picture - <i>Optional</i>
+                  Profile Picture - <i>Optional</i> (5mb max)
                 </b>
               </Form.Label>
               <Form.Control
@@ -102,7 +103,7 @@ function RegisterModal({ onClose, show, onUserInfoUpdated }) {
         </Modal.Body>
         <Modal.Footer>
           <Button variant="primary" onClick={registerAndLogin}>
-            Register
+            Confirm
           </Button>
         </Modal.Footer>
       </Modal>

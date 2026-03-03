@@ -228,7 +228,6 @@ function TypingSentences({ paragraphText, sessionId, timer, isPaused }) {
         </div>
         <div className="ghost-text">{listOfSentence}</div>
       </div>
-      <h3>Score: {correctStrokes}</h3>
     </>
   );
 }

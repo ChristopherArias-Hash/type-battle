@@ -28,3 +28,8 @@
 .dark-modal .btn:active {
   transform: translateY(0px);
 }
+
+.required {
+  
+  color: #14adff;
+}

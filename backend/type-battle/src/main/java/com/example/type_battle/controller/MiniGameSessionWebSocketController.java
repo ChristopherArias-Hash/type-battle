@@ -76,8 +76,8 @@ public class MiniGameSessionWebSocketController {
         List<MiniGamePlayerData> flatPlayers = allParticipants.stream()
                 .map(MiniGamePlayerData::new)
                 .toList();
-        
-        MiniGameLobbyState state = new MiniGameLobbyState(flatPlayers, 0);
+        int duration = (sessionOpt.get().getMiniGames() != null && sessionOpt.get().getMiniGames().getId() == 1L) ? 30 : 60;
+        MiniGameLobbyState state = new MiniGameLobbyState(flatPlayers, duration);
         messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId, state);
     }
 
@@ -106,8 +106,8 @@ public class MiniGameSessionWebSocketController {
         List<MiniGamePlayerData> flatPlayers = allParticipants.stream()
                 .map(MiniGamePlayerData::new)
                 .toList();
-        
-        MiniGameLobbyState state = new MiniGameLobbyState(flatPlayers, 0);
+        int duration = (miniGameSession.getMiniGames() != null && miniGameSession.getMiniGames().getId() == 1L) ? 30 : 60;
+        MiniGameLobbyState state = new MiniGameLobbyState(flatPlayers, duration);
         messagingTemplate.convertAndSend("/topic/mini-game-lobby/" + miniGameSessionId, state);
 
         boolean everyoneReady = allParticipants.stream().allMatch(MiniGameParticipants::isIs_ready);
@@ -209,23 +209,13 @@ public class MiniGameSessionWebSocketController {
         String uid = resolveUid(headerAccessor);
         if (uid == null) return;
 
-        Optional<User> userOpt = userRepository.findByFirebaseUid(uid);
-        Optional<MiniGameSession> miniGameSessionOpt = miniGameSessionRepository.findById(miniGameSessionId);
-
-        if (userOpt.isEmpty() || miniGameSessionOpt.isEmpty()) return;
-
-        MiniGameSession miniGameSession = miniGameSessionOpt.get();
-        User user = userOpt.get();
-        Optional<MiniGameParticipants> miniGameParticipantsOpt = miniGameParticipantRepository.findByMiniGameSessionAndUser(miniGameSession, user);
-
-        if (miniGameParticipantsOpt.isEmpty()) return;
-
         Integer pointsToAdd = (Integer) stackerPointsData.get("highScore");
         if (pointsToAdd == null) return;
 
-        MiniGameParticipants miniGameParticipants = miniGameParticipantsOpt.get();
-        miniGameParticipants.setScore(pointsToAdd);
-        miniGameParticipantRepository.save(miniGameParticipants);
+        // Update the in-memory cache so it doesn't get overwritten to 0 at the end of the game
+        gameTimerService.updateMiniGameScoreInMemory(miniGameSessionId, uid, pointsToAdd);
+
+
     }
 
 

@@ -24,6 +24,7 @@ function GamePlay() {
     paragraphText,
     players,
     gameStart,
+    transitionTime,
     gameEnded,
     isPaused,
     wpm,
@@ -116,6 +117,15 @@ function GamePlay() {
     );
   }
 
+  if (transitionTime !== null) {
+  return (
+    <div className="transition-screen">
+      <h1>Get Ready!</h1>
+      <h2>Game resuming in {transitionTime}</h2>
+    </div>
+  );
+}
+
   return (
     <>
       <NavBar
@@ -141,6 +151,13 @@ function GamePlay() {
               key={index}
               className={`lobby-list-section ${userInfo.getDisplayName === p.displayName ? "current-player-highlight" : ""}`}
             >
+              {p.imageUrl && (
+                <img
+                  src={p.imageUrl}
+                  alt="Profile"
+                  className="lobby-list-profile-pic"
+                />
+              )}
               <p
                 ref={usernameRef}
                 className="lobby-list-username"
@@ -172,10 +189,13 @@ function GamePlay() {
                 </p>
               )}
             </li>
-            
           ))}
         </ul>
-     {singlePlayer && !playerReady && (<p className="single-player-text"><b>Single player games do not count toward stats!</b></p>) }
+        {singlePlayer && !playerReady && (
+          <p className="single-player-text">
+            <b>Single player games do not count toward stats!</b>
+          </p>
+        )}
 
         {/* The button is only shown if the server says you are NOT ready */}
         {!playerReady && (
