@@ -1,5 +1,6 @@
 package com.example.type_battle.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
@@ -30,6 +31,18 @@ public class MiniGameSession {
 
     @Column(name = "status")
     private String status;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "miniGameSession", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MiniGameParticipants> miniGameParticipants = new ArrayList<>();
+
+    public List<MiniGameParticipants> getMiniGameParticipants() {
+        return miniGameParticipants;
+    }
+
+    public void setMiniGameParticipants(List<MiniGameParticipants> miniGameParticipants) {
+        this.miniGameParticipants = miniGameParticipants;
+    }
 
 
     public Long getId() {

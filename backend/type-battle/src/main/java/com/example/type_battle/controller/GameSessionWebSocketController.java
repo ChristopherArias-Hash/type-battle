@@ -121,6 +121,7 @@ public class GameSessionWebSocketController {
         if (paragraph != null) {
             messagingTemplate.convertAndSend("/topic/game/" + sessionId, new ParagraphData(paragraph.getText()));
         }
+        gameTimerService.syncGameState(sessionId);
     }
     @MessageMapping("/ready_up/{sessionId}")
     public void handlePlayerReadyUp(@DestinationVariable String sessionId, SimpMessageHeaderAccessor headerAccessor) {

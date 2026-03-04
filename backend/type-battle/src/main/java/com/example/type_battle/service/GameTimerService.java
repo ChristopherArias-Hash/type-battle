@@ -55,58 +55,85 @@ public class GameTimerService {
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
+    //Run's the 10 workers that handle time based tasks (schedulers)
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);
+
+    //Runs and Closes the scheduler for the timers
     private final Map<String, ScheduledFuture<?>> gameTimers = new ConcurrentHashMap<>();
     private final Map<Long, ScheduledFuture<?>> miniGameTimers = new ConcurrentHashMap<>();
-
-    // NEW: Transition Timers
     private final Map<String, ScheduledFuture<?>> transitionTimers = new ConcurrentHashMap<>();
-    private final Map<String, Integer> localTransitionClocks = new ConcurrentHashMap<>();
 
-    private final Set<Long> processingMiniGames = ConcurrentHashMap.newKeySet();
-
-    private final Map<String, Boolean> gamePaused = new ConcurrentHashMap<>();
-    private final Map<String, Integer> remainingTimeBeforePause = new ConcurrentHashMap<>();
-    private final Map<String, Set<Integer>> triggeredPausePoints = new ConcurrentHashMap<>();
-
+    //Runs inside scheduler in order to increment time -1 second
     private final Map<String, Integer> localGameClocks = new ConcurrentHashMap<>();
     private final Map<Long, Integer> localMiniGameClocks = new ConcurrentHashMap<>();
+    private final Map<String, Integer> localTransitionClocks = new ConcurrentHashMap<>();
 
-    // NEW: Cache participants in memory to stop DB spam during live score updates
-    private final Map<Long, List<MiniGameParticipants>> activeMiniGameParticipants = new ConcurrentHashMap<>();
+    //Tracks when main game status to see if we should pause
+    private final Map<String, Boolean> gamePaused = new ConcurrentHashMap<>();
+    private final Map<String, Integer> remainingTimeBeforePause = new ConcurrentHashMap<>();
 
-    private final Set<Integer> pausePoints = Set.of(44, 29, 14);
+    //Prevents a mini-game from firing multiple times at the same second mark
+    private final Map<String, Set<Integer>> triggeredPausePoints = new ConcurrentHashMap<>();
+
+    //Mini game configs
+    private final Set<Integer> pausePoints = Set.of(45, 30, 15);
     private final List<Integer> miniGameBonusPoints = List.of(100, 75, 50, 25);
     private final int LONG_GAME = 60;
     private final int SHORT_GAME = 30;
 
+    // Stores participant objects to avoid hitting the DB on every score update
+    private final Map<Long, List<MiniGameParticipants>> activeMiniGameParticipants = new ConcurrentHashMap<>();
+
+    //Stores participants who are dead in "Island Game", also cords [x,y] for when they die
     private final Map<Long, Set<Long>> miniGameDeadParticipantIds = new ConcurrentHashMap<>();
     private final Map<Long, Map<String, double[]>> miniGameDeadGhostPositions = new ConcurrentHashMap<>();
+
+    //Stores which MiniGames have already been played so the same game is not played twice
     private final Map<String, Set<Long>> usedMiniGameIdsBySession = new ConcurrentHashMap<>();
 
+    //Prevents endMiniGame() from running twice for the same session (might not be needed)
+    private final Set<Long> processingMiniGames = ConcurrentHashMap.newKeySet();
+
+    //Maps lobby codes to mini game ID's so people can resync if disconnected
+    private final Map<String, Long> activeMiniGameSessionIds = new ConcurrentHashMap<>();
+    private final Map<String, Long> activeMiniGameIds = new ConcurrentHashMap<>();
+
+
+    //Starts main game timer (60)
     public void startGameTimer(String sessionId, int durationSeconds) {
+        //Stop stale timers
         stopGameTimer(sessionId);
+
         triggeredPausePoints.put(sessionId, new HashSet<>());
         localGameClocks.put(sessionId, durationSeconds);
 
+        //Create main timer scheduler (gameTimers)
         ScheduledFuture<?> future = scheduler.scheduleAtFixedRate(() -> {
+
             if (gamePaused.getOrDefault(sessionId, false)) return;
 
             int remainingTime = localGameClocks.getOrDefault(sessionId, 0) - 1;
+
+            //Send -1 to client
             localGameClocks.put(sessionId, remainingTime);
 
             Set<Integer> triggered = triggeredPausePoints.get(sessionId);
 
+            //Check remaining time to see if it is in pausePoints
             if (pausePoints.contains(remainingTime) && triggered != null && !triggered.contains(remainingTime)) {
                 Optional<GameSessions> sessionOpt = sessionRepository.findByLobbyCode(sessionId);
+                //Trigger pause
                 if (sessionOpt.isPresent()) {
                     triggered.add(remainingTime);
                     pauseGame(sessionId, remainingTime);
                 }
+            //Check remaining time to see if its below 0 (time out)
             } else if (remainingTime <= 0) {
                 endGame(sessionId);
                 stopGameTimer(sessionId);
+            //If none of the above stay unpaused and sent timer updates
             } else {
+                //Send info into hashmap so client can read on frontend
                 Map<String, Object> timerUpdate = new HashMap<>();
                 timerUpdate.put("remainingTime", remainingTime);
                 timerUpdate.put("type", "game_tick");
@@ -118,6 +145,7 @@ public class GameTimerService {
         gameTimers.put(sessionId, future);
     }
 
+    //Pauses main game timer
     private void pauseGame(String sessionId, int remainingTime) {
         Optional<GameSessions> sessionOpt = sessionRepository.findByLobbyCode(sessionId);
         if (sessionOpt.isEmpty()) return;
@@ -161,6 +189,9 @@ public class GameTimerService {
 
         gamePaused.put(sessionId, true);
         remainingTimeBeforePause.put(sessionId, remainingTime);
+
+        activeMiniGameSessionIds.put(sessionId, newMiniGameSession.getId());
+        activeMiniGameIds.put(sessionId, randomMiniGameId);
 
         Map<String, Object> pauseMessage = new HashMap<>();
         pauseMessage.put("type", "game_pause");
@@ -284,7 +315,11 @@ public class GameTimerService {
             miniGameSession.setStatus("finished");
             miniGameSessionRepository.save(miniGameSession);
 
-            // NEW: Instead of resuming instantly, start the transition timer!
+            // Clear active tracking now that the game is completely over
+            activeMiniGameSessionIds.remove(sessionId);
+            activeMiniGameIds.remove(sessionId);
+
+            // Start the transition timer
             startTransitionTimer(sessionId);
 
         } finally {
@@ -295,6 +330,7 @@ public class GameTimerService {
             activeMiniGameParticipants.remove(miniGameSessionId); // Clean up memory
         }
     }
+
 
     private void processMiniGameResults(Long miniGameSessionId, String sessionId) {
         ScheduledFuture<?> future = miniGameTimers.remove(miniGameSessionId);
@@ -332,6 +368,7 @@ public class GameTimerService {
         messagingTemplate.convertAndSend("/topic/lobby/" + sessionId, allParticipants);
     }
 
+    //Helper to avoid using DB at the end of game we call this once to send server data to DB
     public void updateMiniGameScoreInMemory(Long miniGameSessionId, String firebaseUid, int newScore) {
         List<MiniGameParticipants> participants = activeMiniGameParticipants.get(miniGameSessionId);
         if (participants != null) {
@@ -345,7 +382,8 @@ public class GameTimerService {
             }
         }
     }
-    // The 5-Second Transition Timer
+
+    // The 10-Second Transition Timer
     private void startTransitionTimer(String sessionId) {
         localTransitionClocks.put(sessionId, 10);
 
@@ -375,9 +413,12 @@ public class GameTimerService {
         transitionTimers.put(sessionId, future);
     }
 
+    //Resume main game
     private void resumeGame(String sessionId) {
         gamePaused.put(sessionId, false);
-        int remainingTime = remainingTimeBeforePause.get(sessionId)+ 1;
+        activeMiniGameSessionIds.remove(sessionId);
+        activeMiniGameIds.remove(sessionId);
+        int remainingTime = remainingTimeBeforePause.get(sessionId) + 1;
         localGameClocks.put(sessionId, remainingTime);
 
         Optional<GameSessions> sessionOpt = sessionRepository.findByLobbyCode(sessionId);
@@ -393,6 +434,7 @@ public class GameTimerService {
         messagingTemplate.convertAndSend("/topic/game/" + sessionId, resumeMessage);
     }
 
+    // Kills main game and mini-game times
     public void stopGameTimer(String sessionId) {
         ScheduledFuture<?> future = gameTimers.remove(sessionId);
         if (future != null) future.cancel(true);
@@ -401,13 +443,29 @@ public class GameTimerService {
         ScheduledFuture<?> tFuture = transitionTimers.remove(sessionId);
         if (tFuture != null) tFuture.cancel(true);
 
+        // Ensure mini-game timer stops too!
+        Long mgSessionId = activeMiniGameSessionIds.remove(sessionId);
+        if (mgSessionId != null) {
+            ScheduledFuture<?> mgFuture = miniGameTimers.remove(mgSessionId);
+            if (mgFuture != null) mgFuture.cancel(true);
+
+            // Clean up all mini-game memory leaks
+            processingMiniGames.remove(mgSessionId);
+            miniGameDeadParticipantIds.remove(mgSessionId);
+            miniGameDeadGhostPositions.remove(mgSessionId);
+            localMiniGameClocks.remove(mgSessionId);
+            activeMiniGameParticipants.remove(mgSessionId);
+        }
+
         localTransitionClocks.remove(sessionId);
         localGameClocks.remove(sessionId);
+        activeMiniGameIds.remove(sessionId);
         gamePaused.remove(sessionId);
         remainingTimeBeforePause.remove(sessionId);
         triggeredPausePoints.remove(sessionId);
         usedMiniGameIdsBySession.remove(sessionId);
     }
+
 
     private void endGame(String sessionId) {
         Optional<GameSessions> sessionOpt = sessionRepository.findByLobbyCode(sessionId);
@@ -458,6 +516,36 @@ public class GameTimerService {
         messagingTemplate.convertAndSend("/topic/game/" + sessionId, gameEndMessage);
     }
 
+    //On browser refresh reync game data if message never got sent to client
+    public void syncGameState(String sessionId) {
+        if (gamePaused.getOrDefault(sessionId, false)) {
+            // Game is currently in a minigame
+            Long mgSessionId = activeMiniGameSessionIds.get(sessionId);
+            Long mgId = activeMiniGameIds.get(sessionId);
+            if (mgSessionId != null && mgId != null) {
+                Map<String, Object> pauseMessage = new HashMap<>();
+                pauseMessage.put("type", "game_pause");
+                int duration = localMiniGameClocks.getOrDefault(mgSessionId, (mgId == 1L) ? SHORT_GAME : LONG_GAME);
+                pauseMessage.put("duration", duration);
+                pauseMessage.put("miniGameId", mgId);
+                pauseMessage.put("miniGameSessionId", mgSessionId);
+                messagingTemplate.convertAndSend("/topic/game/" + sessionId, pauseMessage);
+            }
+        } else if (localTransitionClocks.containsKey(sessionId)) {
+            // Game is currently in the 10-second transition
+            Map<String, Object> tickMsg = new HashMap<>();
+            tickMsg.put("type", "transition_tick");
+            tickMsg.put("remainingTime", localTransitionClocks.get(sessionId));
+            messagingTemplate.convertAndSend("/topic/game/" + sessionId, tickMsg);
+        } else if (localGameClocks.containsKey(sessionId)) {
+            // Normal typing game is ticking
+            Map<String, Object> timerUpdate = new HashMap<>();
+            timerUpdate.put("remainingTime", localGameClocks.get(sessionId));
+            timerUpdate.put("type", "game_tick");
+            timerUpdate.put("isPaused", false);
+            messagingTemplate.convertAndSend("/topic/game/" + sessionId, timerUpdate);
+        }
+    }
     public void markMiniGameParticipantDead(Long miniGameSessionId, Long miniGameParticipantId) {
         miniGameDeadParticipantIds.computeIfAbsent(miniGameSessionId, k -> ConcurrentHashMap.newKeySet()).add(miniGameParticipantId);
     }
@@ -473,5 +561,17 @@ public class GameTimerService {
     @PreDestroy
     public void shutdown() {
         scheduler.shutdown();
+    }
+
+    // endpoint method to help you track down active timers and verify there are no memory leaks!
+    public Map<String, Integer> getMemoryStats() {
+        Map<String, Integer> stats = new HashMap<>();
+        stats.put("Active Main Game Timers", gameTimers.size());
+        stats.put("Active Mini Game Timers", miniGameTimers.size());
+        stats.put("Active Transition Timers", transitionTimers.size());
+        stats.put("Tracked Game Clocks", localGameClocks.size());
+        stats.put("Tracked Paused States", gamePaused.size());
+        stats.put("Tracked Mini Game Caches", activeMiniGameParticipants.size());
+        return stats;
     }
 }

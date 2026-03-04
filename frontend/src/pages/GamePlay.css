@@ -132,7 +132,7 @@
   backdrop-filter: blur(2px);
   display: flex;
   justify-content: center;
-  align-items: top;
+  align-items: center;
   z-index: 999;
   animation: overlayFadeIn 0.3s ease forwards;
   
@@ -140,6 +140,8 @@
 
 /* Modal content */
 .transition-modal {
+    margin-bottom: 130px;
+
   text-align: center;
   animation: popIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.4);
 }
@@ -150,6 +152,7 @@
   font-weight: 900;
   letter-spacing: 3px;
   margin: 0;
+  margin-bottom: 10px;
 
 }
 
