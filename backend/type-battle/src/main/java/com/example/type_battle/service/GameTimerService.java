@@ -59,7 +59,7 @@ public class GameTimerService {
     private final Map<String, ScheduledFuture<?>> gameTimers = new ConcurrentHashMap<>();
     private final Map<Long, ScheduledFuture<?>> miniGameTimers = new ConcurrentHashMap<>();
 
-    // NEW: Transition Timers
+    // Transition Timers
     private final Map<String, ScheduledFuture<?>> transitionTimers = new ConcurrentHashMap<>();
     private final Map<String, Integer> localTransitionClocks = new ConcurrentHashMap<>();
 
@@ -72,7 +72,10 @@ public class GameTimerService {
     private final Map<String, Integer> localGameClocks = new ConcurrentHashMap<>();
     private final Map<Long, Integer> localMiniGameClocks = new ConcurrentHashMap<>();
 
-    // NEW: Cache participants in memory to stop DB spam during live score updates
+    private final Map<String, Long> activeMiniGameSessionIds = new ConcurrentHashMap<>();
+    private final Map<String, Long> activeMiniGameIds = new ConcurrentHashMap<>();
+
+    // Cache participants in memory to stop DB spam during live score updates
     private final Map<Long, List<MiniGameParticipants>> activeMiniGameParticipants = new ConcurrentHashMap<>();
 
     private final Set<Integer> pausePoints = Set.of(44, 29, 14);
@@ -161,6 +164,9 @@ public class GameTimerService {
 
         gamePaused.put(sessionId, true);
         remainingTimeBeforePause.put(sessionId, remainingTime);
+
+        activeMiniGameSessionIds.put(sessionId, newMiniGameSession.getId());
+        activeMiniGameIds.put(sessionId, randomMiniGameId);
 
         Map<String, Object> pauseMessage = new HashMap<>();
         pauseMessage.put("type", "game_pause");
@@ -284,7 +290,11 @@ public class GameTimerService {
             miniGameSession.setStatus("finished");
             miniGameSessionRepository.save(miniGameSession);
 
-            // NEW: Instead of resuming instantly, start the transition timer!
+            // Clear active tracking now that the game is completely over
+            activeMiniGameSessionIds.remove(sessionId);
+            activeMiniGameIds.remove(sessionId);
+
+            // Start the transition timer
             startTransitionTimer(sessionId);
 
         } finally {
@@ -345,7 +355,8 @@ public class GameTimerService {
             }
         }
     }
-    // The 5-Second Transition Timer
+
+    // The 10-Second Transition Timer (Fixed to 10 seconds)
     private void startTransitionTimer(String sessionId) {
         localTransitionClocks.put(sessionId, 10);
 
@@ -377,7 +388,9 @@ public class GameTimerService {
 
     private void resumeGame(String sessionId) {
         gamePaused.put(sessionId, false);
-        int remainingTime = remainingTimeBeforePause.get(sessionId)+ 1;
+        activeMiniGameSessionIds.remove(sessionId);
+        activeMiniGameIds.remove(sessionId);
+        int remainingTime = remainingTimeBeforePause.get(sessionId) + 1;
         localGameClocks.put(sessionId, remainingTime);
 
         Optional<GameSessions> sessionOpt = sessionRepository.findByLobbyCode(sessionId);
@@ -393,6 +406,7 @@ public class GameTimerService {
         messagingTemplate.convertAndSend("/topic/game/" + sessionId, resumeMessage);
     }
 
+    // THIS NOW KILLS MINI-GAMES TOO!
     public void stopGameTimer(String sessionId) {
         ScheduledFuture<?> future = gameTimers.remove(sessionId);
         if (future != null) future.cancel(true);
@@ -401,8 +415,23 @@ public class GameTimerService {
         ScheduledFuture<?> tFuture = transitionTimers.remove(sessionId);
         if (tFuture != null) tFuture.cancel(true);
 
+        // NEW: Ensure mini-game timer stops too!
+        Long mgSessionId = activeMiniGameSessionIds.remove(sessionId);
+        if (mgSessionId != null) {
+            ScheduledFuture<?> mgFuture = miniGameTimers.remove(mgSessionId);
+            if (mgFuture != null) mgFuture.cancel(true);
+
+            // Clean up all mini-game memory leaks
+            processingMiniGames.remove(mgSessionId);
+            miniGameDeadParticipantIds.remove(mgSessionId);
+            miniGameDeadGhostPositions.remove(mgSessionId);
+            localMiniGameClocks.remove(mgSessionId);
+            activeMiniGameParticipants.remove(mgSessionId);
+        }
+
         localTransitionClocks.remove(sessionId);
         localGameClocks.remove(sessionId);
+        activeMiniGameIds.remove(sessionId);
         gamePaused.remove(sessionId);
         remainingTimeBeforePause.remove(sessionId);
         triggeredPausePoints.remove(sessionId);
@@ -458,6 +487,35 @@ public class GameTimerService {
         messagingTemplate.convertAndSend("/topic/game/" + sessionId, gameEndMessage);
     }
 
+    public void syncGameState(String sessionId) {
+        if (gamePaused.getOrDefault(sessionId, false)) {
+            // Game is currently in a minigame
+            Long mgSessionId = activeMiniGameSessionIds.get(sessionId);
+            Long mgId = activeMiniGameIds.get(sessionId);
+            if (mgSessionId != null && mgId != null) {
+                Map<String, Object> pauseMessage = new HashMap<>();
+                pauseMessage.put("type", "game_pause");
+                int duration = localMiniGameClocks.getOrDefault(mgSessionId, (mgId == 1L) ? SHORT_GAME : LONG_GAME);
+                pauseMessage.put("duration", duration);
+                pauseMessage.put("miniGameId", mgId);
+                pauseMessage.put("miniGameSessionId", mgSessionId);
+                messagingTemplate.convertAndSend("/topic/game/" + sessionId, pauseMessage);
+            }
+        } else if (localTransitionClocks.containsKey(sessionId)) {
+            // Game is currently in the 10-second transition
+            Map<String, Object> tickMsg = new HashMap<>();
+            tickMsg.put("type", "transition_tick");
+            tickMsg.put("remainingTime", localTransitionClocks.get(sessionId));
+            messagingTemplate.convertAndSend("/topic/game/" + sessionId, tickMsg);
+        } else if (localGameClocks.containsKey(sessionId)) {
+            // Normal typing game is ticking
+            Map<String, Object> timerUpdate = new HashMap<>();
+            timerUpdate.put("remainingTime", localGameClocks.get(sessionId));
+            timerUpdate.put("type", "game_tick");
+            timerUpdate.put("isPaused", false);
+            messagingTemplate.convertAndSend("/topic/game/" + sessionId, timerUpdate);
+        }
+    }
     public void markMiniGameParticipantDead(Long miniGameSessionId, Long miniGameParticipantId) {
         miniGameDeadParticipantIds.computeIfAbsent(miniGameSessionId, k -> ConcurrentHashMap.newKeySet()).add(miniGameParticipantId);
     }
@@ -473,5 +531,17 @@ public class GameTimerService {
     @PreDestroy
     public void shutdown() {
         scheduler.shutdown();
+    }
+
+    // endpoint method to help you track down active timers and verify there are no memory leaks!
+    public Map<String, Integer> getMemoryStats() {
+        Map<String, Integer> stats = new HashMap<>();
+        stats.put("Active Main Game Timers", gameTimers.size());
+        stats.put("Active Mini Game Timers", miniGameTimers.size());
+        stats.put("Active Transition Timers", transitionTimers.size());
+        stats.put("Tracked Game Clocks", localGameClocks.size());
+        stats.put("Tracked Paused States", gamePaused.size());
+        stats.put("Tracked Mini Game Caches", activeMiniGameParticipants.size());
+        return stats;
     }
 }
