@@ -29,12 +29,12 @@ function NavBar({onLoginClick, onRegisterClick, isUserLoggedIn, logOut, userInfo
                                 <div className="user-stats">
                                     WPM: {userInfo.getHighestWpmInfo} Games: {userInfo.getGamesPlayedInfo} Wins: {userInfo.getWinsInfo}
                                 </div>
-                            </div>
                             {!disableLogout && (
                                 <button className="logout-btn" onClick={logOut}>
                                     Log out
                                 </button>
                             )}
+                            </div>
                         </div>
                     ) : (
                         <div className="auth-links">
