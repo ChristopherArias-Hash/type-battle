@@ -331,8 +331,8 @@ const CrossyRoad = ({
       const carEnd = carStart + obs.width;
       if (
         playerPos.y === obs.y &&
-        playerPos.x >= carStart &&
-        playerPos.x < carEnd
+        playerPos.x>=carStart &&
+        playerPos.x<=carEnd
       ) {
         const respawnPos =
           crossingDirection === "up"

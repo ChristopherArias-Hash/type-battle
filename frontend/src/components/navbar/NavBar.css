@@ -132,13 +132,7 @@
       0 0, 0 0;              /* 6–7 */
   }
 }
-/* PERFECT FLOW - left line transitions smoothly into bottom line:
-           0%   corners only visible
-           50%  left line grows down, right line grows left, corners consumed
-           75%  left line reaches bottom and starts becoming bottom line
-           90%  lines meet in the middle perfectly
-           100% only bottom underline remains
-        */
+
 @keyframes snake {
   0% {
     background-size: var(--t) 0, /* left line height */ 0 var(--t),
@@ -379,11 +373,15 @@ transform: translateY(-2px);
 /* Auth links styling */
 .auth-links {
   display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
   gap: 15px;
   margin-right: 10px;
-}
+justify-content: flex-end}
+
 
 .auth-links a {
+  text-align: center;
   background: linear-gradient(135deg, #2a2a2a 0%, #404040 100%);
   border: 2px solid rgba(20, 173, 255, 0.587);
   color: #ffffff;
@@ -401,6 +399,8 @@ transform: translateY(-2px);
   z-index: 2;
   position: relative;
   text-decoration: none;
+  width: 100px;
+  
 }
 
 .auth-links a:hover {

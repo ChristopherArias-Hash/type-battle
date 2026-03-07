@@ -78,7 +78,7 @@ public class GameTimerService {
     //Mini game configs
     private final Set<Integer> pausePoints = Set.of(45, 30, 15);
     private final List<Integer> miniGameBonusPoints = List.of(100, 75, 50, 25);
-    private final int LONG_GAME = 60;
+    private final int LONG_GAME = 100000;
     private final int SHORT_GAME = 30;
 
     // Stores participant objects to avoid hitting the DB on every score update
