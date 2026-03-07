@@ -85,7 +85,6 @@
 /* ─────────────── Player ─────────────── */
 
 .player-container {
-  background-color: rgb(238, 227, 227);
   position: absolute;
   width: var(--tile-size);
   height: var(--tile-size);
