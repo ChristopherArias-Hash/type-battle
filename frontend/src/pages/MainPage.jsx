@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import useSound from "use-sound";
 
 import clickSound from "../sounds/keyboard-press.wav";
@@ -24,6 +24,7 @@ function MainPage() {
     isUserVerified,
     isUserInDb,
     verifyAuthEmailStatus,
+    cancelRegistration,
   } = useAuth();
 
   // Modals for login and Register
@@ -32,6 +33,15 @@ function MainPage() {
 
   // Sound
   const [playClickSound] = useSound(clickSound);
+
+  useEffect(() => {
+    
+    //Check if user is in 2nd or 3rd stage, show modal if so
+    if (isUserLoggedIn && (!isUserVerified || !isUserInDb)) {
+      setShowRegisterModal(true);
+    }
+  }, [isUserLoggedIn, isUserVerified, isUserInDb]);
+
   return (
     <>
       <NavBar
@@ -67,6 +77,8 @@ function MainPage() {
           isUserInDb={isUserInDb}
           verifyAuthEmailStatus={verifyAuthEmailStatus}
           logOutFirebase={logOutFirebase}
+          cancelRegistration={cancelRegistration}
+          setShowRegisterModal={setShowRegisterModal}
         />
       )}
       <div className="container">

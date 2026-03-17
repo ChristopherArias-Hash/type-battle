@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { auth } from "../../../firebase";
 import {
   handleRegister,
   handleVerifiedRegister,
@@ -37,9 +38,47 @@ function RegisterModal({
   if (verifyRegistrationStage) currentStep = 2;
   if (finalRegistrationStage) currentStep = 3;
 
+  //------- MOVE LOGIC TO authHelpers.js? ---------//
+  const cancelRegistration = async () => {
+    try {
+      const user = auth.currentUser;
+
+      if (user && !isUserVerified) {
+        const token = await user.getIdToken();
+
+        // Tell the backend to execute the deletion
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL || "http://localhost:8080"}/protected/cancel-registration`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        if (response.ok) {
+          console.log("Backend successfully wiped the unverified user.");
+        } else {
+          console.error("Backend refused/failed to wipe user.");
+        }
+      }
+    } catch (error) {
+      console.error("Failed to execute cancelation:", error);
+    } finally {
+      //Always log out and close the modal
+      logOutFirebase();
+      onClose();
+    }
+  };
+
   const startRegistration = async () => {
     try {
-      const register = await handleRegister(email.trim(), password.trim(), confirmPassword.trim());
+      const register = await handleRegister(
+        email.trim(),
+        password.trim(),
+        confirmPassword.trim(),
+      );
       if (!register) return;
     } catch (_err) {
       alert("Something went wrong during registration or login.");
@@ -59,6 +98,8 @@ function RegisterModal({
       alert("Something went wrong during registration or login.");
     }
   };
+
+  //------- MOVE LOGIC TO authHelpers.js? ---------//
 
   if (intialRegistrationStage) {
     titleContent = "Register";
@@ -92,8 +133,8 @@ function RegisterModal({
         </Form.Group>
         <Form.Group className="mb-3" controlId="regPassword">
           <Form.Label>
-            <b>Reenter Password</b> <span className="required">*required</span> (6-20
-            characters)
+            <b>Reenter Password</b> <span className="required">*required</span>{" "}
+            (6-20 characters)
           </Form.Label>
           <Form.Control
             maxLength={20}
@@ -114,17 +155,23 @@ function RegisterModal({
     titleContent = "Email Verification Required";
     bodyContent = (
       <p className="text-center mt-3">
-        Your email address needs to be verified before you can finish registeration. Please
-        check your inbox for a verification email and click the link provided.
-        If you haven't received the email, please check your spam folder.
+        Your email address needs to be verified before you can finish
+        registeration. Please check your inbox for a verification email and
+        click the link provided. If you haven't received the email, please check
+        your spam folder.
       </p>
     );
     footerContent = (
       <>
-        <Button  className ="verify-status-button"  onClick={verifyAuthEmailStatus}>
+        <Button
+          className="verify-status-button"
+          onClick={verifyAuthEmailStatus}
+        >
           Verify status
         </Button>
-        <Button  className ="cancel-status-button"  onClick={logOutFirebase}>Cancel Registration</Button>
+        <Button className="cancel-status-button" onClick={cancelRegistration}>
+          Cancel Registration
+        </Button>
       </>
     );
   } else if (finalRegistrationStage) {

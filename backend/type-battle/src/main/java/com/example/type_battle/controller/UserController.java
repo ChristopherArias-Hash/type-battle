@@ -14,6 +14,8 @@ import com.example.type_battle.repository.GameParticipantsRepository;
 import com.example.type_battle.repository.GameSessionsRepository;
 import com.example.type_battle.repository.ParagraphsRepository;
 import com.example.type_battle.repository.UserRepository;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.UserRecord;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -216,5 +218,30 @@ public class UserController {
         return ResponseEntity.ok(gameSessionData);
     }
 
+    //Used to force delete user if they cancel their registration (Can't do this on front end due to strict fb rules)
+    @DeleteMapping("/cancel-registration")
+    public ResponseEntity<?> cancelRegistration(HttpServletRequest request) {
+        String uid = (String) request.getAttribute("uid");
 
+        if (uid == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+
+        try {
+            UserRecord userRecord = FirebaseAuth.getInstance().getUser(uid);
+
+            // Ensure they are actually unverified
+            if (userRecord.isEmailVerified()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Cannot delete verified users this way.");
+            }
+
+            FirebaseAuth.getInstance().deleteUser(uid);
+
+            return ResponseEntity.ok("Unverified user wiped successfully");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to wipe user");
+        }
+    }
 }
