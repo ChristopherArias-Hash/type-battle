@@ -385,11 +385,11 @@ public class GameTimerService {
 
     // The 10-Second Transition Timer
     private void startTransitionTimer(String sessionId) {
-        localTransitionClocks.put(sessionId, 10);
+        localTransitionClocks.put(sessionId, 5);
 
         Map<String, Object> startMsg = new HashMap<>();
         startMsg.put("type", "transition_tick");
-        startMsg.put("remainingTime", 10);
+        startMsg.put("remainingTime", 5);
         messagingTemplate.convertAndSend("/topic/game/" + sessionId, startMsg);
 
         ScheduledFuture<?> future = scheduler.scheduleAtFixedRate(() -> {

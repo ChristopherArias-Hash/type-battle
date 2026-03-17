@@ -1,14 +1,15 @@
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  deleteUser,
   signOut,
+  sendEmailVerification,
+  
 } from "firebase/auth";
 import { auth } from "../firebase";
 import axios from "axios";
 
-const invalidRegistrationInput = (email, password, username, file) => {
-  if (!email || !password || !username) {
+const invalidRegistrationInput = (email, password, confirmPassword) => {
+  if (!email || !password) {
     alert("Please fill in all required fields.");
     return true;
   }
@@ -18,18 +19,30 @@ const invalidRegistrationInput = (email, password, username, file) => {
     return true;
   }
 
-  if (username.length < 3 || username.length > 20) {
-    alert("Username must be between 3 and 20 characters.");
-    return true;
-  }
+  
 
   if (password.length < 6 || password.length > 20) {
     alert("Password must be between 6 and 20 characters.");
     return true;
   }
 
+  if (password !== confirmPassword) {
+    alert("Passwords do not match.");
+    return true;
+  }
+
   if (email.length < 1 || email.length > 40) {
     alert("Email must be between 1 and 40 characters.");
+    return true;
+  }
+
+  return false;
+};
+
+const invalidFinalRegistration = (username, file) => {
+
+  if (username.length < 3 || username.length > 20) {
+    alert("Username must be between 3 and 20 characters.");
     return true;
   }
 
@@ -131,91 +144,109 @@ export async function handleLogin(email, password) {
   }
 }
 
-export async function handleRegister(email, password, username, file) {
-  if (invalidRegistrationInput(email, password, username, file)) {
+export async function handleRegister(email, password, confirmPassword) {
+  if (invalidRegistrationInput(email, password, confirmPassword)) {
     return false;
   }
 
   if (!(await isServerUp())) {
-    return;
+    return false;
   }
-  let firebaseUser = null;
 
   try {
-    // Step 1: Firebase Auth
     const userCredential = await createUserWithEmailAndPassword(
       auth,
       email,
       password,
     );
-    firebaseUser = userCredential.user;
-    const idToken = await firebaseUser.getIdToken();
 
-    // Step 2: Backend user registration
+    const firebaseUser = userCredential.user;
+
+    await sendEmailVerification(firebaseUser);
+
+    alert("Verification email sent. Please verify before continuing.");
+
+    return true;  
+
+  } catch (error) {
+    invalidFirebaseAuthErrors(error);
+    return false;
+  }
+}
+
+export async function handleVerifiedRegister(username, file) {
+  if (invalidFinalRegistration(username, file)) {
+    return false;
+  }
+
+  const firebaseUser = auth.currentUser;
+
+  if (!firebaseUser) {
+    alert("No authenticated user found.");
+    return false;
+  }
+
+  await firebaseUser.reload(); // ensure latest verification state
+
+  if (!firebaseUser.emailVerified) {
+    alert("Email is not verified yet.");
+    return false;
+  }
+
+  const idToken = await firebaseUser.getIdToken();
+  const email = firebaseUser.email;
+
+  // Create backend user
+  try {
+    await axios.post(
+      `${import.meta.env.VITE_BACKEND_URL}/protected/users`,
+      {
+        email,
+        displayName: username,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+      },
+    );
+  } catch (error) {
+    if (error.response?.status === 409) {
+      alert("User already exists in database.");
+    } else {
+      alert("Failed to register user in backend.");
+    }
+    return false;
+  }
+
+  // Upload profile image (optional)
+  if (file) {
+    const formData = new FormData();
+    formData.append("file", file);
+
     try {
       await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/protected/users`,
-        {
-          email,
-          displayName: username,
-        },
+        `${import.meta.env.VITE_BACKEND_URL}/api/media/upload`,
+        formData,
         {
           headers: {
             Authorization: `Bearer ${idToken}`,
           },
         },
       );
-    } catch (backendError) {
-      void backendError;
-      alert("Failed to register user in backend.");
-
-      if (firebaseUser) {
-        await deleteUser(firebaseUser);
-      }
-
-      return;
+    } catch (error) {
+      alert("Image upload failed.");
+      return false;
     }
-
-    // Step 3: Profile image upload (if file is provided)
-    if (file) {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      try {
-        await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/api/media/upload`,
-          formData,
-          {
-            headers: {
-              Authorization: `Bearer ${idToken}`,
-              "Content-Type": "multipart/form-data",
-            },
-          },
-        );
-      } catch (uploadError) {
-        void uploadError;
-        alert("Image upload failed. Please try again.");
-
-        if (firebaseUser) {
-          await deleteUser(firebaseUser);
-        }
-
-        return;
-      }
-    }
-
-    alert("Registration successful!");
-    return true;
-  } catch (_error) {
-    invalidFirebaseAuthErrors(_error);
-    return; 
   }
+
+  return true;
 }
 
 export async function createGame() {
   const user = auth.currentUser;
-
-  if (!user) {
+  const verificationStatus = user.emailVerified 
+  if (!user || !verificationStatus) {
     throw new Error("User not authenticated.");
   }
 
@@ -244,7 +275,9 @@ export const joinGameUsingCode = async (code, navigate) => {
     return;
   }
   const user = auth.currentUser;
-  if (user) {
+  const verificationStatus = user.emailVerified 
+
+  if (user && verificationStatus) {
     try {
       const token = await user.getIdToken();
       const response = await axios.get(

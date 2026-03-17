@@ -16,7 +16,9 @@ export const useAuth = () => {
 
 //Contains all fuctions that require auth protection
 export const AuthProvider = ({ children }) => {
+  const [isUserVerified, setIsUserVerified] = useState(false);
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
+  const [isUserInDb, setIsUserInDb] = useState(false);
   const [serverStatus, setServerStatus] = useState(false);
   const [userInfo, setUserInfo] = useState({
     getWinsInfo: 0,
@@ -39,7 +41,8 @@ export const AuthProvider = ({ children }) => {
   //GET: User Info
   const loadUserInfo = async () => {
     const user = auth.currentUser;
-    if (!user) return;
+    const verificationStatus = user.emailVerified;
+    if (!user || !verificationStatus) return;
 
     try {
       const idToken = await user.getIdToken();
@@ -53,6 +56,14 @@ export const AuthProvider = ({ children }) => {
       );
 
       const userDetails = response.data;
+
+      if (!userDetails) {
+        setIsUserInDb(false);
+        return;
+      }
+      
+      console.log("User details loaded:");
+      setIsUserInDb(true);
       setUserInfo({
         getWinsInfo: userDetails.gamesWon,
         getGamesPlayedInfo: userDetails.gamesPlayed,
@@ -60,15 +71,21 @@ export const AuthProvider = ({ children }) => {
         getDisplayName: userDetails.displayName,
         getProfilePicture: userDetails.imageUrl,
       });
-    } catch (error) {}
+    } catch (error) {
+         console.error("Failed to load user info:", error);
+      setIsUserInDb(false);
+    }
   };
 
   //GET: Leaderboard info
   const loadLeaderboardInfo = async () => {
     const user = auth.currentUser;
-    if (!user) {
+    const verificationStatus = user.emailVerified;
+
+    if (!user || !verificationStatus || !isUserInDb) {
       return;
     }
+
     try {
       const idToken = await user.getIdToken();
       const response = await axios.get(
@@ -91,6 +108,8 @@ export const AuthProvider = ({ children }) => {
     try {
       await signOut(auth);
       setIsUserLoggedIn(false);
+      setIsUserVerified(false);
+      setIsUserInDb(false);
       setUserInfo({
         getWinsInfo: 0,
         getGamesPlayedInfo: 0,
@@ -105,14 +124,46 @@ export const AuthProvider = ({ children }) => {
     loadServerStatus();
   }, []);
 
+  const verifyAuthEmailStatus = async () => {
+    const user = auth.currentUser;
+    if (user) {
+      await user.reload();
+      if (user.emailVerified) {
+        setIsUserVerified(true);
+        await loadUserInfo();
+      } else {
+        alert("Account is not verified. Please check your email for the verification link.");
+        setIsUserVerified(false);
+        setIsUserInDb(false);
+      }
+    }
+
+    console.log(
+      "Email verification status:",
+      user ? user.emailVerified : "No user",
+    );
+  };
   //Keeps track if user is logged in or out.
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setIsUserLoggedIn(true);
-        await loadUserInfo();
+
+        //Force refresh from Firebase server
+        await user.reload();
+
+        if (user.emailVerified) {
+          setIsUserInDb(false);
+          setIsUserVerified(true);
+          await loadUserInfo();
+        } else {
+          setIsUserVerified(false);
+          setIsUserInDb(false);
+        }
       } else {
         setIsUserLoggedIn(false);
+        setIsUserVerified(false);
+        setIsUserInDb(false);
         setUserInfo({
           getWinsInfo: 0,
           getGamesPlayedInfo: 0,
@@ -121,6 +172,7 @@ export const AuthProvider = ({ children }) => {
           getProfilePicture: null,
         });
       }
+
       setLoading(false);
     });
 
@@ -136,6 +188,9 @@ export const AuthProvider = ({ children }) => {
     loading,
     loadLeaderboardInfo,
     serverStatus,
+    isUserVerified,
+    isUserInDb,
+    verifyAuthEmailStatus,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

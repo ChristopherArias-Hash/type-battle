@@ -18,8 +18,7 @@ function AboutUs() {
           <b className="highlighted">Christopher Arias</b> as a passion project.
           He was bored of generic type racing games and wanted to create a fun
           party game out of the genre. He currently is a Senior at California
-          State University Channel Islands Majoring in Computer Science. He’s currently
-          a <b className="highlighted">Web Developer</b> at linked2pay 
+          State University Channel Islands Majoring in Computer Science. 
         </p>
         <ul className="example-2">
           <li className="icon-content">

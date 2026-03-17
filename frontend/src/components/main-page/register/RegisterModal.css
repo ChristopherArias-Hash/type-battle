@@ -1,4 +1,55 @@
-/* Button styles matching navbar logout */
+/* Ensure the modal content box is uniformly sized */
+.dark-modal-content {
+  min-height: 320px; /* Adjust this slightly if your final form is taller */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Modal Body stretches to fill available space */
+.dark-modal .modal-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+}
+
+/* This locks the inner content so the modal doesn't resize vertically between steps */
+.step-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 200px; 
+  flex: 1;
+}
+
+/* --- Progress Indicator (3 Dots) --- */
+.step-indicator {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.step-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #404040; /* Inactive color */
+  transition: all 0.4s ease;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+}
+
+.step-dot.active {
+  background-color: #14adff;
+  box-shadow: 0 0 10px rgba(20, 173, 255, 0.6);
+  transform: scale(1.1);
+}
+
+/* --- Required Text --- */
+.required {
+  color: #14adff;
+}
+
+/* --- Button styles matching navbar logout --- */
 .dark-modal .btn {
   background: linear-gradient(135deg, #2a2a2a 0%, #404040 100%);
   border: 1px solid rgba(20, 173, 255, 0.3);
@@ -11,8 +62,7 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   z-index: 2;
   position: relative;
 }
@@ -29,7 +79,11 @@
   transform: translateY(0px);
 }
 
-.required {
-  
-  color: #14adff;
+
+.dark-modal .verify-status-button:hover {
+  color: #14adff; 
+}
+
+.dark-modal .cancel-status-button {
+  background-color: #ff4d4d !important;
 }
