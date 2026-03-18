@@ -77,9 +77,12 @@ function GamePlay() {
     return (
       <>
         <NavBar
-          userInfo={userInfo}
-          isUserLoggedIn={isUserLoggedIn}
-          logOut={logOutFirebase}
+        disableLogout={disableLogout}
+        userInfo={userInfo}
+        isUserLoggedIn={isUserLoggedIn}
+        logOut={logOutFirebase}
+        isUserInDb={isUserInDb}
+        isUserVerified={isUserVerified}
         />
         <div className="game-ended-container">
           <h2 className="game-over">Game Over!</h2>
