@@ -55,6 +55,7 @@ function MainPage() {
   return (
     <>
       <NavBar
+        loading={loading}
         userInfo={userInfo}
         logOut={logOutFirebase}
         isUserLoggedIn={isUserLoggedIn}
@@ -102,6 +103,7 @@ function MainPage() {
             isUserLoggedIn={isUserLoggedIn}
             isUserVerified={isUserVerified}
             isUserInDb={isUserInDb}
+            loading={loading}
           ></LeaderBoard>
           <AboutUs></AboutUs>
         </div>

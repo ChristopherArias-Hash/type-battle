@@ -2,11 +2,12 @@ import "./NotFound.css"
 import NavBar from "../components/navbar/NavBar"
 import { useAuth } from "../utils/authContext"
 function NotFound() {
-    const { isUserLoggedIn, userInfo, logOutFirebase, isUserVerified, isUserInDb} = useAuth();
+    const { isUserLoggedIn, userInfo, logOutFirebase, isUserVerified, isUserInDb, loading} = useAuth();
     
     return (
         <>
         <NavBar
+        loading={loading}
           userInfo={userInfo}
           isUserLoggedIn={isUserLoggedIn}
           logOut={logOutFirebase}

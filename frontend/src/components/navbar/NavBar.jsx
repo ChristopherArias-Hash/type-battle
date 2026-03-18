@@ -1,6 +1,7 @@
 import "./NavBar.css"
 import defaultProfilePicture from "../../images/profile/Default_pfp.svg";
-function NavBar({onLoginClick, onRegisterClick, isUserLoggedIn, logOut, userInfo, isUserVerified, isUserInDb, disableLogout}) {
+
+function NavBar({onLoginClick, onRegisterClick, isUserLoggedIn, logOut, userInfo, isUserVerified, isUserInDb, disableLogout, loading}) { // <-- ADDED loading
     return(
         <>
             <ul className="nav-bar">
@@ -12,16 +13,25 @@ function NavBar({onLoginClick, onRegisterClick, isUserLoggedIn, logOut, userInfo
                         </h1>
                     </li>
                     <li className="nav-item pull-left">
-                        
-                        <p>Beta 1.1</p>
+                        <p>Beta 1.2</p>
                         <p className="patch-notes"><a href="/patch-notes">Patch notes</a></p>
-
                     </li>
                 </div>
 
                 {/* Right side content */}
                 <div className="nav-right">
-                    {isUserLoggedIn  && isUserVerified && isUserInDb? (
+                    {loading ? (
+                        <div className="user-card skeleton-card">
+                            <div className="skeleton-img"></div>
+                            <div className="user-info">
+                                <div className="skeleton-text name"></div>
+                                <div className="skeleton-text stats"></div>
+                                {!disableLogout && (
+                                    <div className="skeleton-btn"></div>
+                                )}
+                            </div>
+                        </div>
+                    ) : isUserLoggedIn  && isUserVerified && isUserInDb ? (
                         <div className="user-card">
                             <img src={userInfo.getProfilePicture || defaultProfilePicture} alt="Profile picture" />
                             <div className="user-info">
