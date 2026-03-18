@@ -25,6 +25,7 @@ function MainPage() {
     isUserInDb,
     verifyAuthEmailStatus,
     cancelRegistration,
+    loading,
   } = useAuth();
 
   // Modals for login and Register
@@ -34,13 +35,22 @@ function MainPage() {
   // Sound
   const [playClickSound] = useSound(clickSound);
 
-  useEffect(() => {
+  console.log("DB: " + isUserInDb)
+  console.log("Verified: " + isUserVerified)
+  console.log("Logged in: " + isUserLoggedIn)
+
+ useEffect(() => {
+    // If Firebase is still loading the user state or database info, do nothing.
+    if (loading) return;
     
-    //Check if user is in 2nd or 3rd stage, show modal if so
+    // Once loading is complete, check if they need the register modal.
     if (isUserLoggedIn && (!isUserVerified || !isUserInDb)) {
       setShowRegisterModal(true);
+    } else {
+      // hide it just in case it was open
+      setShowRegisterModal(false); 
     }
-  }, [isUserLoggedIn, isUserVerified, isUserInDb]);
+  }, [isUserLoggedIn, isUserVerified, isUserInDb, loading]); //
 
   return (
     <>

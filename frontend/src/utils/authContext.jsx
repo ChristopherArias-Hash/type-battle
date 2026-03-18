@@ -145,7 +145,12 @@ export const AuthProvider = ({ children }) => {
   };
   //Keeps track if user is logged in or out.
   useEffect(() => {
+    
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+
+      // Instantly pause the UI while we process the login/logout
+      setLoading(true);
+
       if (user) {
         setIsUserLoggedIn(true);
 
