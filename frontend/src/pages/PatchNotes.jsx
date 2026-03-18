@@ -2,17 +2,49 @@ import NavBar from "../components/navbar/NavBar";
 import "./PatchNotes.css";
 import { useAuth } from "../utils/authContext";
 function PatchNotes() {
-  const { isUserLoggedIn, userInfo, logOutFirebase, isUserInDb, isUserVerified } = useAuth();
+  const { isUserLoggedIn, userInfo, logOutFirebase, isUserInDb, isUserVerified, loading } = useAuth();
 
   return (
     <>
       <NavBar
+      loading={loading}
         userInfo={userInfo}
         isUserLoggedIn={isUserLoggedIn}
         logOut={logOutFirebase}
          isUserVerified={isUserVerified}
         isUserInDb={isUserInDb}
       />
+      <div className="patch-notes-container">
+  <header className="patch-header">
+    <div className="patch-header-top">
+      <span>v1.2</span>
+      <span>March 17, 2026</span>
+    </div>
+    <h1 className="patch-title">QUALITY OF LIFE</h1>
+  </header>
+
+  <div className="patch-intro">
+    <p>Mainly focused on polishing UI and Game mechanics.</p>
+  </div>
+
+  <div className="patch-sections">
+    <section key="0">
+      <h2 className="patch-section-title">FEATURES</h2>
+      <ul className="patch-list">
+        <li>Email verification is now required upon account creation</li>
+        <li>Added 5 second transition timer at the end of mini games</li>
+        <li>Added skeleton loaders when refreshing on homepage </li>
+      </ul>
+    </section>
+    <section key="1">
+      <h2 className="patch-section-title">OPTIMIZATIONS</h2>
+      <ul className="patch-list">
+        <li>Improved Crossy Road hitboxes </li>
+        <li>Made stacker 30 second's instead of 60</li>
+      </ul>
+    </section>
+  </div>
+</div>
 
       <div className="patch-notes-container">
         <header className="patch-header">

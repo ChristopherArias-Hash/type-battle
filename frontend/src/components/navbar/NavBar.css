@@ -412,3 +412,66 @@ justify-content: flex-end}
     0 2px 8px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
+
+
+/* =========================================
+   Skeleton Loading State for NavBar
+   ========================================= */
+
+@keyframes skeletonPulse {
+  0% { background-color: rgba(255, 255, 255, 0.05); }
+  50% { background-color: rgba(255, 255, 255, 0.15); }
+  100% { background-color: rgba(255, 255, 255, 0.05); }
+}
+
+.skeleton-card {
+  border-color: rgba(255, 255, 255, 0.05);
+  pointer-events: none; 
+}
+
+/* Hide the glowing animated border while it's loading 
+.skeleton-card::before {
+  display: none;
+}
+*/ 
+
+.skeleton-img {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  animation: skeletonPulse 1.5s infinite ease-in-out;
+}
+
+.skeleton-text {
+  border-radius: 4px;
+  animation: skeletonPulse 1.5s infinite ease-in-out;
+}
+
+.skeleton-text.name {
+  width: 120px;
+  height: 16px;
+  margin-bottom: 4px;
+}
+
+.skeleton-text.stats {
+  width: 180px;
+  height: 12px;
+  margin-bottom: 4px;
+}
+
+.skeleton-btn {
+  width: 180px;
+  height: 28px;
+  border-radius: 8px;
+  animation: skeletonPulse 1.5s infinite ease-in-out;
+}
+
+/* Mobile responsiveness for skeleton */
+@media (max-width: 768px) {
+  .skeleton-img {
+    width: 56px;
+    height: 56px;
+  }
+  .skeleton-text.name { width: 90px; }
+  .skeleton-text.stats { width: 130px; }
+}

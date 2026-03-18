@@ -14,7 +14,7 @@ function GamePlay() {
 
   const { id: sessionId } = useParams();
   const [enableWarning, disableWarning] = useUserLeavingWarning();
-  const { isUserLoggedIn, userInfo, logOutFirebase, loading, loadUserInfo, isUserInDb, isUserVerified} =
+  const { isUserLoggedIn, userInfo, logOutFirebase, loading, loadUserInfo, isUserInDb, isUserVerified,} =
     useAuth();
 
   const {
@@ -77,6 +77,7 @@ function GamePlay() {
     return (
       <>
         <NavBar
+        loading={loading}
         disableLogout={disableLogout}
         userInfo={userInfo}
         isUserLoggedIn={isUserLoggedIn}
@@ -127,6 +128,7 @@ function GamePlay() {
   return (
     <>
       <NavBar
+        loading={loading}
         disableLogout={disableLogout}
         userInfo={userInfo}
         isUserLoggedIn={isUserLoggedIn}
