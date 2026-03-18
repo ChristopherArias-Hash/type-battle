@@ -2,11 +2,16 @@ import "./LeaderBoard.css";
 
 import { useState, useEffect } from "react";
 
-function LeaderBoard({ loadLeaderboardInfo, isUserLoggedIn }) {
+function LeaderBoard({ loadLeaderboardInfo, isUserLoggedIn, isUserVerified, isUserInDb}) {
   const [listItems, setListItems] = useState([]);
+
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
+      if (!isUserLoggedIn && !isUserVerified && !isUserInDb) {
+        return;
+      }
+      
       try {
         const response = await loadLeaderboardInfo(); // now works
         const data = response.data;
@@ -23,12 +28,12 @@ function LeaderBoard({ loadLeaderboardInfo, isUserLoggedIn }) {
     };
 
     fetchLeaderboard();
-  }, [loadLeaderboardInfo, isUserLoggedIn]);
+  }, [loadLeaderboardInfo, isUserLoggedIn, isUserVerified]);
 
   return (
     <div className="leader-board">
       <h2>Leaderboard</h2>
-      {isUserLoggedIn ? (
+      {isUserLoggedIn && isUserVerified && isUserInDb? (
         <ol className="leader-board-list">{listItems}</ol>
       ) : (
         <p>Please login to see leaderboard</p>

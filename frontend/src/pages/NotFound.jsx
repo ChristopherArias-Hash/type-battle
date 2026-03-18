@@ -2,7 +2,7 @@ import "./NotFound.css"
 import NavBar from "../components/navbar/NavBar"
 import { useAuth } from "../utils/authContext"
 function NotFound() {
-    const { isUserLoggedIn, userInfo, logOutFirebase, loading, loadUserInfo} = useAuth();
+    const { isUserLoggedIn, userInfo, logOutFirebase, isUserVerified, isUserInDb} = useAuth();
     
     return (
         <>
@@ -10,6 +10,8 @@ function NotFound() {
           userInfo={userInfo}
           isUserLoggedIn={isUserLoggedIn}
           logOut={logOutFirebase}
+           isUserVerified={isUserVerified}
+            isUserInDb={isUserInDb}
         />
         <div className ="error-container">
             <h1>404</h1>

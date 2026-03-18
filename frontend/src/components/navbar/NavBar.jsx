@@ -1,6 +1,6 @@
 import "./NavBar.css"
 import defaultProfilePicture from "../../images/profile/Default_pfp.svg";
-function NavBar({onLoginClick, onRegisterClick, isUserLoggedIn, logOut, userInfo, serverStatus, disableLogout}) {
+function NavBar({onLoginClick, onRegisterClick, isUserLoggedIn, logOut, userInfo, isUserVerified, isUserInDb, disableLogout}) {
     return(
         <>
             <ul className="nav-bar">
@@ -21,7 +21,7 @@ function NavBar({onLoginClick, onRegisterClick, isUserLoggedIn, logOut, userInfo
 
                 {/* Right side content */}
                 <div className="nav-right">
-                    {isUserLoggedIn ? (
+                    {isUserLoggedIn  && isUserVerified && isUserInDb? (
                         <div className="user-card">
                             <img src={userInfo.getProfilePicture || defaultProfilePicture} alt="Profile picture" />
                             <div className="user-info">

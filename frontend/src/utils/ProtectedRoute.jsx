@@ -2,13 +2,13 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../utils/authContext";
 
 export default function ProtectedRoute({ children }) {  // Add children prop
-  const { isUserLoggedIn, loading } = useAuth();
+  const { isUserLoggedIn, isUserVerified, loading } = useAuth();
 
   if (loading) {
     return <div>Loading...</div>;
   }
 
-  if (!isUserLoggedIn) {
+  if (!isUserLoggedIn || !isUserVerified) {
     return <Navigate to="/" replace />;
   }
 

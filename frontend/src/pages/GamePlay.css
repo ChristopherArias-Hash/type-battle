@@ -3,6 +3,13 @@
   padding: 15px;
 }
 
+.loading-text {
+  font-size: 1.5rem;
+  color: #ffffff;
+  text-align: left;
+  font-weight: bold;
+}
+
 .gameplay-lobby-list{
   padding: auto;
 }

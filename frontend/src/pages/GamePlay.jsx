@@ -14,7 +14,7 @@ function GamePlay() {
 
   const { id: sessionId } = useParams();
   const [enableWarning, disableWarning] = useUserLeavingWarning();
-  const { isUserLoggedIn, userInfo, logOutFirebase, loading, loadUserInfo } =
+  const { isUserLoggedIn, userInfo, logOutFirebase, loading, loadUserInfo, isUserInDb, isUserVerified} =
     useAuth();
 
   const {
@@ -42,6 +42,9 @@ function GamePlay() {
   const disableLogout = true;
   const singlePlayer = players.length === 1;
 
+  const sortPlayersByScore = [...players].sort((a, b) => b.score - a.score);
+  
+
   useEffect(() => {
     enableWarning();
   }, [enableWarning]);
@@ -67,8 +70,9 @@ function GamePlay() {
     };
   }, []);
 
-  if (loading || paragraphText === null) return <div>Loading...</div>;
+  if (loading || paragraphText === null) return <div className="loading-text">LOADING...</div>;
   if (!isUserLoggedIn) return <Navigate to="/" replace />;
+  console.log(players[0].score)
   if (gameEnded) {
     return (
       <>
@@ -81,7 +85,7 @@ function GamePlay() {
           <h2 className="game-over">Game Over!</h2>
           <h3 className="final-scores">Final Scores</h3>
           <ul className="win-list">
-            {players.map((p, index) => (
+            {sortPlayersByScore.map((p, index) => (
               <li key={index}>
                 <p className="win-list-player-name">
                   {p.displayName || p.firebaseUid}
@@ -124,6 +128,8 @@ function GamePlay() {
         userInfo={userInfo}
         isUserLoggedIn={isUserLoggedIn}
         logOut={logOutFirebase}
+        isUserInDb={isUserInDb}
+        isUserVerified={isUserVerified}
       />
       <div className="lobby-container">
         {transitionTime !== null && (
